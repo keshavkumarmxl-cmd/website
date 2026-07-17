@@ -1,0 +1,1519 @@
+/* TEXT preset panel — Keshav Velo extension theme (AMOLED + red accent) */
+
+.apple-preset-shell,
+.apple-liquid-shell,
+.apple-silence-shell,
+.apple-audio-cleaner-shell,
+.apple-mp3-converter-shell {
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Sync Apple preset accents with Panel Settings */
+.apple-preset-shell .apple-section-head:focus-visible,
+.apple-liquid-shell .apple-section-head:focus-visible,
+.apple-silence-shell .apple-section-head:focus-visible,
+.apple-audio-cleaner-shell .apple-section-head:focus-visible,
+.apple-mp3-converter-shell .apple-section-head:focus-visible {
+    box-shadow: inset 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.45);
+}
+
+.apple-preset-shell .preset-list-container::-webkit-scrollbar-thumb:hover,
+.apple-preset-shell .apple-preset-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--kwv-accent, #ff0000);
+}
+
+.apple-preset-shell .preset-card:hover,
+.apple-preset-shell .preset-search-input:focus {
+    border-color: var(--kwv-accent, #ff0000);
+    box-shadow: 0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.15);
+}
+
+.apple-preset-tab-btn.active {
+    border-bottom-color: var(--kwv-accent, #ff0000) !important;
+}
+
+.apple-preset-group-head::before {
+    background: var(--kwv-accent, #ff0000);
+    box-shadow: 0 0 4px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.22);
+}
+
+.apple-preset-row.is-previewing {
+    box-shadow: inset 2px 0 0 var(--kwv-accent, #ff0000);
+}
+
+.apple-preset-row:active {
+    background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08);
+}
+
+.apple-preset-row:hover .apple-preset-row-gear,
+.apple-preset-row.is-previewing .apple-preset-row-gear,
+.apple-preset-row-gear:focus-visible {
+    color: var(--kwv-accent, #ff0000);
+    background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.10);
+}
+
+.apple-preset-variant-btn.active {
+    box-shadow: inset 0 -1px 0 var(--kwv-accent, #ff0000);
+}
+
+.apple-preset-shell:hover,
+.apple-liquid-shell:hover,
+.apple-silence-shell:hover,
+.apple-audio-cleaner-shell:hover,
+.apple-mp3-converter-shell:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.apple-preset-shell .apple-section-head,
+.apple-liquid-shell .apple-section-head,
+.apple-silence-shell .apple-section-head,
+.apple-audio-cleaner-shell .apple-section-head,
+.apple-mp3-converter-shell .apple-section-head {
+    cursor: pointer;
+    margin-bottom: 0;
+    outline: none;
+    border-radius: 7px;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.apple-preset-shell .apple-section-head::after,
+.apple-liquid-shell .apple-section-head::after,
+.apple-silence-shell .apple-section-head::after,
+.apple-audio-cleaner-shell .apple-section-head::after,
+.apple-mp3-converter-shell .apple-section-head::after {
+    display: none;
+    content: none;
+}
+
+.apple-preset-shell .apple-section-head > *,
+.apple-liquid-shell .apple-section-head > *,
+.apple-silence-shell .apple-section-head > *,
+.apple-audio-cleaner-shell .apple-section-head > *,
+.apple-mp3-converter-shell .apple-section-head > * {
+    position: relative;
+    z-index: 1;
+}
+
+.apple-preset-shell .apple-section-head:focus,
+.apple-preset-shell .apple-section-head:focus-visible,
+.apple-liquid-shell .apple-section-head:focus,
+.apple-liquid-shell .apple-section-head:focus-visible,
+.apple-silence-shell .apple-section-head:focus,
+.apple-silence-shell .apple-section-head:focus-visible,
+.apple-audio-cleaner-shell .apple-section-head:focus,
+.apple-audio-cleaner-shell .apple-section-head:focus-visible,
+.apple-mp3-converter-shell .apple-section-head:focus,
+.apple-mp3-converter-shell .apple-section-head:focus-visible {
+    outline: none;
+}
+
+.apple-preset-shell .apple-section-head:hover,
+.apple-liquid-shell .apple-section-head:hover,
+.apple-silence-shell .apple-section-head:hover,
+.apple-audio-cleaner-shell .apple-section-head:hover,
+.apple-mp3-converter-shell .apple-section-head:hover {
+    background: transparent;
+    border-color: inherit;
+}
+
+.apple-preset-shell .apple-section-head:active,
+.apple-liquid-shell .apple-section-head:active,
+.apple-silence-shell .apple-section-head:active,
+.apple-audio-cleaner-shell .apple-section-head:active,
+.apple-mp3-converter-shell .apple-section-head:active {
+    background: transparent;
+    transform: none;
+}
+
+.apple-preset-shell .apple-section-head:active::after,
+.apple-liquid-shell .apple-section-head:active::after,
+.apple-silence-shell .apple-section-head:active::after,
+.apple-audio-cleaner-shell .apple-section-head:active::after {
+    display: none;
+}
+
+.apple-preset-shell .apple-section-head:focus-visible,
+.apple-liquid-shell .apple-section-head:focus-visible,
+.apple-silence-shell .apple-section-head:focus-visible,
+.apple-audio-cleaner-shell .apple-section-head:focus-visible {
+    box-shadow: inset 0 0 0 1px rgba(255, 42, 42, 0.45);
+}
+
+.apple-preset-shell:not(.collapsed) .apple-section-head,
+.apple-liquid-shell:not(.collapsed) .apple-section-head,
+.apple-silence-shell:not(.collapsed) .apple-section-head,
+.apple-audio-cleaner-shell:not(.collapsed) .apple-section-head {
+    background: transparent;
+}
+
+.apple-preset-shell.collapsed .apple-section-head,
+.apple-liquid-shell.collapsed .apple-section-head,
+.apple-silence-shell.collapsed .apple-section-head,
+.apple-audio-cleaner-shell.collapsed .apple-section-head {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.apple-preset-shell .preset-search-toggle {
+    transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out;
+}
+
+.apple-preset-shell.collapsed .preset-search-toggle {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.apple-preset-shell .apple-preset-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.25s ease-in-out;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.apple-preset-shell.collapsed .apple-preset-content {
+    grid-template-rows: 0fr;
+    pointer-events: none;
+}
+
+.apple-preset-content-inner {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.apple-preset-shell.collapsed .apple-preset-content-inner {
+    opacity: 0;
+}
+
+.apple-liquid-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.25s ease-in-out;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.apple-liquid-shell.collapsed .apple-liquid-content {
+    grid-template-rows: 0fr;
+    pointer-events: none;
+}
+
+.apple-liquid-content-inner {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.apple-liquid-shell.collapsed .apple-liquid-content-inner {
+    opacity: 0;
+}
+
+.apple-silence-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.25s ease-in-out;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.apple-silence-shell.collapsed .apple-silence-content {
+    grid-template-rows: 0fr;
+    pointer-events: none;
+}
+
+.apple-silence-content-inner {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.apple-silence-shell.collapsed .apple-silence-content-inner {
+    opacity: 0;
+}
+
+.apple-audio-cleaner-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.25s ease-in-out;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.apple-audio-cleaner-shell.collapsed .apple-audio-cleaner-content {
+    grid-template-rows: 0fr;
+    pointer-events: none;
+}
+
+.mp3-converter-tools {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.apple-audio-cleaner-content-inner {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.apple-audio-cleaner-shell.collapsed .apple-audio-cleaner-content-inner {
+    opacity: 0;
+}
+
+.audio-cleaner-dropzone {
+    min-height: 46px;
+    padding: 6px 8px;
+    border: 1px dashed #282828;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #090909 0%, #040404 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: #bdbdbd;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.audio-cleaner-dropzone.is-dragging,
+.audio-cleaner-dropzone:hover {
+    border-color: var(--kwv-accent, #ff0000);
+    background: linear-gradient(180deg, #111111 0%, #060606 100%);
+    box-shadow: 0 0 14px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.12);
+}
+
+.audio-cleaner-drop-copy {
+    min-width: 0;
+}
+
+.audio-cleaner-drop-title,
+.audio-cleaner-file-name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #ffffff;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+.audio-cleaner-drop-hint {
+    display: block;
+    margin-top: 2px;
+    color: #777777;
+    font-size: 6px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.audio-cleaner-select-btn {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0;
+    border-radius: 8px;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.audio-cleaner-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px;
+}
+
+.audio-cleaner-tool {
+    min-width: 0;
+    min-height: 86px;
+    padding: 7px;
+    border: 1px solid #242424;
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 20% 0%, rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.10) 0%, rgba(0,0,0,0) 38%),
+        linear-gradient(180deg, #0e0e0f 0%, #060606 100%);
+    color: #dcdcdc;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 6px;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.audio-cleaner-tool:hover {
+    transform: translateY(-1px);
+    border-color: var(--kwv-accent, #ff0000);
+    box-shadow: 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.18), 0 0 14px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.18);
+}
+
+.audio-cleaner-tool:focus,
+.audio-cleaner-tool:focus-visible {
+    outline: none;
+    border-color: var(--kwv-accent, #ff0000);
+}
+
+.audio-cleaner-art {
+    height: 52px;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+    box-shadow: none;
+    isolation: isolate;
+}
+
+.audio-cleaner-tool.vocal .audio-cleaner-art {
+    background: transparent;
+}
+
+.audio-cleaner-art::before {
+    content: "";
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 16px;
+    height: 20px;
+    opacity: 0.98;
+    background: linear-gradient(90deg, #31d9ff 0%, #bca7ff 50%, #ff3bbf 100%);
+    clip-path: polygon(0 52%, 5% 49%, 8% 38%, 12% 78%, 15% 17%, 18% 94%, 22% 11%, 26% 83%, 30% 26%, 34% 61%, 38% 31%, 42% 71%, 46% 22%, 50% 78%, 54% 33%, 58% 68%, 62% 18%, 66% 84%, 70% 35%, 74% 69%, 78% 24%, 82% 78%, 86% 34%, 90% 61%, 94% 43%, 100% 50%, 100% 57%, 94% 57%, 90% 68%, 86% 42%, 82% 87%, 78% 33%, 74% 78%, 70% 43%, 66% 92%, 62% 26%, 58% 76%, 54% 41%, 50% 86%, 46% 31%, 42% 80%, 38% 39%, 34% 69%, 30% 35%, 26% 91%, 22% 20%, 18% 99%, 15% 26%, 12% 86%, 8% 47%, 5% 58%, 0 58%);
+    filter: drop-shadow(0 0 6px rgba(49,217,255,0.62)) drop-shadow(0 0 10px rgba(255,59,191,0.42));
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 54%, transparent 72%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 54%, transparent 72%);
+    -webkit-mask-size: 230% 100%;
+    mask-size: 230% 100%;
+    transform-origin: center;
+    animation: audioWaveTrace 2.15s linear infinite;
+}
+
+.audio-cleaner-tool.vocal .audio-cleaner-art::before {
+    background: linear-gradient(90deg, #ff8a3d 0%, #ff756f 38%, #ff4fe0 72%, #a77bff 100%);
+    filter: drop-shadow(0 0 6px rgba(255,138,61,0.58)) drop-shadow(0 0 10px rgba(255,79,224,0.42));
+}
+
+.audio-cleaner-label {
+    color: #cfcfcf;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: 0.35px;
+    text-align: center;
+    line-height: 1;
+    padding-top: 2px;
+}
+
+@keyframes audioWaveTrace {
+    0% {
+        -webkit-mask-position: 130% 0;
+        mask-position: 130% 0;
+        opacity: 0;
+        transform: scaleY(0.92);
+    }
+    12% {
+        opacity: 1;
+    }
+    50% {
+        transform: scaleY(1);
+    }
+    88% {
+        opacity: 1;
+    }
+    100% {
+        -webkit-mask-position: -130% 0;
+        mask-position: -130% 0;
+        opacity: 0;
+        transform: scaleY(0.92);
+    }
+}
+
+body.kwv-reduce-animations .audio-cleaner-art::before {
+    animation: none !important;
+    opacity: 0.85;
+    transform: none !important;
+    -webkit-mask-image: none;
+    mask-image: none;
+    filter: none;
+}
+
+.audio-cleaner-progress {
+    padding: 7px;
+    border: 1px solid #191919;
+    border-radius: 8px;
+    background: #060606;
+}
+
+.audio-cleaner-progress-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    margin-bottom: 6px;
+    color: #8d8d8d;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.audio-cleaner-progress-track {
+    height: 5px;
+    border-radius: 999px;
+    background: #171717;
+    overflow: hidden;
+}
+
+.audio-cleaner-progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--kwv-accent, #ff0000), #ffffff);
+    transition: width 0.22s ease;
+}
+
+.audio-cleaner-output-stack {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.audio-cleaner-output-stack.active {
+    display: flex;
+}
+
+.audio-cleaner-output-row {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+    min-height: 44px;
+    padding: 8px 7px 8px 9px;
+    border: 1px solid #202020;
+    border-radius: 8px;
+    background:
+        linear-gradient(90deg, rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08) 0%, rgba(255,255,255,0.018) 50%, rgba(0,0,0,0) 100%),
+        #080808;
+}
+
+.audio-cleaner-output-row.active {
+    display: flex;
+}
+
+.audio-cleaner-output-meta {
+    min-width: 58px;
+    max-width: 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.audio-cleaner-output-type {
+    color: var(--kwv-accent, #ff0000);
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.audio-cleaner-play-btn {
+    width: 45px;
+    height: 18px;
+    padding: 0 7px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+    background: #0d0d0d;
+    color: #dcdcdc;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6.5px;
+    font-weight: 900;
+    letter-spacing: 0.55px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.audio-cleaner-play-btn:hover,
+.audio-cleaner-play-btn.playing {
+    border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.54);
+    background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.13);
+    color: #ffffff;
+}
+
+.audio-cleaner-output-wave {
+    flex: 1 1 auto;
+    min-width: 72px;
+    height: 20px;
+    border-radius: 6px;
+    opacity: 1;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(90deg, rgba(255,255,255,0.018), rgba(255,255,255,0.045), rgba(255,255,255,0.018));
+}
+
+.audio-cleaner-output-wave::before {
+    content: "";
+    position: absolute;
+    inset: 2px 0;
+    border-radius: inherit;
+    background:
+        linear-gradient(90deg,
+            transparent 0 3%,
+            currentColor 3% 4.4%, transparent 4.4% 7.2%,
+            currentColor 7.2% 8.6%, transparent 8.6% 11.4%,
+            currentColor 11.4% 12.8%, transparent 12.8% 15.6%,
+            currentColor 15.6% 17%, transparent 17% 19.8%,
+            currentColor 19.8% 21.2%, transparent 21.2% 24%,
+            currentColor 24% 25.4%, transparent 25.4% 28.2%,
+            currentColor 28.2% 29.6%, transparent 29.6% 32.4%,
+            currentColor 32.4% 33.8%, transparent 33.8% 36.6%,
+            currentColor 36.6% 38%, transparent 38% 40.8%,
+            currentColor 40.8% 42.2%, transparent 42.2% 45%,
+            currentColor 45% 46.4%, transparent 46.4% 49.2%,
+            currentColor 49.2% 50.6%, transparent 50.6% 53.4%,
+            currentColor 53.4% 54.8%, transparent 54.8% 57.6%,
+            currentColor 57.6% 59%, transparent 59% 61.8%,
+            currentColor 61.8% 63.2%, transparent 63.2% 66%,
+            currentColor 66% 67.4%, transparent 67.4% 70.2%,
+            currentColor 70.2% 71.6%, transparent 71.6% 74.4%,
+            currentColor 74.4% 75.8%, transparent 75.8% 78.6%,
+            currentColor 78.6% 80%, transparent 80% 82.8%,
+            currentColor 82.8% 84.2%, transparent 84.2% 87%,
+            currentColor 87% 88.4%, transparent 88.4% 91.2%,
+            currentColor 91.2% 92.6%, transparent 92.6% 95.4%,
+            currentColor 95.4% 96.8%, transparent 96.8% 100%);
+    clip-path: polygon(0 50%, 3% 38%, 4.4% 62%, 7.2% 28%, 8.6% 72%, 11.4% 43%, 12.8% 57%, 15.6% 18%, 17% 82%, 19.8% 36%, 21.2% 64%, 24% 24%, 25.4% 76%, 28.2% 44%, 29.6% 56%, 32.4% 31%, 33.8% 69%, 36.6% 39%, 38% 61%, 40.8% 18%, 42.2% 82%, 45% 35%, 46.4% 65%, 49.2% 25%, 50.6% 75%, 53.4% 41%, 54.8% 59%, 57.6% 29%, 59% 71%, 61.8% 21%, 63.2% 79%, 66% 40%, 67.4% 60%, 70.2% 27%, 71.6% 73%, 74.4% 37%, 75.8% 63%, 78.6% 22%, 80% 78%, 82.8% 43%, 84.2% 57%, 87% 34%, 88.4% 66%, 91.2% 28%, 92.6% 72%, 95.4% 46%, 96.8% 54%, 100% 50%, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 3px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.18));
+}
+
+.audio-cleaner-output-wave::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-0.5px);
+}
+
+.audio-cleaner-wave-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 1;
+    transition: opacity 0.12s ease;
+}
+
+.audio-cleaner-output-wave::before,
+.audio-cleaner-output-wave::after {
+    display: none;
+}
+
+.audio-cleaner-output-wave.playing::before {
+    opacity: 0;
+}
+
+.audio-cleaner-output-wave.music {
+    color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.76);
+}
+
+.audio-cleaner-output-wave.vocal {
+    color: rgba(255,255,255,0.42);
+}
+
+.audio-cleaner-output-actions {
+    display: flex;
+    gap: 5px;
+    flex: 0 0 auto;
+}
+
+.audio-cleaner-output-actions .apple-action-icon-btn {
+    width: 30px;
+    min-width: 30px;
+    min-height: 28px;
+    border-radius: 7px;
+}
+
+.apple-silence-tool {
+    margin-top: 0;
+    padding: 10px;
+    border: 1px solid #151515;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #070707 0%, #030303 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.apple-silence-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+}
+
+.apple-silence-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #8a8a8a;
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.apple-silence-field .apple-settings-input {
+    width: 100%;
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 6px;
+    border-color: #202020;
+    background: #050505;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.apple-silence-tool .apple-silence-action-row {
+    display: block;
+    grid-template-columns: none;
+    gap: 0;
+}
+
+.apple-silence-tool .apple-silence-action-row .apple-action-btn {
+    width: 100%;
+    height: 34px;
+    justify-content: center;
+    text-align: center;
+    border-radius: 6px;
+}
+
+.apple-preset-shell .preset-list-container {
+    max-height: 240px;
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 4px;
+    margin-top: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    display: grid;
+    gap: 6px;
+}
+
+.apple-preset-shell .preset-list-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.apple-preset-shell .preset-list-container::-webkit-scrollbar-track {
+    background: #080808;
+}
+
+.apple-preset-shell .preset-list-container::-webkit-scrollbar-thumb {
+    background: #252525;
+    border-radius: 2px;
+}
+
+.apple-preset-shell .preset-list-container::-webkit-scrollbar-thumb:hover {
+    background: #ff2a2a;
+}
+
+.apple-preset-shell .preset-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 10px;
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 6px;
+    color: #d8d8d8;
+    font-size: 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    min-height: 36px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.apple-preset-shell .preset-card:hover {
+    background: #181818;
+    color: #fff;
+    border-color: #ff2a2a;
+    box-shadow: 0 0 10px rgba(255, 42, 42, 0.15);
+}
+
+.apple-preset-shell .preset-card:active {
+    transform: scale(0.97);
+}
+
+.apple-preset-shell .preset-empty {
+    border: 0;
+    background: transparent;
+    color: #555;
+    font-size: 7px;
+    padding: 10px 2px;
+}
+
+.apple-preset-shell .preset-search-shell {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.apple-preset-shell .preset-search-input {
+    width: 100%;
+    height: 26px;
+    font-size: 8px;
+    border-color: #161616;
+    background: #050505;
+    border-radius: 3px;
+}
+
+.apple-preset-shell .preset-search-input:focus {
+    border-color: #e60000;
+    box-shadow: 0 0 10px rgba(230, 0, 0, 0.15);
+}
+
+.apple-preset-shell .btn-primary {
+    min-height: 28px;
+}
+
+.apple-preset-shell .apple-section-head {
+    user-select: none;
+}
+
+.apple-preset-tab-bar {
+    display: flex;
+    gap: 0;
+    margin: 4px 0 0;
+    padding: 0 2px;
+    border: 0;
+    border-bottom: 1px solid #141414;
+    border-radius: 0;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+.apple-preset-tab-btn {
+    flex: 1;
+    min-height: 26px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: #666;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.55px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.14s ease, border-color 0.14s ease;
+}
+
+.apple-preset-tab-btn:hover {
+    color: #bdbdbd;
+}
+
+.apple-preset-tab-btn.active {
+    color: #f0f0f0 !important;
+    border-bottom-color: #ff2a2a !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.apple-preset-toolbar {
+    padding: 6px 0 4px;
+    flex-shrink: 0;
+}
+
+.apple-preset-shell .apple-preset-toolbar .preset-search-shell {
+    display: block;
+    margin: 0;
+}
+
+.apple-preset-shell .apple-preset-toolbar .preset-search-shell.active {
+    display: block;
+}
+
+.apple-preset-body {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+    min-height: 0;
+    min-height: 226px;
+    max-height: 244px;
+    max-height: min(244px, 58vh);
+    border: 1px solid #121212;
+    border-radius: 4px;
+    background: #050505;
+    padding: 0;
+    overflow: hidden;
+}
+
+.apple-preset-sidebar-wrap {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    min-height: 226px;
+    max-height: 244px;
+    max-height: min(244px, 58vh);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #121212;
+    overflow: hidden;
+}
+
+.apple-preset-shell .apple-preset-sidebar {
+    flex: 1;
+    min-height: 0;
+    max-height: 244px;
+    max-height: min(244px, 58vh);
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px 4px 6px 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #252525 #080808;
+}
+
+.apple-preset-shell .apple-preset-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.apple-preset-shell .apple-preset-sidebar::-webkit-scrollbar-track {
+    background: #080808;
+}
+
+.apple-preset-shell .apple-preset-sidebar::-webkit-scrollbar-thumb {
+    background: #252525;
+    border-radius: 2px;
+}
+
+.apple-preset-shell .apple-preset-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #ff2a2a;
+}
+
+.apple-preset-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.apple-preset-group + .apple-preset-group {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.apple-preset-group-head {
+    position: relative;
+    padding: 8px 0 3px 11px;
+    margin: 0;
+    color: #e8e8e8;
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: 0.75px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.apple-preset-group:first-child .apple-preset-group-head {
+    padding-top: 2px;
+}
+
+.apple-preset-group-head::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 8px;
+    bottom: 3px;
+    width: 2px;
+    border-radius: 1px;
+    background: #ff2a2a;
+    box-shadow: 0 0 4px rgba(255, 42, 42, 0.22);
+}
+
+.apple-preset-group:first-child .apple-preset-group-head::before {
+    top: 2px;
+}
+
+.apple-preset-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 0 2px 10px;
+}
+
+.apple-preset-flat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 2px 2px 4px 4px;
+    min-height: 0;
+}
+
+.apple-preset-row-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.apple-preset-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    min-height: 26px;
+    padding: 0 1px 0 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: #b0b0b0;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.apple-preset-row:hover,
+.apple-preset-row.is-previewing {
+    background: rgba(255, 255, 255, 0.035);
+    color: #efefef;
+    box-shadow: none;
+}
+
+.apple-preset-row.is-previewing {
+    box-shadow: inset 2px 0 0 #ff2a2a;
+}
+
+.apple-preset-row:active {
+    background: rgba(255, 42, 42, 0.08);
+}
+
+.apple-preset-row-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.apple-preset-row-label {
+    font-size: 7.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    letter-spacing: 0.15px;
+}
+
+.apple-preset-row-chip {
+    align-self: flex-start;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #1e1e1e;
+    background: #0a0a0a;
+    color: #777;
+    font-size: 5.5px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+}
+
+.apple-preset-row-gear {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: #5a5a5a;
+    opacity: 0.82;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.1s ease, opacity 0.1s ease, background 0.1s ease;
+}
+
+.apple-preset-row-gear svg {
+    width: 10px;
+    height: 10px;
+    display: block;
+}
+
+.apple-preset-row:hover .apple-preset-row-gear,
+.apple-preset-row.is-previewing .apple-preset-row-gear,
+.apple-preset-row-gear:focus-visible {
+    opacity: 1;
+    color: #ff4d4d;
+    background: rgba(255, 42, 42, 0.1);
+}
+
+.apple-preset-row-gear-end {
+    margin-left: auto;
+}
+
+.apple-preset-variant-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    margin-left: auto;
+    border: 1px solid #1a1a1a;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.apple-preset-variant-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    padding-left: 2px;
+}
+
+.apple-preset-variant-btn {
+    min-height: 16px;
+    padding: 1px 5px;
+    border: 1px solid #1a1a1a;
+    border-radius: 3px;
+    background: #080808;
+    color: #666;
+    font-size: 5.5px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.apple-preset-variant-toggle {
+    min-width: 24px;
+    line-height: 1;
+    border: 0;
+    border-radius: 0;
+    border-right: 1px solid #1a1a1a;
+}
+
+.apple-preset-variant-toggle:last-child {
+    border-right: 0;
+}
+
+.apple-preset-variant-btn:hover {
+    color: #bdbdbd;
+    border-color: #262626;
+    background: #0e0e0e;
+}
+
+.apple-preset-variant-btn.active {
+    border-color: #3a3a3a;
+    color: #f0f0f0;
+    background: #141414;
+    box-shadow: inset 0 -1px 0 #ff2a2a;
+}
+
+.apple-preset-body .apple-sticky-preview,
+.apple-preset-body .apple-preset-preview-panel {
+    position: relative;
+    width: 126px;
+    min-width: 126px;
+    max-width: 126px;
+    height: 224px;
+    min-height: 224px;
+    max-height: 224px;
+    aspect-ratio: 9 / 16;
+    margin: 4px 0 0;
+    flex-shrink: 0;
+    align-self: flex-start;
+    background: #070707;
+    border: 0;
+    border-radius: 0;
+    box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.apple-preview-lock-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 3;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #666;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: color 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+}
+
+.apple-preview-lock-btn svg {
+    width: 8px;
+    height: 8px;
+    display: block;
+}
+
+.apple-preview-lock-btn:hover,
+.apple-preview-lock-btn.active {
+    color: #ff4d4d;
+    background: rgba(255, 42, 42, 0.14);
+    opacity: 1;
+}
+
+.apple-preset-shell #applePreviewVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center center;
+    background: #000;
+    border-radius: 0;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.apple-preset-shell .apple-preview-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 5px;
+    height: 100%;
+    color: #555555;
+    text-align: center;
+}
+
+.apple-preset-shell .apple-preview-placeholder .preview-title {
+    color: #525252;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.35px;
+    line-height: 1;
+    text-transform: none;
+}
+
+.apple-preset-shell .apple-preview-placeholder .preview-hint {
+    color: #3d3d3d;
+    font-size: 5px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0;
+    max-width: 92px;
+}
+
+.apple-preset-shell .apple-preset-preview-panel.is-live {
+    border-color: #2a2a2a;
+    box-shadow: inset 0 0 0 1px rgba(255, 42, 42, 0.12);
+}
+
+.apple-preset-shell .apple-preset-preview-panel.is-locked {
+    box-shadow: inset 0 0 0 1px rgba(255, 42, 42, 0.22);
+}
+
+.apple-preset-settings-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.74);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0.2s step-end;
+    border-radius: 10px;
+}
+
+.apple-preset-settings-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.2s ease, visibility 0s;
+}
+
+.apple-preset-settings-card {
+    width: 100%;
+    border: 1px solid #202020;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #111 0%, #080808 100%);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+.apple-preset-settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 10px;
+    border-bottom: 1px solid #171717;
+}
+
+.apple-preset-settings-title {
+    margin: 0;
+    color: #fff;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+.apple-preset-settings-close {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #252525;
+    border-radius: 6px;
+    background: #101010;
+    color: #d8d8d8;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.apple-preset-settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+}
+
+.apple-preset-settings-copy {
+    margin: 0;
+    color: #8a8a8a;
+    font-size: 8px;
+    line-height: 1.45;
+}
+
+.apple-preset-settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.apple-preset-settings-label {
+    color: #9a9a9a;
+    font-size: 7px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.apple-preset-settings-variant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.apple-preset-settings-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 0 10px 10px;
+}
+
+.apple-preset-settings-actions .btn-primary {
+    min-height: 28px;
+}
+
+@media (max-width: 340px) {
+    .apple-preset-tab-bar {
+        flex-wrap: wrap;
+    }
+
+    .apple-preset-tab-btn {
+        flex: 1 1 54px;
+        min-width: 0;
+        padding: 4px 2px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .apple-preset-body {
+        min-height: 200px;
+        max-height: 218px;
+        max-height: min(218px, 54vh);
+    }
+
+    .apple-preset-sidebar-wrap,
+    .apple-preset-shell .apple-preset-sidebar {
+        min-height: 200px;
+        max-height: 218px;
+        max-height: min(218px, 54vh);
+    }
+
+    .apple-preset-body .apple-sticky-preview,
+    .apple-preset-body .apple-preset-preview-panel {
+        width: 112px;
+        min-width: 112px;
+        max-width: 112px;
+        height: 199px;
+        min-height: 199px;
+        max-height: 199px;
+    }
+
+    .apple-preset-shell .apple-preview-placeholder .preview-hint {
+        display: none;
+    }
+}
+
+@media (max-width: 280px) {
+    .apple-preset-body {
+        flex-direction: column;
+        min-height: 0;
+        max-height: none;
+    }
+
+    .apple-preset-sidebar-wrap {
+        width: 100%;
+        min-height: 0;
+        border-right: 0;
+        border-bottom: 1px solid #121212;
+    }
+
+    .apple-preset-body .apple-sticky-preview,
+    .apple-preset-body .apple-preset-preview-panel {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        min-height: 52px;
+        height: 52px;
+        max-height: 52px;
+    }
+
+    .apple-preset-shell .apple-preset-sidebar {
+        min-height: 0;
+        max-height: 120px;
+    }
+
+    .apple-preset-row {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 3px 1px 3px 0;
+    }
+
+    .apple-preset-variant-inline,
+    .apple-preset-row-gear-end {
+        margin-left: 0;
+    }
+
+    .apple-preset-variant-inline {
+        width: 100%;
+    }
+
+    .apple-preset-variant-toggle {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .apple-preset-settings-actions,
+    .apple-preset-settings-variant-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Final theme sync: keep Apple preset reds tied to Settings accent */
+.apple-preset-shell .apple-section-head:focus-visible,
+.apple-liquid-shell .apple-section-head:focus-visible,
+.apple-silence-shell .apple-section-head:focus-visible {
+    box-shadow: inset 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.45);
+}
+
+.apple-preset-shell .preset-list-container::-webkit-scrollbar-thumb:hover,
+.apple-preset-shell .apple-preset-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--kwv-accent, #ff0000);
+}
+
+.apple-preset-shell .preset-card:hover,
+.apple-preset-shell .preset-search-input:focus {
+    border-color: var(--kwv-accent, #ff0000);
+    box-shadow: 0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.15);
+}
+
+.apple-preset-tab-btn.active {
+    border-bottom-color: var(--kwv-accent, #ff0000) !important;
+}
+
+.apple-preset-group-head::before {
+    background: var(--kwv-accent, #ff0000);
+    box-shadow: 0 0 4px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.22);
+}
+
+.apple-preset-row.is-previewing {
+    box-shadow: inset 2px 0 0 var(--kwv-accent, #ff0000);
+}
+
+.apple-preset-row:active {
+    background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08);
+}
+
+.apple-preset-row:hover .apple-preset-row-gear,
+.apple-preset-row.is-previewing .apple-preset-row-gear,
+.apple-preset-row-gear:focus-visible {
+    color: var(--kwv-accent, #ff0000);
+    background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.10);
+}
+
+.apple-preset-variant-btn.active {
+    box-shadow: inset 0 -1px 0 var(--kwv-accent, #ff0000);
+}
+
+.apple-preset-settings-close:hover {
+    color: var(--kwv-accent, #ff0000);
+    background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.14);
+}
+
+.apple-preset-settings-card {
+    box-shadow: inset 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.12), 0 22px 44px rgba(0, 0, 0, 0.52);
+}
+
+.apple-preset-settings-card:hover {
+    box-shadow: inset 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.22), 0 22px 44px rgba(0, 0, 0, 0.52);
+}

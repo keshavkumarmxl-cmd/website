@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keshav With Velo - Real Extension Preview</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="motion-bg" aria-hidden="true">
+        <div class="motion-grid"></div>
+        <div class="motion-aurora aurora-one"></div>
+        <div class="motion-aurora aurora-two"></div>
+        <div class="motion-aurora aurora-three"></div>
+        <div class="motion-beams">
+            <span></span><span></span><span></span>
+        </div>
+        <div class="motion-lines">
+            <span></span><span></span><span></span><span></span>
+        </div>
+    </div>
+    <div class="scroll-orbit" aria-hidden="true">
+        <div class="scroll-track"><span id="scrollDot"></span></div>
+        <p id="scrollPercent">0%</p>
+    </div>
+    <div class="cursor-echo" id="cursorEcho" aria-hidden="true"></div>
+    <header class="site-header">
+        <a class="brand" href="#top">
+            <span class="brand-mark"><img src="assets/profile.png" alt="Keshav Editz"></span>
+            <span>Keshav With Velo</span>
+        </a>
+        <nav>
+            <a href="#preview">Extension</a>
+            <a href="#workflow">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#support">Support</a>
+        </nav>
+        <button class="song-toggle" id="songToggle" type="button" aria-label="Play or pause Keshav song">Play Song</button>
+        <button class="buy-btn" data-open-payment="India Launch">Buy Extension</button>
+    </header>
+
+    <audio id="keshavSong" src="Keshav%20song.mp3" preload="auto" autoplay loop></audio>
+
+    <main id="top">
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">After Effects creator cockpit</p>
+                <h1>Keshav With Velo</h1>
+                <p>Keshav With Velo 300x Workflow Edition turns repetitive After Effects work into fast panel actions. Captions, overlays, SFX, text tools, browser research, project saving, BG remove, audio cleanup and preset packs sit in one focused command center. <span class="hero-highlight">No more hunting through menus when the edit is moving fast.</span></p>
+                <div class="hero-actions">
+                    <button class="primary-btn" data-scroll="#preview">Check Extension</button>
+                    <button class="ghost-btn" data-scroll="#workflow">See Full Pack</button>
+                </div>
+                <div class="speed-strip">
+                    <span>300x workflow feel</span>
+                    <span>Less menu hunting</span>
+                    <span>More editing speed</span>
+                </div>
+            </div>
+            <aside class="hero-stage" aria-label="Keshav With Velo animated product summary">
+                <div class="stage-orbit" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <div class="hero-console">
+                    <div class="console-topline">
+                        <span class="live-dot"></span>
+                        <span>Internal preview build</span>
+                    </div>
+                    <div class="console-brand">
+                        <img src="assets/profile.png" alt="Keshav Editz">
+                        <div>
+                            <strong>Keshav With Velo</strong>
+                            <p>Workflow Edition</p>
+                        </div>
+                    </div>
+                    <div class="console-grid">
+                        <div><span data-count-to="80">0</span><p>Preset actions</p></div>
+                        <div><span data-count-to="100">0</span><p>Overlays</p></div>
+                        <div><span data-count-to="100">0</span><p>SFX assets</p></div>
+                        <div><span>1 panel</span><p>Creator hub</p></div>
+                    </div>
+                    <div class="console-command">
+                        <span>Ready for demo</span>
+                        <strong>AE speed tools, captions, AEP import, Text Exploder</strong>
+                    </div>
+                </div>
+                <div class="stage-chip-row" aria-label="Featured tools">
+                    <span>Auto Caption</span>
+                    <span>Text Exploder</span>
+                    <span>AEP Import</span>
+                </div>
+            </aside>
+        </section>
+
+        <section class="kinetic-marquee" aria-label="Included tools ticker">
+            <div class="marquee-track">
+                <span>Auto Captions</span>
+                <span>Text Exploder</span>
+                <span>Higher Version AEP Import</span>
+                <span>100+ SFX</span>
+                <span>100+ Overlays</span>
+                <span>BG Remove</span>
+                <span>Noise Remover</span>
+                <span>Vocal Remover</span>
+                <span>Comp Saver</span>
+                <span>Preset Packs</span>
+                <span>Auto Captions</span>
+                <span>Text Exploder</span>
+                <span>Higher Version AEP Import</span>
+                <span>100+ SFX</span>
+                <span>100+ Overlays</span>
+                <span>BG Remove</span>
+                <span>Noise Remover</span>
+                <span>Vocal Remover</span>
+                <span>Comp Saver</span>
+                <span>Preset Packs</span>
+            </div>
+        </section>
+
+        <section class="proof-strip" aria-label="Workflow proof points">
+            <article>
+                <span>01</span>
+                <strong>Edit faster</strong>
+                <p>Common AE actions are grouped as one-click buttons.</p>
+            </article>
+            <article>
+                <span>02</span>
+                <strong>Create inside panel</strong>
+                <p>Captions, text, solids, colors, browser and tools stay together.</p>
+            </article>
+            <article>
+                <span>03</span>
+                <strong>Reuse everything</strong>
+                <p>Comps, presets, packs and project setups are ready to repeat.</p>
+            </article>
+        </section>
+
+        <section class="extension-section" id="preview">
+            <div class="section-head">
+                <div>
+                    <p class="eyebrow">Live product</p>
+                    <h2>Extension Panel</h2>
+                </div>
+                <div class="frame-actions">
+                    <button id="fitBtn">Fit</button>
+                    <button id="wideBtn">Wide</button>
+                    <button id="tallBtn">Tall</button>
+                </div>
+            </div>
+
+            <div class="extension-frame-shell" id="frameShell">
+                <iframe
+                    class="real-extension-frame"
+                    id="extensionFrame"
+                    src="extension/index.html"
+                    title="Keshav With Velo real extension preview">
+                </iframe>
+            </div>
+        </section>
+
+        <section class="workflow-lane" aria-label="Keshav With Velo workflow stages">
+            <div class="section-head">
+                <div>
+                    <p class="eyebrow">Built around real edit pressure</p>
+                    <h2>From rough cut to final punch</h2>
+                </div>
+                <p class="section-copy">The website preview is open so reviewers can test the panel flow without activation. The paid extension keeps the full protected build for actual users.</p>
+            </div>
+            <div class="lane-grid">
+                <article>
+                    <span>Import</span>
+                    <h3>Bring assets in cleanly</h3>
+                    <p>Higher-version AEP support, project saver, MP4 to MP3 and creator browser reduce setup friction.</p>
+                </article>
+                <article>
+                    <span>Build</span>
+                    <h3>Make edits quickly</h3>
+                    <p>Alignment, anchors, layer creation, text exploder, gradients, solids and reusable comp actions stay nearby.</p>
+                </article>
+                <article>
+                    <span>Polish</span>
+                    <h3>Add creator finish</h3>
+                    <p>Captions, overlays, SFX, CC looks, shakes, BG removal, noise removal and vocal removal complete the edit.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="command-wall" aria-label="Moving command wall">
+            <div class="command-copy">
+                <p class="eyebrow">Looks like a tool, feels like speed</p>
+                <h2>One panel that keeps the editor in flow</h2>
+                <p>Internal demo me sabse important cheez clarity hoti hai. Is page ka motion product ke benefit ko show karta hai: fewer clicks, faster decisions, and a panel that feels alive while still showing the real extension.</p>
+            </div>
+            <div class="command-stack" aria-hidden="true">
+                <div class="command-card"><span>01</span><strong>Caption</strong><p>Hinglish + multilingual modes</p></div>
+                <div class="command-card"><span>02</span><strong>Explode</strong><p>Fast text breakup workflows</p></div>
+                <div class="command-card"><span>03</span><strong>Import</strong><p>Higher-version AEP support</p></div>
+                <div class="command-card"><span>04</span><strong>Polish</strong><p>Overlays, SFX, CC, shakes</p></div>
+            </div>
+        </section>
+
+        <section class="panel-showcase" id="workflow">
+            <div class="orbit-head">
+                <p class="eyebrow">Everything included</p>
+                <h2>Full creator workflow pack</h2>
+                <p>Some tools may not appear in the website preview, but after purchase the extension ZIP includes all listed features, presets, overlays, SFX, and workflow packs.</p>
+            </div>
+
+            <div class="feature-orbit" aria-label="Included extension features orbit">
+                <div class="orbit-rings" aria-hidden="true"></div>
+
+                <div class="orbit-center" aria-label="Extension preview in center">
+                    <p class="eyebrow">Extension preview</p>
+                    <div class="floating-panel-shell">
+                        <iframe
+                            class="real-extension-frame"
+                            src="extension/index.html"
+                            title="Keshav With Velo moving extension preview">
+                        </iframe>
+                    </div>
+                </div>
+
+                <article class="orbit-card" style="--i:0">
+                    <span>Chrome + YouTube</span>
+                    <p>Browser tools for search, references and faster creator research.</p>
+                </article>
+                <article class="orbit-card" style="--i:1">
+                    <span>Auto Caption</span>
+                    <p>Special Hinglish support plus 10+ more language modes.</p>
+                </article>
+                <article class="orbit-card" style="--i:2">
+                    <span>Noise Remover</span>
+                    <p>Clean rough audio files before editing and exporting.</p>
+                </article>
+                <article class="orbit-card" style="--i:3">
+                    <span>Vocal Remover</span>
+                    <p>Separate vocals for cleaner reels, music edits and remixes.</p>
+                </article>
+                <article class="orbit-card" style="--i:4">
+                    <span>Auto Clip Cut</span>
+                    <p>Silence parts auto cut feature for faster talking-head edits.</p>
+                </article>
+                <article class="orbit-card" style="--i:5">
+                    <span>MP4 to MP3</span>
+                    <p>Convert creator files into MP3 directly from the workflow.</p>
+                </article>
+                <article class="orbit-card" style="--i:6">
+                    <span>Preset Packs</span>
+                    <p>20 text, 20 effects, 20 shakes and 20 CC presets included.</p>
+                </article>
+                <article class="orbit-card" style="--i:7">
+                    <span>Influencer CC</span>
+                    <p>Flow edits, car edits, CC looks and shake style presets.</p>
+                </article>
+                <article class="orbit-card" style="--i:8">
+                    <span>100+ Overlays</span>
+                    <p>Ready overlay pack for reels, edits, memes and motion graphics.</p>
+                </article>
+                <article class="orbit-card" style="--i:9">
+                    <span>100+ SFX</span>
+                    <p>Sound effects included for punchy cuts and transitions.</p>
+                </article>
+                <article class="orbit-card" style="--i:10">
+                    <span>Comp Saver</span>
+                    <p>Save and reuse repeated composition workflows.</p>
+                </article>
+                <article class="orbit-card" style="--i:11">
+                    <span>AE Project Saver</span>
+                    <p>Keep useful project setups ready for future edits.</p>
+                </article>
+                <article class="orbit-card" style="--i:12">
+                    <span>Effects Toggle</span>
+                    <p>Disable and enable effects quickly when previewing heavy comps.</p>
+                </article>
+                <article class="orbit-card" style="--i:13">
+                    <span>Notepad + BG Remove</span>
+                    <p>Notes and background removal tools inside the creator panel.</p>
+                </article>
+                <article class="orbit-card" style="--i:14">
+                    <span>Text Exploder + AEP Import</span>
+                    <p>Text exploder plus higher-version AEP support, so no more project file conversion hassle.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="pricing" id="pricing">
+            <div class="section-head">
+                <div>
+                    <p class="eyebrow">Checkout ready</p>
+                    <h2>Pricing</h2>
+                </div>
+            </div>
+            <div class="price-grid">
+                <article>
+                    <p class="plan">India Launch</p>
+                    <h3>Rs 99</h3>
+                    <p>Full Keshav With Velo extension access for Indian editors.</p>
+                    <button class="pricing-buy" data-open-payment="India Launch"><span>Buy for Rs 99</span><i aria-hidden="true"></i></button>
+                </article>
+                <article>
+                    <p class="plan">International</p>
+                    <h3>$1</h3>
+                    <p>Simple global pricing for editors outside India.</p>
+                    <button class="pricing-buy" data-open-payment="International"><span>Buy for $1</span><i aria-hidden="true"></i></button>
+                </article>
+            </div>
+        </section>
+
+        <section class="support-section" id="support">
+            <div>
+                <p class="eyebrow">Contact support</p>
+                <h2>Need help after purchase?</h2>
+                <p>For license, download, installation, or extension support, contact us directly by email.</p>
+            </div>
+            <div class="support-actions">
+                <a class="support-mail" href="mailto:keshavv.aep@gmail.com">keshavv.aep@gmail.com</a>
+                <a class="support-discord" href="https://discord.gg/Yx5VaqPtFq" target="_blank" rel="noopener">Join Discord</a>
+                <a class="support-telegram" href="https://t.me/keshavwithvelochat" target="_blank" rel="noopener">Chat Zone</a>
+                <a class="support-telegram" href="https://t.me/Keshavwithvelo" target="_blank" rel="noopener">Material Channel</a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <span>Keshav With Velo</span>
+        <button data-scroll="#top">Back to top</button>
+    </footer>
+
+    <div class="modal" id="paymentModal" aria-hidden="true">
+        <div class="modal-card">
+            <button class="modal-close" id="modalClose" aria-label="Close"><span>x</span></button>
+            <div class="checkout-shell">
+                <aside class="checkout-summary">
+                    <p class="eyebrow">Secure checkout</p>
+                    <h2 id="modalTitle">India Launch checkout</h2>
+                    <div class="checkout-product">
+                        <img src="assets/profile.png" alt="Keshav With Velo">
+                        <div>
+                            <strong>Keshav With Velo</strong>
+                            <span>300x Workflow Edition</span>
+                        </div>
+                    </div>
+                    <div class="checkout-price">
+                        <span id="checkoutPlanLabel">India Launch</span>
+                        <strong id="checkoutPriceLabel">Rs 99</strong>
+                        <p>Instant license delivery after payment confirmation.</p>
+                    </div>
+                    <ul class="checkout-includes">
+                        <li>Full ZIP</li>
+                        <li>License email</li>
+                        <li>All packs</li>
+                        <li>Support</li>
+                    </ul>
+                    <div class="checkout-security">
+                        <span>Protected delivery</span>
+                        <span>No subscription</span>
+                        <span>Creator support</span>
+                    </div>
+                </aside>
+
+                <form class="checkout-action" id="checkoutForm">
+                    <button class="primary-btn checkout-submit" type="submit">
+                        <span id="checkoutButtonText">Checkout</span>
+                        <span class="checkout-arrow" aria-hidden="true"></span>
+                    </button>
+                    <p class="checkout-note" id="checkoutStatus">Razorpay gateway will open after checkout.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

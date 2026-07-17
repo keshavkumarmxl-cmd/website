@@ -1,0 +1,37 @@
+import dotenv from "dotenv";
+
+dotenv.config();
+
+export const config = {
+  nodeEnv: process.env.NODE_ENV || "development",
+  port: Number(process.env.PORT || 4000),
+  publicBaseUrl: process.env.PUBLIC_BASE_URL || "http://localhost:4000",
+  frontendOrigin: process.env.FRONTEND_ORIGIN || "http://localhost:8080",
+  databasePath: process.env.DATABASE_PATH || "./data/licensing.sqlite",
+  jwtSecret: process.env.JWT_SECRET || "dev-only-change-me",
+  licenseHashSecret: process.env.LICENSE_HASH_SECRET || "dev-only-license-secret",
+  adminEmail: process.env.ADMIN_EMAIL || "admin@example.com",
+  adminPassword: process.env.ADMIN_PASSWORD || "change-this-admin-password",
+  downloadApiKey: process.env.DOWNLOAD_API_KEY || "dev-download-api-key",
+  productId: process.env.EXTENSION_PRODUCT_ID || "keshav-with-velo",
+  extensionZipPath: process.env.EXTENSION_ZIP_PATH || "./storage/extensions/keshav-with-velo.zip",
+  licenseExpiryDays: Number(process.env.LICENSE_EXPIRY_DAYS || 365),
+  maxFailedActivationsPerHour: Number(process.env.MAX_FAILED_ACTIVATIONS_PER_HOUR || 8),
+  smtp: {
+    host: process.env.SMTP_HOST || "",
+    port: Number(process.env.SMTP_PORT || 587),
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+    from: process.env.SMTP_FROM || "Keshav With Velo <no-reply@example.com>"
+  },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || "",
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+    priceId: process.env.STRIPE_PRICE_ID || ""
+  },
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || "",
+    keySecret: process.env.RAZORPAY_KEY_SECRET || "",
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || ""
+  }
+};
