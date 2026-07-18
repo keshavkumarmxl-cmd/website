@@ -189,7 +189,7 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
   }
 });
 
-publicRoutes.post("/activate", validate(activateSchema), (req, res) => {
+function handleActivate(req, res) {
   const { email, licenseKey, deviceFingerprint } = req.body;
   const normalizedKey = normalizeLicenseKey(licenseKey);
   const licenseHash = hashLicenseKey(normalizedKey);
@@ -263,9 +263,12 @@ publicRoutes.post("/activate", validate(activateSchema), (req, res) => {
   tx();
   logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Activated" });
   return res.json({ status: "success", message: "License activated" });
-});
+}
 
-publicRoutes.post("/verify-license", validate(verifyLicenseSchema), (req, res) => {
+publicRoutes.post("/activate", validate(activateSchema), handleActivate);
+publicRoutes.post("/licenses/activate", validate(activateSchema), handleActivate);
+
+function handleVerifyLicense(req, res) {
   if (isMasterLicenseKey(req.body.licenseKey)) {
     return res.json({
       status: "valid",
@@ -300,7 +303,10 @@ publicRoutes.post("/verify-license", validate(verifyLicenseSchema), (req, res) =
     licenseType: license.license_type,
     expiryDate: license.expiry_date
   });
-});
+}
+
+publicRoutes.post("/verify-license", validate(verifyLicenseSchema), handleVerifyLicense);
+publicRoutes.post("/licenses/verify", validate(verifyLicenseSchema), handleVerifyLicense);
 
 publicRoutes.post("/download", validate(downloadSchema), (req, res) => {
   if (isMasterLicense({ email: req.body.email, licenseKey: req.body.licenseKey })) {
