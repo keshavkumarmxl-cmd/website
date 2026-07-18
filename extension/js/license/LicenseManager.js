@@ -141,7 +141,7 @@
         var current = this.storage.read();
         if (current) this.state = Object.assign(this.state, current);
 
-        if (!this.state.sessionToken || !this.state.deviceId) {
+        if (!this.state.licenseKey || !this.state.deviceId) {
             this.state.active = false;
             this.state.message = "Activation required.";
             if (!options.silent) this.save(); else this.emit();
@@ -200,7 +200,7 @@
         var graceUntil = lastVerification ? lastVerification + this.options.offlineGraceMs : 0;
         var tokenResult = this.api.verifyOfflineToken(this.state.offlineToken);
         var tokenAllows = tokenResult.valid && tokenResult.payload && tokenResult.payload.deviceId === this.state.deviceId;
-        return Date.now() < Math.max(offlineUntil || 0, graceUntil || 0) && tokenAllows;
+        return Date.now() < Math.max(offlineUntil || 0, graceUntil || 0) && (tokenAllows || !this.state.offlineToken);
     };
 
     LicenseManager.prototype.startBackgroundVerification = function () {
