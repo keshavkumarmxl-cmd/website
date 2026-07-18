@@ -1754,6 +1754,36 @@ h2 {
     margin-bottom: 28px;
 }
 
+.terms-panel {
+    margin-top: 22px;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(31,199,255,0.12), transparent 16rem),
+        linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022));
+    text-align: left;
+}
+
+.terms-panel h3 {
+    margin: 4px 0 14px;
+    font-size: clamp(24px, 3vw, 38px);
+    text-transform: uppercase;
+}
+
+.terms-panel ul {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.terms-panel li::marker {
+    color: var(--red);
+}
+
 .contact {
     display: flex;
     align-items: center;
@@ -2284,6 +2314,29 @@ footer button {
 .checkout-field input:focus {
     border-color: var(--cyan);
     box-shadow: 0 0 0 3px rgba(31,199,255,0.14);
+}
+
+.checkout-terms {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 10px;
+    align-items: start;
+    margin: 2px 0 2px;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.035);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.45;
+}
+
+.checkout-terms input {
+    width: 16px;
+    height: 16px;
+    margin: 1px 0 0;
+    accent-color: var(--red);
 }
 
 .checkout-submit::before {

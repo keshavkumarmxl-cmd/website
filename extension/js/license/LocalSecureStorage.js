@@ -92,7 +92,6 @@
     function write(payload) {
         removePlaintextLegacyKeys();
         var safePayload = Object.assign({}, payload || {});
-        delete safePayload.licenseKey;
         delete safePayload.activationKey;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(encryptJson(safePayload)));
     }

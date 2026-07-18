@@ -106,6 +106,7 @@
             self.state = {
                 active: true,
                 email: email,
+                licenseKey: licenseKey,
                 licenseKeyHash: payload.licenseKeyHash,
                 deviceId: device.deviceId,
                 sessionToken: response.sessionToken,
@@ -157,6 +158,7 @@
 
         var payload = {
             email: this.state.email,
+            licenseKey: this.state.licenseKey,
             licenseKeyHash: this.state.licenseKeyHash,
             deviceId: device.deviceId,
             fingerprintVersion: device.fingerprintVersion,

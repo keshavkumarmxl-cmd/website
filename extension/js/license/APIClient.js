@@ -55,9 +55,9 @@
                 throw err;
             }
             if (!response.ok) {
-                var err = new Error(payload.message || ("HTTP " + response.status));
+                var err = new Error(payload.message || payload.reason || ("HTTP " + response.status));
                 err.status = response.status;
-                err.code = payload.code || "HTTP_ERROR";
+                err.code = payload.code || (response.status === 409 ? "DEVICE_ALREADY_BOUND" : "HTTP_ERROR");
                 err.payload = payload;
                 throw err;
             }
@@ -104,11 +104,37 @@
     };
 
     APIClient.prototype.activate = function (payload) {
-        return this.request("POST", "/licenses/activate", payload, null);
+        return this.request("POST", "/activate", {
+            email: payload.email,
+            licenseKey: payload.licenseKey,
+            deviceFingerprint: payload.deviceId
+        }, null).then(function (response) {
+            return {
+                active: response && response.status === "success",
+                licenseStatus: "active",
+                subscriptionStatus: "active",
+                activationDate: new Date().toISOString(),
+                lastVerificationAt: new Date().toISOString(),
+                offlineUntil: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+                message: response && response.message
+            };
+        });
     };
 
     APIClient.prototype.verify = function (payload, auth) {
-        return this.request("POST", "/licenses/verify", payload, auth);
+        return this.request("POST", "/verify-license", {
+            licenseKey: payload.licenseKey,
+            deviceFingerprint: payload.deviceId
+        }, auth).then(function (response) {
+            return {
+                active: response && response.status === "valid",
+                licenseStatus: response && response.status === "valid" ? "active" : response.status,
+                subscriptionStatus: "active",
+                expiresAt: response && response.expiryDate,
+                lastVerificationAt: new Date().toISOString(),
+                offlineUntil: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+            };
+        });
     };
 
     APIClient.prototype.deactivateLocal = function (payload, auth) {

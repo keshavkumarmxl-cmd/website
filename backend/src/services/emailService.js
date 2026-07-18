@@ -34,6 +34,11 @@ Activation:
 4. Activate on your main editing device.
 
 Important: one license is bound to one device unless reset by admin.
+
+Terms:
+- This is a digital product. No refund is available after successful payment.
+- One license key activates on one PC only.
+- Do not share, resell, leak, modify, or redistribute the extension or included assets.
 `;
 
   const html = `
@@ -51,6 +56,12 @@ Important: one license is bound to one device unless reset by admin.
         <li>Activate on your main editing device.</li>
       </ol>
       <p>Important: one license is bound to one device unless reset by admin.</p>
+      <h3>Terms</h3>
+      <ul>
+        <li>This is a digital product. No refund is available after successful payment.</li>
+        <li>One license key activates on one PC only.</li>
+        <li>Do not share, resell, leak, modify, or redistribute the extension or included assets.</li>
+      </ul>
     </div>
   `;
 

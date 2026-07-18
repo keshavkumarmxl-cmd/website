@@ -294,15 +294,28 @@
                 <article>
                     <p class="plan">India Launch</p>
                     <h3>Rs 99</h3>
-                    <p>Full Keshav With Velo extension access for Indian editors.</p>
+                    <p>Full Keshav With Velo extension access for Indian editors. One license activates on one PC only.</p>
                     <button class="pricing-buy" data-open-payment="India Launch"><span>Buy for Rs 99</span><i aria-hidden="true"></i></button>
                 </article>
                 <article>
                     <p class="plan">International</p>
                     <h3>$1</h3>
-                    <p>Simple global pricing for editors outside India.</p>
+                    <p>Simple global pricing for editors outside India. One license activates on one PC only.</p>
                     <button class="pricing-buy" data-open-payment="International"><span>Buy for $1</span><i aria-hidden="true"></i></button>
                 </article>
+            </div>
+            <div class="terms-panel" id="terms">
+                <div>
+                    <p class="eyebrow">Terms and conditions</p>
+                    <h3>Digital product policy</h3>
+                </div>
+                <ul>
+                    <li>All sales are final. No refund is available after successful payment because the extension ZIP and license key are delivered digitally.</li>
+                    <li>Each license key is for one user and one PC only. After activation, the key is permanently bound to the first activated device.</li>
+                    <li>The same key cannot be activated again on another PC. Device reset is only available at admin discretion for genuine support cases.</li>
+                    <li>Do not share, resell, leak, modify, or redistribute the extension, license key, presets, overlays, SFX, or included assets.</li>
+                    <li>Use the correct email at checkout. The license key and download link are sent to that email after payment confirmation.</li>
+                </ul>
             </div>
         </section>
 
@@ -354,8 +367,8 @@
                     </ul>
                     <div class="checkout-security">
                         <span>Protected delivery</span>
-                        <span>No subscription</span>
-                        <span>Creator support</span>
+                        <span>One PC license</span>
+                        <span>No refund</span>
                     </div>
                 </aside>
 
@@ -367,6 +380,10 @@
                     <label class="checkout-field">
                         <span>Email for your license</span>
                         <input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="254" required>
+                    </label>
+                    <label class="checkout-terms">
+                        <input id="checkoutTerms" name="terms" type="checkbox" required>
+                        <span>I agree that this is a digital product with no refund after successful payment, and the license activates on one PC only.</span>
                     </label>
                     <button class="primary-btn checkout-submit" type="submit">
                         <span id="checkoutButtonText">Checkout</span>
