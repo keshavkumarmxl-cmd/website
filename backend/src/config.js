@@ -6,7 +6,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 4000),
   publicBaseUrl: process.env.PUBLIC_BASE_URL || "http://localhost:4000",
-  frontendOrigin: process.env.FRONTEND_ORIGIN || "http://localhost:8080",
+  frontendOrigin: process.env.FRONTEND_ORIGIN || "https://website-0fny.onrender.com",
   databasePath: process.env.DATABASE_PATH || "./data/licensing.sqlite",
   jwtSecret: process.env.JWT_SECRET || "dev-only-change-me",
   licenseHashSecret: process.env.LICENSE_HASH_SECRET || "dev-only-license-secret",

@@ -17,8 +17,20 @@ app.set("trust proxy", 1);
 app.use(helmet({
   contentSecurityPolicy: false
 }));
+
+const allowedOrigins = new Set([
+  config.frontendOrigin,
+  "https://website-0fny.onrender.com",
+  "http://localhost:8080"
+].filter(Boolean));
+
 app.use(cors({
-  origin: config.nodeEnv === "production" ? config.frontendOrigin : true,
+  origin: config.nodeEnv === "production"
+    ? (origin, callback) => {
+        if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    : true,
   credentials: true
 }));
 app.use(rateLimit({

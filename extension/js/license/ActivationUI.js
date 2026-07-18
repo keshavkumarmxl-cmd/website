@@ -121,6 +121,11 @@
     function init() {
         var manager = global.KWVLicenseManager;
         if (!manager) return;
+        if (global.__KWV_WEBSITE_PREVIEW__ || /^https?:/i.test(global.location.protocol)) {
+            manager.options.enabled = false;
+            manager.init();
+            return;
+        }
         if (manager.options && manager.options.enabled === false) {
             manager.init();
             return;
