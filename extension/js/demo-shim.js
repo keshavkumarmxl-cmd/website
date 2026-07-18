@@ -3,6 +3,7 @@
 
     if (window.__kwvPreviewShimReady) return;
     window.__kwvPreviewShimReady = true;
+    window.__KWV_WEBSITE_PREVIEW__ = /^https?:/i.test(window.location.protocol);
 
     var extensionUrl = window.location.href.split("/").slice(0, -1).join("/");
     var hostEnvironment = {
