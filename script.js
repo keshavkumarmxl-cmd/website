@@ -542,7 +542,10 @@ checkoutForm.addEventListener("submit", async (event) => {
         if (!response.ok) throw new Error(data.reason || data.error || "Purchase failed");
 
         checkoutStatus.className = "checkout-note success";
-        checkoutStatus.innerHTML = `License generated: <strong>${data.licenseKey}</strong><br>Email sent to ${data.email}. Download API: ${data.downloadUrl}`;
+        const emailLine = data.emailDelivery?.sent
+            ? `Email sent to ${data.email}.`
+            : `Email delivery failed. Save this key now and contact support if needed.`;
+        checkoutStatus.innerHTML = `License generated: <strong>${data.licenseKey}</strong><br>${emailLine}<br>Download: ${data.downloadUrl}`;
         checkoutForm.reset();
     } catch (error) {
         setCheckoutStatus(error.message || "Could not generate license. Check backend server.", "error");
