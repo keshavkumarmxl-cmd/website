@@ -2030,6 +2030,7 @@ footer button {
     display: none;
     place-items: center;
     padding: 22px;
+    overflow-y: auto;
     background:
         radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,21,21,0.18), transparent 22rem),
         rgba(0,0,0,0.88);
@@ -2043,8 +2044,10 @@ footer button {
 .modal-card {
     position: relative;
     width: min(620px, calc(100vw - 28px));
-    height: min(620px, calc(100vh - 28px));
-    overflow: hidden;
+    max-height: calc(100vh - 28px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
     padding: 0;
     border: 1px solid rgba(255,255,255,0.14);
     border-radius: 12px;
@@ -2054,6 +2057,26 @@ footer button {
         linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02)),
         #030303;
     box-shadow: 0 34px 120px rgba(0,0,0,0.92), 0 0 0 1px rgba(255,21,21,0.16), 0 0 90px rgba(255,21,21,0.12);
+}
+
+.modal-card::-webkit-scrollbar {
+    width: 10px;
+}
+
+.modal-card::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.04);
+    border-radius: 999px;
+}
+
+.modal-card::-webkit-scrollbar-thumb {
+    border: 2px solid rgba(0,0,0,0.45);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ff2020, #7a0000);
+}
+
+.modal-card {
+    scrollbar-color: #d60000 rgba(255,255,255,0.04);
+    scrollbar-width: thin;
 }
 
 .modal-card::before {
