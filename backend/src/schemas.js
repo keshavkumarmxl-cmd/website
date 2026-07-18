@@ -13,7 +13,9 @@ export const purchaseSchema = z.object({
 
 export const razorpayOrderSchema = z.object({
   productId: z.string().trim().min(2),
-  plan: z.enum(["India Launch", "International"]).default("India Launch")
+  plan: z.enum(["India Launch", "International"]).default("India Launch"),
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email().toLowerCase()
 });
 
 export const activateSchema = z.object({

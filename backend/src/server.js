@@ -5,7 +5,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "url";
 import { config } from "./config.js";
-import "./db/connection.js";
+import "./db/init.js";
 import { publicRoutes } from "./routes/publicRoutes.js";
 import { adminRoutes } from "./routes/adminRoutes.js";
 

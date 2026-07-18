@@ -1,4 +1,4 @@
-const API_BASE_URL = window.LICENSING_API_BASE_URL || "http://localhost:4000";
+const API_BASE_URL = window.LICENSING_API_BASE_URL || "https://keshavwithvelo-license-api.onrender.com";
 const cursor = document.getElementById("cursorEcho");
 const keshavSong = document.getElementById("keshavSong");
 const songToggle = document.getElementById("songToggle");
@@ -456,6 +456,14 @@ modal.addEventListener("click", (event) => {
 checkoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
+    const formData = new FormData(checkoutForm);
+    const name = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    if (!name || !email) {
+        setCheckoutStatus("Enter your name and email so we can deliver your license.", "error");
+        return;
+    }
+
     const submitButton = checkoutForm.querySelector("button");
     submitButton.disabled = true;
     checkoutButtonText.textContent = "Opening Razorpay...";
@@ -468,7 +476,9 @@ checkoutForm.addEventListener("submit", async (event) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 productId: "keshav-with-velo",
-                plan: selectedPlan
+                plan: selectedPlan,
+                name,
+                email
             })
         });
 
@@ -489,8 +499,11 @@ checkoutForm.addEventListener("submit", async (event) => {
                 order_id: order.orderId,
                 notes: {
                     productId: "keshav-with-velo",
-                    plan: selectedPlan
+                    plan: selectedPlan,
+                    name,
+                    email
                 },
+                prefill: { name, email },
                 theme: {
                     color: "#ff1515"
                 },
@@ -515,6 +528,8 @@ checkoutForm.addEventListener("submit", async (event) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 productId: "keshav-with-velo",
+                name,
+                email,
                 paymentProvider: "razorpay",
                 paymentId: payment.razorpay_payment_id,
                 razorpayOrderId: payment.razorpay_order_id,

@@ -7,6 +7,7 @@ import { validate } from "../middleware/validate.js";
 import { activateSchema, downloadSchema, purchaseSchema, razorpayOrderSchema, verifyLicenseSchema } from "../schemas.js";
 import { sendPurchaseEmail } from "../services/emailService.js";
 import { createRazorpayOrder, verifyPayment } from "../services/paymentService.js";
+import { createDownloadToken, readDownloadToken } from "../utils/downloadLink.js";
 import {
   expiryDate,
   generateLicenseKey,
@@ -89,7 +90,9 @@ publicRoutes.post("/razorpay/order", validate(razorpayOrderSchema), async (req, 
 
     const order = await createRazorpayOrder({
       plan: body.plan,
-      productId: body.productId
+      productId: body.productId,
+      name: body.name,
+      email: body.email
     });
 
     return res.status(201).json({
@@ -154,7 +157,8 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
     });
 
     const { user, key } = tx();
-    const downloadUrl = `${config.publicBaseUrl}/api/download`;
+    const downloadToken = createDownloadToken({ email: user.email, licenseKey: key });
+    const downloadUrl = `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
     await sendPurchaseEmail({ name: user.name, email: user.email, licenseKey: key, downloadUrl });
 
     return res.status(201).json({
@@ -291,6 +295,29 @@ publicRoutes.post("/download", validate(downloadSchema), (req, res) => {
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ status: "failed", reason: "Extension ZIP file is not uploaded yet" });
   }
+
+  return res.download(filePath, "keshav-with-velo.zip");
+});
+
+publicRoutes.get("/download-link", (req, res) => {
+  const token = readDownloadToken(req.query.token);
+  if (!token) return res.status(403).send("This download link is invalid or has expired.");
+
+  const licenseHash = hashLicenseKey(token.licenseKey);
+  const license = db.prepare(`
+    SELECT licenses.*, users.email
+    FROM licenses
+    JOIN users ON users.id = licenses.user_id
+    WHERE licenses.license_hash = ?
+  `).get(licenseHash);
+
+  if (!license || license.email !== token.email || license.status === "blocked" || isExpired(license.expiry_date)) {
+    return res.status(403).send("This download is no longer available.");
+  }
+
+  const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
+  const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
+  if (!fs.existsSync(filePath)) return res.status(404).send("The extension download is not available yet.");
 
   return res.download(filePath, "keshav-with-velo.zip");
 });

@@ -360,6 +360,14 @@
                 </aside>
 
                 <form class="checkout-action" id="checkoutForm">
+                    <label class="checkout-field">
+                        <span>Full name</span>
+                        <input id="checkoutName" name="name" type="text" autocomplete="name" minlength="2" maxlength="80" required>
+                    </label>
+                    <label class="checkout-field">
+                        <span>Email for your license</span>
+                        <input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="254" required>
+                    </label>
                     <button class="primary-btn checkout-submit" type="submit">
                         <span id="checkoutButtonText">Checkout</span>
                         <span class="checkout-arrow" aria-hidden="true"></span>

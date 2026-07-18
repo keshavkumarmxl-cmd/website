@@ -21,7 +21,7 @@ export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }
 
 Thank you for buying Keshav With Velo.
 
-Download link:
+Download link (valid for ${config.downloadLinkExpiryHours} hours):
 ${downloadUrl}
 
 License key:
@@ -40,7 +40,7 @@ Important: one license is bound to one device unless reset by admin.
     <div style="font-family:Arial,sans-serif;line-height:1.55;color:#111">
       <h2>Keshav With Velo License</h2>
       <p>Hi ${name}, thank you for buying Keshav With Velo.</p>
-      <p><strong>Download:</strong> <a href="${downloadUrl}">${downloadUrl}</a></p>
+      <p><strong>Download:</strong> <a href="${downloadUrl}">Download Keshav With Velo</a> (valid for ${config.downloadLinkExpiryHours} hours).</p>
       <p><strong>License key:</strong></p>
       <p style="font-size:22px;font-weight:700;letter-spacing:2px">${licenseKey}</p>
       <h3>Activation</h3>

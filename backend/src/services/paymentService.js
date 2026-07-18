@@ -23,7 +23,7 @@ export const checkoutPlans = {
   }
 };
 
-export async function createRazorpayOrder({ plan, productId }) {
+export async function createRazorpayOrder({ plan, productId, name, email }) {
   if (!razorpay) {
     const error = new Error("Razorpay is not configured");
     error.statusCode = 503;
@@ -39,7 +39,9 @@ export async function createRazorpayOrder({ plan, productId }) {
     receipt,
     notes: {
       productId,
-      plan
+      plan,
+      name,
+      email
     }
   });
 
