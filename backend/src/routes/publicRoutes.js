@@ -175,14 +175,23 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
     const { user, key } = tx();
     const downloadToken = createDownloadToken({ email: user.email, licenseKey: key });
     const downloadUrl = `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
-    await sendPurchaseEmail({ name: user.name, email: user.email, licenseKey: key, downloadUrl });
+    let emailDelivery = { sent: false };
+    try {
+      emailDelivery = await sendPurchaseEmail({ name: user.name, email: user.email, licenseKey: key, downloadUrl });
+    } catch (emailError) {
+      console.error("[purchase email failed]", emailError);
+      emailDelivery = { sent: false, error: "email_failed" };
+    }
 
     return res.status(201).json({
       status: "success",
-      message: "Purchase confirmed. License generated and email queued.",
+      message: emailDelivery.sent
+        ? "Purchase confirmed. License generated and email sent."
+        : "Purchase confirmed. License generated. Email delivery needs manual follow-up.",
       email: user.email,
       licenseKey: key,
-      downloadUrl
+      downloadUrl,
+      emailDelivery
     });
   } catch (error) {
     return next(error);

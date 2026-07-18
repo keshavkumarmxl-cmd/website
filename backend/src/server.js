@@ -21,7 +21,8 @@ app.use(helmet({
 const allowedOrigins = new Set([
   config.frontendOrigin,
   "https://website-0fny.onrender.com",
-  "http://localhost:8080"
+  "http://localhost:8080",
+  "file://"
 ].filter(Boolean));
 
 app.use(cors({
