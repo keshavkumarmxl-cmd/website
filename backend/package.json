@@ -4,6 +4,9 @@
   "description": "Digital product licensing backend for Adobe After Effects extensions.",
   "main": "src/server.js",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
