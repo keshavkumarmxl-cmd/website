@@ -15,6 +15,10 @@ export const config = {
   downloadApiKey: process.env.DOWNLOAD_API_KEY || "dev-download-api-key",
   downloadLinkSecret: process.env.DOWNLOAD_LINK_SECRET || process.env.LICENSE_HASH_SECRET || "dev-only-download-link-secret",
   downloadLinkExpiryHours: Number(process.env.DOWNLOAD_LINK_EXPIRY_HOURS || 168),
+  masterLicense: {
+    email: String(process.env.MASTER_LICENSE_EMAIL || "").trim().toLowerCase(),
+    key: String(process.env.MASTER_LICENSE_KEY || "").trim().toUpperCase()
+  },
   productId: process.env.EXTENSION_PRODUCT_ID || "keshav-with-velo",
   extensionZipPath: process.env.EXTENSION_ZIP_PATH || "./storage/extensions/keshav-with-velo.zip",
   licenseExpiryDays: Number(process.env.LICENSE_EXPIRY_DAYS || 365),

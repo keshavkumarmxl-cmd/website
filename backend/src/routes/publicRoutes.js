@@ -42,6 +42,22 @@ function failedAttemptCount(req, email) {
   `).get(email, clientIp(req)).count;
 }
 
+function isMasterLicense({ email, licenseKey }) {
+  return Boolean(
+    config.masterLicense.email &&
+    config.masterLicense.key &&
+    String(email || "").trim().toLowerCase() === config.masterLicense.email &&
+    normalizeLicenseKey(licenseKey) === config.masterLicense.key
+  );
+}
+
+function isMasterLicenseKey(licenseKey) {
+  return Boolean(
+    config.masterLicense.key &&
+    normalizeLicenseKey(licenseKey) === config.masterLicense.key
+  );
+}
+
 function createLicenseForUser(userId, licenseType, expiryDays = config.licenseExpiryDays) {
   for (let i = 0; i < 8; i += 1) {
     const key = generateLicenseKey();
@@ -179,6 +195,11 @@ publicRoutes.post("/activate", validate(activateSchema), (req, res) => {
   const licenseHash = hashLicenseKey(normalizedKey);
   const deviceHash = hashFingerprint(deviceFingerprint);
 
+  if (isMasterLicense({ email, licenseKey: normalizedKey })) {
+    logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Master license activated" });
+    return res.json({ status: "success", message: "Master license activated" });
+  }
+
   if (failedAttemptCount(req, email) >= config.maxFailedActivationsPerHour) {
     logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Too many failed attempts" });
     return res.status(429).json({ status: "failed", reason: "Too many failed activation attempts. Try again later." });
@@ -245,6 +266,14 @@ publicRoutes.post("/activate", validate(activateSchema), (req, res) => {
 });
 
 publicRoutes.post("/verify-license", validate(verifyLicenseSchema), (req, res) => {
+  if (isMasterLicenseKey(req.body.licenseKey)) {
+    return res.json({
+      status: "valid",
+      licenseType: "master",
+      expiryDate: null
+    });
+  }
+
   const licenseHash = hashLicenseKey(req.body.licenseKey);
   const deviceHash = hashFingerprint(req.body.deviceFingerprint);
 
@@ -274,6 +303,15 @@ publicRoutes.post("/verify-license", validate(verifyLicenseSchema), (req, res) =
 });
 
 publicRoutes.post("/download", validate(downloadSchema), (req, res) => {
+  if (isMasterLicense({ email: req.body.email, licenseKey: req.body.licenseKey })) {
+    const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
+    const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ status: "failed", reason: "Extension ZIP file is not uploaded yet" });
+    }
+    return res.download(filePath, "keshav-with-velo.zip");
+  }
+
   const licenseHash = hashLicenseKey(req.body.licenseKey);
   const license = db.prepare(`
     SELECT licenses.*, users.email
