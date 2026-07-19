@@ -473,6 +473,7 @@ nav {
 }
 
 nav a,
+footer a,
 footer button,
 .ghost-btn {
     color: var(--muted);
@@ -480,6 +481,7 @@ footer button,
 }
 
 nav a:hover,
+footer a:hover,
 footer button:hover,
 .ghost-btn:hover {
     color: #fff;
@@ -1878,15 +1880,147 @@ h2 {
 
 footer {
     justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 16px;
     padding: 24px clamp(16px, 4vw, 54px);
     border-top: 1px solid var(--line);
     color: var(--muted);
 }
 
+.footer-brand,
+.footer-links {
+    display: flex;
+    gap: 10px;
+}
+
+.footer-brand {
+    flex-direction: column;
+}
+
+.footer-brand span {
+    color: #fff;
+    font-weight: 900;
+}
+
+.footer-brand small {
+    color: var(--muted);
+}
+
+.footer-links {
+    flex-wrap: wrap;
+    align-items: center;
+    max-width: 620px;
+}
+
+.footer-links a {
+    font-size: 13px;
+    font-weight: 800;
+}
+
 footer button {
     border: 0;
     background: transparent;
+}
+
+.policy-main {
+    min-height: 100vh;
+    padding: clamp(86px, 10vw, 132px) clamp(16px, 4vw, 54px) 54px;
+}
+
+.policy-shell {
+    width: min(980px, 100%);
+    margin: 0 auto;
+}
+
+.policy-hero {
+    padding: clamp(26px, 5vw, 46px) 0 26px;
+    border-bottom: 1px solid var(--line);
+}
+
+.policy-hero h1 {
+    margin: 8px 0 12px;
+    font-size: clamp(38px, 7vw, 86px);
+    line-height: 0.92;
+    text-transform: uppercase;
+}
+
+.policy-hero p:not(.eyebrow) {
+    max-width: 760px;
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.policy-content {
+    display: grid;
+    gap: 20px;
+    padding: 28px 0;
+}
+
+.policy-block {
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(255,21,21,0.10), transparent 16rem),
+        linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022));
+}
+
+.policy-block h2 {
+    margin: 0 0 12px;
+    font-size: clamp(22px, 3vw, 34px);
+    text-transform: uppercase;
+}
+
+.policy-block p,
+.policy-block li {
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.policy-block p {
+    margin: 0 0 12px;
+}
+
+.policy-block p:last-child {
+    margin-bottom: 0;
+}
+
+.policy-block ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.policy-block li::marker {
+    color: var(--red);
+}
+
+.policy-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.policy-contact-card {
+    min-height: 120px;
+    padding: 18px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+}
+
+.policy-contact-card strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.policy-contact-card a {
+    color: #fff;
+    font-weight: 850;
+    overflow-wrap: anywhere;
 }
 
 @keyframes glowBreath {
