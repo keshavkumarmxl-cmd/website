@@ -1,7 +1,5 @@
 const API_BASE_URL = window.LICENSING_API_BASE_URL || "https://keshavwithvelo-license-api.onrender.com";
 const cursor = document.getElementById("cursorEcho");
-const keshavSong = document.getElementById("keshavSong");
-const songToggle = document.getElementById("songToggle");
 let lastEcho = 0;
 let lastFrameEcho = 0;
 const pointerTarget = {
@@ -24,49 +22,6 @@ function updateScrollMotion() {
 updateScrollMotion();
 window.addEventListener("scroll", updateScrollMotion, { passive: true });
 window.addEventListener("resize", updateScrollMotion);
-
-function updateSongButton() {
-    if (!songToggle || !keshavSong) return;
-    const playing = !keshavSong.paused;
-    songToggle.textContent = playing ? "Pause Song" : "Play Song";
-    songToggle.classList.toggle("playing", playing);
-    songToggle.setAttribute("aria-label", playing ? "Pause Keshav song" : "Play Keshav song");
-}
-
-async function playKeshavSong() {
-    if (!keshavSong) return;
-    try {
-        keshavSong.volume = 0.55;
-        await keshavSong.play();
-    } catch {
-        // Browsers can block sound until the visitor interacts with the page.
-    } finally {
-        updateSongButton();
-    }
-}
-
-if (songToggle && keshavSong) {
-    songToggle.addEventListener("click", async () => {
-        if (keshavSong.paused) {
-            await playKeshavSong();
-        } else {
-            keshavSong.pause();
-            updateSongButton();
-        }
-    });
-
-    keshavSong.addEventListener("play", updateSongButton);
-    keshavSong.addEventListener("pause", updateSongButton);
-    keshavSong.addEventListener("ended", updateSongButton);
-
-    window.addEventListener("load", playKeshavSong);
-    document.addEventListener("DOMContentLoaded", playKeshavSong);
-    document.addEventListener("pointerdown", (event) => {
-        if (event.target.closest("#songToggle")) return;
-        playKeshavSong();
-    }, { once: true });
-    updateSongButton();
-}
 
 function updateShowcaseMotion(clientX, clientY) {
     const showcase = document.querySelector(".panel-showcase");
