@@ -235,13 +235,12 @@ function getYoutubeId(value) {
     return "";
 }
 
-function initTutorialVideo() {
+function setTutorialVideo(url) {
     const video = document.querySelector(".tutorial-video");
     const frame = document.getElementById("tutorialFrame");
     const watchLink = document.getElementById("tutorialWatchLink");
     if (!video || !frame || !watchLink) return;
 
-    const url = video.dataset.youtubeUrl || "";
     const videoId = getYoutubeId(url);
 
     if (!videoId) {
@@ -257,6 +256,27 @@ function initTutorialVideo() {
     frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
     watchLink.href = watchUrl;
     watchLink.setAttribute("aria-disabled", "false");
+}
+
+async function initTutorialVideo() {
+    const video = document.querySelector(".tutorial-video");
+    if (!video) return;
+
+    let url = video.dataset.youtubeUrl || "";
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/site-settings/tutorial`, {
+            headers: { Accept: "application/json" }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            url = data.youtubeUrl || url;
+        }
+    } catch (error) {
+        // Keep the built-in placeholder if the API is unavailable.
+    }
+
+    setTutorialVideo(url);
 }
 
 initTutorialVideo();

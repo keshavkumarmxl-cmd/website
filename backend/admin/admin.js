@@ -85,6 +85,33 @@ document.getElementById("manualBtn").addEventListener("click", async () => {
   }
 });
 
+document.getElementById("loadTutorialBtn").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/admin/settings/tutorial");
+    document.getElementById("tutorialUrl").value = data.youtubeUrl || "";
+    show(data.youtubeUrl ? data : "No tutorial link is saved yet.");
+  } catch (error) {
+    show(error);
+  }
+});
+
+document.getElementById("saveTutorialBtn").addEventListener("click", async () => {
+  try {
+    show(await api("/api/admin/settings/tutorial", {
+      method: "POST",
+      body: JSON.stringify({
+        youtubeUrl: document.getElementById("tutorialUrl").value.trim()
+      })
+    }));
+  } catch (error) {
+    show(error);
+  }
+});
+
+document.getElementById("clearTutorialBtn").addEventListener("click", () => {
+  document.getElementById("tutorialUrl").value = "";
+});
+
 document.getElementById("versionBtn").addEventListener("click", async () => {
   try {
     show(await api("/api/admin/versions", {

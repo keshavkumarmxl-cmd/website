@@ -3,7 +3,7 @@ import express from "express";
 import { db } from "../db/connection.js";
 import { validate } from "../middleware/validate.js";
 import { createAdminToken, requireAdmin } from "../middleware/auth.js";
-import { adminLoginSchema, manualLicenseSchema, versionSchema } from "../schemas.js";
+import { adminLoginSchema, manualLicenseSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
 import { expiryDate, generateLicenseKey, hashLicenseKey, licenseHint } from "../utils/license.js";
 
 export const adminRoutes = express.Router();
@@ -18,6 +18,26 @@ adminRoutes.post("/login", validate(adminLoginSchema), (req, res) => {
 });
 
 adminRoutes.use(requireAdmin);
+
+adminRoutes.get("/settings/tutorial", (req, res) => {
+  const row = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("tutorial_youtube_url");
+  res.json({
+    youtubeUrl: row?.value || "",
+    updatedAt: row?.updated_at || null
+  });
+});
+
+adminRoutes.post("/settings/tutorial", validate(tutorialVideoSchema), (req, res) => {
+  db.prepare(`
+    INSERT INTO site_settings (key, value, updated_at)
+    VALUES ('tutorial_youtube_url', ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET
+      value = excluded.value,
+      updated_at = CURRENT_TIMESTAMP
+  `).run(req.body.youtubeUrl || "");
+
+  res.json({ status: "success", youtubeUrl: req.body.youtubeUrl || "" });
+});
 
 adminRoutes.get("/users", (req, res) => {
   const rows = db.prepare(`

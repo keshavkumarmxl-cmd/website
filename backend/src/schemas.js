@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+function isYoutubeUrl(value) {
+  if (!value) return true;
+  if (/^[a-zA-Z0-9_-]{11}$/.test(value)) return true;
+
+  try {
+    const url = new URL(value);
+    const host = url.hostname.replace(/^www\./, "");
+    return ["youtube.com", "m.youtube.com", "youtu.be", "youtube-nocookie.com"].includes(host);
+  } catch (error) {
+    return false;
+  }
+}
+
 export const purchaseSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
   email: z.string().trim().email().toLowerCase().optional(),
@@ -51,4 +64,8 @@ export const versionSchema = z.object({
   downloadPath: z.string().trim().min(3),
   notes: z.string().trim().max(1000).optional(),
   isActive: z.boolean().default(false)
+});
+
+export const tutorialVideoSchema = z.object({
+  youtubeUrl: z.string().trim().max(300).refine(isYoutubeUrl, "Enter a valid YouTube link or video ID")
 });

@@ -97,6 +97,14 @@ publicRoutes.get("/health", (req, res) => {
   res.json({ status: "ok", service: "licensing", time: new Date().toISOString() });
 });
 
+publicRoutes.get("/site-settings/tutorial", (req, res) => {
+  const row = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("tutorial_youtube_url");
+  res.json({
+    youtubeUrl: row?.value || "",
+    updatedAt: row?.updated_at || null
+  });
+});
+
 publicRoutes.post("/razorpay/order", validate(razorpayOrderSchema), async (req, res, next) => {
   try {
     const body = req.body;
