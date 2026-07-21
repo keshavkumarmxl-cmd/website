@@ -1087,6 +1087,80 @@ h2 {
     box-shadow: 0 0 26px rgba(255,21,21,0.24);
 }
 
+.extension-preview-stage {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.88fr) minmax(0, auto) minmax(220px, 0.88fr);
+    align-items: center;
+    gap: clamp(18px, 4vw, 54px);
+}
+
+.ae-support-card {
+    position: relative;
+    overflow: hidden;
+    max-width: 390px;
+    justify-self: end;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 15% 0%, rgba(255,21,21,0.22), transparent 13rem),
+        linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.024));
+    box-shadow: 0 22px 78px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.ae-support-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(255,21,21,0.78), rgba(31,199,255,0.36), transparent 76%) top left / 100% 1px no-repeat,
+        radial-gradient(circle at 50% 100%, rgba(255,21,21,0.10), transparent 12rem);
+}
+
+.ae-support-card h3 {
+    position: relative;
+    margin: 10px 0 16px;
+    color: #fff;
+    font-size: clamp(28px, 3vw, 46px);
+    line-height: 0.96;
+    text-transform: uppercase;
+}
+
+.ae-version-list {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.ae-version-list span {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,21,21,0.42);
+    border-radius: 8px;
+    background: rgba(255,21,21,0.10);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 950;
+    box-shadow: 0 12px 28px rgba(255,21,21,0.10);
+}
+
+.ae-support-card p:not(.eyebrow) {
+    position: relative;
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.extension-stage-spacer {
+    min-width: 220px;
+}
+
 .extension-frame-shell {
     position: relative;
     width: min(100%, 430px);
@@ -2743,6 +2817,7 @@ footer button {
 
     .hero,
     .price-grid,
+    .extension-preview-stage,
     .panel-showcase,
     .proof-strip,
     .lane-grid,
@@ -2775,6 +2850,16 @@ footer button {
 
     .panel-showcase {
         max-width: 620px;
+    }
+
+    .ae-support-card {
+        justify-self: stretch;
+        max-width: none;
+        text-align: center;
+    }
+
+    .extension-stage-spacer {
+        display: none;
     }
 
     .feature-orbit {
