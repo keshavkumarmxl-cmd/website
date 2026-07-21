@@ -186,7 +186,7 @@
         <input id="password" type="password" autocomplete="current-password" placeholder="Admin password">
       </label>
       <button id="loginBtn" type="button">Login</button>
-      <p class="status" id="loginStatus"></p>
+      <p class="status" id="loginStatus">Preparing secure login...</p>
     </section>
 
     <section class="hidden" id="tutorialPanel">
@@ -262,19 +262,41 @@
     }
 
     async function api(path, options = {}) {
-      const response = await fetch(`${API_BASE_URL}${path}`, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
-          ...(options.headers || {})
-        }
-      });
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || 90000);
+
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}${path}`, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
+            ...(options.headers || {})
+          }
+        });
+      } catch (error) {
+        if (error.name === "AbortError") throw { error: "Backend is taking too long to respond. Try again in a few seconds." };
+        throw { error: "Cannot connect to backend. Please try again." };
+      } finally {
+        window.clearTimeout(timeout);
+      }
 
       const text = await response.text();
       const data = text ? JSON.parse(text) : {};
       if (!response.ok) throw data;
       return data;
+    }
+
+    async function warmApi() {
+      try {
+        setStatus(loginStatus, "Waking secure backend. First load can take up to one minute...");
+        await api("/api/health", { timeoutMs: 90000 });
+        setStatus(loginStatus, "Ready to login.", "success");
+      } catch (error) {
+        setStatus(loginStatus, error.error || "Backend is still waking up. Login may take longer.", "error");
+      }
     }
 
     function showAdmin() {
@@ -304,7 +326,7 @@
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
       try {
-        setStatus(loginStatus, "Logging in...");
+        setStatus(loginStatus, "Logging in. If the server was asleep, this can take up to one minute...");
         const data = await api("/api/admin/login", {
           method: "POST",
           body: JSON.stringify({
@@ -354,6 +376,8 @@
     if (token()) {
       showAdmin();
       loadTutorial();
+    } else {
+      warmApi();
     }
   </script>
 </body>
