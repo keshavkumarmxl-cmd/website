@@ -1088,24 +1088,29 @@ h2 {
 }
 
 .extension-preview-stage {
-    display: grid;
-    grid-template-columns: minmax(220px, 0.88fr) minmax(0, auto) minmax(220px, 0.88fr);
-    align-items: center;
-    gap: clamp(18px, 4vw, 54px);
+    position: relative;
+    min-height: 760px;
 }
 
 .ae-support-card {
-    position: relative;
+    position: absolute;
+    left: clamp(0px, 2vw, 26px);
+    top: clamp(146px, 18vw, 210px);
+    z-index: 3;
     overflow: hidden;
-    max-width: 390px;
-    justify-self: end;
-    padding: 22px;
+    width: clamp(260px, 25vw, 330px);
+    padding: 20px;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 8px;
     background:
-        radial-gradient(circle at 15% 0%, rgba(255,21,21,0.22), transparent 13rem),
-        linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.024));
-    box-shadow: 0 22px 78px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.05);
+        radial-gradient(circle at 18% 0%, rgba(255,21,21,0.30), transparent 13rem),
+        radial-gradient(circle at 86% 100%, rgba(31,199,255,0.12), transparent 11rem),
+        linear-gradient(180deg, rgba(255,255,255,0.078), rgba(255,255,255,0.026));
+    backdrop-filter: blur(18px);
+    box-shadow:
+        0 28px 90px rgba(0,0,0,0.34),
+        0 0 44px rgba(255,21,21,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .ae-support-card::before {
@@ -1122,7 +1127,7 @@ h2 {
     position: relative;
     margin: 10px 0 16px;
     color: #fff;
-    font-size: clamp(28px, 3vw, 46px);
+    font-size: clamp(27px, 2.5vw, 40px);
     line-height: 0.96;
     text-transform: uppercase;
 }
@@ -1158,7 +1163,7 @@ h2 {
 }
 
 .extension-stage-spacer {
-    min-width: 220px;
+    display: none;
 }
 
 .extension-frame-shell {
@@ -2817,7 +2822,6 @@ footer button {
 
     .hero,
     .price-grid,
-    .extension-preview-stage,
     .panel-showcase,
     .proof-strip,
     .lane-grid,
@@ -2852,9 +2856,17 @@ footer button {
         max-width: 620px;
     }
 
+    .extension-preview-stage {
+        min-height: 0;
+    }
+
     .ae-support-card {
-        justify-self: stretch;
+        position: relative;
+        left: auto;
+        top: auto;
+        width: 100%;
         max-width: none;
+        margin-bottom: 18px;
         text-align: center;
     }
 
