@@ -211,6 +211,56 @@ function animateCounters() {
 
 animateCounters();
 
+function getYoutubeId(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+
+    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+
+    try {
+        const url = new URL(raw);
+        if (url.searchParams.has("v")) return url.searchParams.get("v");
+
+        const parts = url.pathname.split("/").filter(Boolean);
+        const embedIndex = parts.indexOf("embed");
+        const shortsIndex = parts.indexOf("shorts");
+
+        if (embedIndex >= 0 && parts[embedIndex + 1]) return parts[embedIndex + 1];
+        if (shortsIndex >= 0 && parts[shortsIndex + 1]) return parts[shortsIndex + 1];
+        if (url.hostname.includes("youtu.be") && parts[0]) return parts[0];
+    } catch (error) {
+        return "";
+    }
+
+    return "";
+}
+
+function initTutorialVideo() {
+    const video = document.querySelector(".tutorial-video");
+    const frame = document.getElementById("tutorialFrame");
+    const watchLink = document.getElementById("tutorialWatchLink");
+    if (!video || !frame || !watchLink) return;
+
+    const url = video.dataset.youtubeUrl || "";
+    const videoId = getYoutubeId(url);
+
+    if (!videoId) {
+        video.classList.add("is-empty");
+        frame.removeAttribute("src");
+        watchLink.setAttribute("aria-disabled", "true");
+        watchLink.href = "#";
+        return;
+    }
+
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    video.classList.remove("is-empty");
+    frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+    watchLink.href = watchUrl;
+    watchLink.setAttribute("aria-disabled", "false");
+}
+
+initTutorialVideo();
+
 function animateFeatureOrbit() {
     const orbit = document.querySelector(".feature-orbit");
     const cards = [...document.querySelectorAll(".orbit-card")];
