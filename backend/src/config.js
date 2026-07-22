@@ -30,6 +30,10 @@ export const config = {
     pass: process.env.SMTP_PASS || "",
     from: process.env.SMTP_FROM || "Keshav With Velo <no-reply@example.com>"
   },
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || "",
+    from: process.env.RESEND_FROM || process.env.SMTP_FROM || "Keshav With Velo <no-reply@example.com>"
+  },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || "",
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",

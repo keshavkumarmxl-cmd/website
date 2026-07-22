@@ -18,7 +18,7 @@ function createTransport() {
   });
 }
 
-export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
+function buildPurchaseEmail({ name, licenseKey, downloadUrl }) {
   const subject = "Your Keshav With Velo license key";
   const text = `Hi ${name},
 
@@ -67,6 +67,45 @@ Terms:
       </ul>
     </div>
   `;
+
+  return { subject, text, html };
+}
+
+async function sendWithResend({ email, subject, text, html }) {
+  if (!config.resend.apiKey) return null;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.resend.apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: config.resend.from,
+      to: email,
+      subject,
+      text,
+      html
+    })
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data.message || data.error || `Resend API failed with ${response.status}`;
+    const error = new Error(message);
+    error.provider = "resend";
+    error.status = response.status;
+    throw error;
+  }
+
+  return { sent: true, provider: "resend", id: data.id };
+}
+
+export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
+  const { subject, text, html } = buildPurchaseEmail({ name, licenseKey, downloadUrl });
+
+  const resendDelivery = await sendWithResend({ email, subject, text, html });
+  if (resendDelivery) return resendDelivery;
 
   const transport = createTransport();
   if (!transport) {
