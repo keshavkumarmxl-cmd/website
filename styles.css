@@ -1126,16 +1126,23 @@ h2 {
 
 .extension-preview-stage {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(26px, 4vw, 58px);
     min-height: 760px;
+    max-width: 980px;
+    margin: 0 auto;
 }
 
 .ae-support-card {
-    position: absolute;
-    left: clamp(0px, 2vw, 26px);
-    top: clamp(146px, 18vw, 210px);
+    position: relative;
+    left: auto;
+    top: auto;
     z-index: 3;
     overflow: hidden;
-    width: clamp(260px, 25vw, 330px);
+    width: 100%;
+    margin-top: 158px;
     padding: 20px;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 8px;
@@ -1207,6 +1214,7 @@ h2 {
     position: relative;
     width: min(100%, 430px);
     height: 760px;
+    justify-self: center;
     margin: 0 auto;
     padding: 10px;
     border: 1px solid rgba(255,255,255,0.13);
@@ -3168,7 +3176,9 @@ h2 {
     }
 
     .extension-preview-stage {
+        grid-template-columns: 1fr;
         min-height: 0;
+        max-width: 620px;
     }
 
     .ae-support-card {
@@ -3177,6 +3187,7 @@ h2 {
         top: auto;
         width: 100%;
         max-width: none;
+        margin-top: 0;
         margin-bottom: 18px;
         text-align: center;
     }
