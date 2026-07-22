@@ -1865,48 +1865,100 @@ h2 {
 
 .support-actions {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 10px;
     flex: 0 0 auto;
 }
 
-.support-mail,
-.support-discord,
-.support-telegram {
-    min-height: 40px;
+.support-icon {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 13px;
+    padding: 0;
     border: 1px solid rgba(255,21,21,0.55);
-    border-radius: 8px;
+    border-radius: 14px;
     background: rgba(255,21,21,0.10);
     color: #fff;
-    font-size: 13px;
-    font-weight: 900;
+    overflow: hidden;
     text-decoration: none;
-    white-space: nowrap;
     box-shadow: 0 10px 28px rgba(255,21,21,0.10);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.support-icon svg,
+.support-icon img {
+    position: relative;
+    z-index: 1;
+    width: 24px;
+    height: 24px;
+}
+
+.support-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.support-icon img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.support-icon::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 48%);
+    opacity: 0.8;
 }
 
 .support-discord {
-    border-color: rgba(31,199,255,0.44);
-    background: rgba(31,199,255,0.10);
-    box-shadow: 0 16px 42px rgba(31,199,255,0.10);
+    border-color: rgba(88,101,242,0.68);
+    background: rgba(88,101,242,0.18);
+    box-shadow: 0 16px 42px rgba(88,101,242,0.15);
 }
 
 .support-telegram {
-    border-color: rgba(37,215,123,0.42);
-    background: rgba(37,215,123,0.10);
-    box-shadow: 0 16px 42px rgba(37,215,123,0.10);
+    border-color: rgba(31,199,255,0.54);
+    background: rgba(31,199,255,0.16);
+    box-shadow: 0 16px 42px rgba(31,199,255,0.13);
 }
 
-.support-mail:hover,
-.support-discord:hover,
-.support-telegram:hover {
+.support-material {
+    border-color: rgba(37,215,123,0.50);
+    background: rgba(37,215,123,0.13);
+    box-shadow: 0 16px 42px rgba(37,215,123,0.12);
+}
+
+.support-youtube {
+    border-color: rgba(255,21,21,0.78);
+    background: rgba(255,21,21,0.18);
+    box-shadow: 0 16px 42px rgba(255,21,21,0.16);
+}
+
+.support-youtube svg {
+    fill: currentColor;
+    stroke: none;
+}
+
+.support-youtube svg path:last-child {
+    fill: #06070a;
+}
+
+.support-icon:hover {
     transform: translateY(-2px);
     color: #fff;
+    border-color: rgba(255,255,255,0.42);
+    box-shadow: 0 18px 42px rgba(0,0,0,0.24), 0 0 28px rgba(255,255,255,0.08);
 }
 
 .price-grid {
@@ -3031,15 +3083,13 @@ footer button {
 
     .support-actions {
         width: 100%;
-        justify-content: stretch;
+        justify-content: flex-start;
     }
 
-    .support-mail,
-    .support-discord,
-    .support-telegram {
-        width: 100%;
-        white-space: normal;
-        text-align: center;
+    .support-icon {
+        width: 50px;
+        height: 50px;
+        min-height: 50px;
     }
 }
 
