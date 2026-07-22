@@ -1906,17 +1906,18 @@ h2 {
 }
 
 .support-material {
-    border-color: rgba(255,255,255,0.24);
+    border-color: rgba(247,37,133,0.66);
     background:
-        radial-gradient(circle at 28% 92%, #ffd76f 0 18%, transparent 36%),
-        radial-gradient(circle at 18% 18%, #7b5cff 0 16%, transparent 34%),
-        linear-gradient(135deg, #7b2cff 0%, #f72585 48%, #ff4d00 100%);
+        radial-gradient(circle at 22% 100%, rgba(255,215,111,0.24), transparent 38%),
+        radial-gradient(circle at 100% 0%, rgba(247,37,133,0.26), transparent 42%),
+        rgba(247,37,133,0.10);
     color: #fff;
-    box-shadow: 0 16px 42px rgba(247,37,133,0.20), inset 0 1px 0 rgba(255,255,255,0.28);
+    box-shadow: 0 16px 42px rgba(247,37,133,0.14);
 }
 
 .support-material svg {
-    stroke-width: 1.8;
+    stroke: #fff;
+    stroke-width: 1.9;
 }
 
 .support-youtube {
