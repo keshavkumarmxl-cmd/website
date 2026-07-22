@@ -1914,13 +1914,12 @@ h2 {
 }
 
 .support-material {
-    border-color: rgba(247,37,133,0.66);
-    background:
-        radial-gradient(circle at 22% 100%, rgba(255,215,111,0.24), transparent 38%),
-        radial-gradient(circle at 100% 0%, rgba(247,37,133,0.26), transparent 42%),
-        rgba(247,37,133,0.10);
+    border-color: rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.045);
     color: #fff;
-    box-shadow: 0 16px 42px rgba(247,37,133,0.14);
+    box-shadow:
+        0 16px 44px rgba(0,0,0,0.44),
+        inset 0 1px 0 rgba(255,255,255,0.10);
 }
 
 .support-material svg {
@@ -3612,10 +3611,9 @@ nav a:hover {
 }
 
 .support-material {
-    background:
-        radial-gradient(circle at 72% 22%, rgba(255,255,255,0.42), transparent 0.5rem),
-        linear-gradient(135deg, #3b0f38 0%, #7c1cff 28%, #ff1b89 55%, #ff5a18 100%);
-    border-color: rgba(255,255,255,0.24);
+    background: rgba(255,255,255,0.045);
+    border-color: rgba(255,255,255,0.14);
+    color: #fff;
 }
 
 @media (max-width: 980px) {
