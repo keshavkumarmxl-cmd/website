@@ -2088,6 +2088,26 @@ h2 {
     font-size: 13px;
     color: #c7cad4;
     line-height: 1.45;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.checkout-note-line,
+.checkout-note a,
+.checkout-note strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.checkout-note-line {
+    display: block;
+}
+
+.checkout-note a {
+    color: #d9fff0;
+    font-weight: 850;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .checkout-note.success {

@@ -71,7 +71,7 @@ Terms:
   const transport = createTransport();
   if (!transport) {
     console.log("[email skipped] SMTP not configured", { to: email, subject, licenseKey, downloadUrl });
-    return { skipped: true };
+    return { sent: false, skipped: true, error: "smtp_not_configured" };
   }
 
   await transport.sendMail({

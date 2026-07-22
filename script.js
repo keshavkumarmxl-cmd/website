@@ -454,6 +454,48 @@ function setCheckoutStatus(message, mode = "") {
     checkoutStatus.textContent = message;
 }
 
+function appendCheckoutLine(label, value) {
+    const line = document.createElement("span");
+    line.className = "checkout-note-line";
+    line.append(label);
+
+    if (value instanceof Node) {
+        line.append(value);
+    } else {
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        line.append(strong);
+    }
+
+    checkoutStatus.append(line);
+}
+
+function setCheckoutSuccess(data) {
+    checkoutStatus.className = "checkout-note success";
+    checkoutStatus.textContent = "";
+
+    appendCheckoutLine("License generated: ", data.licenseKey);
+
+    const emailMessage = document.createElement("span");
+    if (data.emailDelivery?.sent) {
+        emailMessage.textContent = `Email sent to ${data.email}.`;
+    } else if (data.emailDelivery?.skipped) {
+        emailMessage.textContent = "Email delivery needs manual follow-up. Save this key now.";
+    } else {
+        emailMessage.textContent = "Email delivery failed. Save this key now and contact support if needed.";
+    }
+    checkoutStatus.append(emailMessage);
+
+    if (data.downloadUrl) {
+        const downloadLink = document.createElement("a");
+        downloadLink.href = data.downloadUrl;
+        downloadLink.target = "_blank";
+        downloadLink.rel = "noopener";
+        downloadLink.textContent = "Download extension";
+        appendCheckoutLine("Download: ", downloadLink);
+    }
+}
+
 document.querySelectorAll("[data-open-payment]").forEach((button) => {
     button.addEventListener("click", () => {
         selectedPlan = button.dataset.openPayment;
@@ -566,11 +608,7 @@ checkoutForm.addEventListener("submit", async (event) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.reason || data.error || "Purchase failed");
 
-        checkoutStatus.className = "checkout-note success";
-        const emailLine = data.emailDelivery?.sent
-            ? `Email sent to ${data.email}.`
-            : `Email delivery failed. Save this key now and contact support if needed.`;
-        checkoutStatus.innerHTML = `License generated: <strong>${data.licenseKey}</strong><br>${emailLine}<br>Download: ${data.downloadUrl}`;
+        setCheckoutSuccess(data);
         checkoutForm.reset();
     } catch (error) {
         setCheckoutStatus(error.message || "Could not generate license. Check backend server.", "error");
