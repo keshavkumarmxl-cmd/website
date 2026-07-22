@@ -13,6 +13,10 @@
 
 * {
     box-sizing: border-box;
+}
+
+.custom-cursor-page,
+.custom-cursor-page * {
     cursor: none !important;
 }
 
@@ -237,7 +241,7 @@ input {
     font: inherit;
 }
 
-button {
+.custom-cursor-page button {
     cursor: none;
 }
 
@@ -2322,12 +2326,13 @@ footer button {
 
 .policy-contact-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
 
 .policy-contact-card {
-    min-height: 120px;
+    min-width: 0;
+    min-height: 108px;
     padding: 18px;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 8px;
@@ -2341,9 +2346,18 @@ footer button {
 }
 
 .policy-contact-card a {
+    display: inline-block;
+    max-width: 100%;
     color: #fff;
     font-weight: 850;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.policy-contact-card a[href^="mailto:"],
+.policy-contact-card a[href*="mail.google.com"] {
+    white-space: nowrap;
+    font-size: clamp(12px, 1.55vw, 16px);
 }
 
 @keyframes glowBreath {
@@ -3070,6 +3084,10 @@ footer button {
 
     .tutorial-video {
         min-height: 220px;
+    }
+
+    .policy-contact-grid {
+        grid-template-columns: 1fr;
     }
 
     .hero-stage {
