@@ -1126,23 +1126,19 @@ h2 {
 
 .extension-preview-stage {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
-    align-items: start;
-    gap: clamp(26px, 4vw, 58px);
     min-height: 760px;
-    max-width: 980px;
+    max-width: 1260px;
     margin: 0 auto;
 }
 
 .ae-support-card {
-    position: relative;
-    left: auto;
-    top: auto;
+    position: absolute;
+    left: clamp(8px, 2vw, 30px);
+    top: 158px;
     z-index: 3;
     overflow: hidden;
-    width: 100%;
-    margin-top: 158px;
+    width: clamp(250px, 22vw, 300px);
+    margin-top: 0;
     padding: 20px;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 8px;
@@ -3176,7 +3172,6 @@ h2 {
     }
 
     .extension-preview-stage {
-        grid-template-columns: 1fr;
         min-height: 0;
         max-width: 620px;
     }
