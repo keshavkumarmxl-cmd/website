@@ -1,12 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap");
+
 :root {
-    --bg: #050505;
-    --panel: #0b0c10;
-    --panel-2: #12141a;
-    --line: rgba(255,255,255,0.1);
-    --text: #f7f7f7;
-    --muted: #a6abb7;
-    --red: #ff1515;
-    --cyan: #1fc7ff;
+    --bg: #030304;
+    --panel: #08090d;
+    --panel-2: #101116;
+    --line: rgba(255,255,255,0.11);
+    --text: #faf7f7;
+    --muted: #aeb3bf;
+    --red: #f01822;
+    --red-deep: #5e0508;
+    --red-soft: rgba(240,24,34,0.16);
+    --cyan: #35c6ff;
     --green: #25d77b;
     --gold: #ffcf5a;
 }
@@ -28,12 +32,12 @@ body {
     margin: 0;
     min-height: 100vh;
     background:
-        radial-gradient(circle at 18% 12%, rgba(255,21,21,0.16), transparent 28rem),
-        radial-gradient(circle at 78% 16%, rgba(31,199,255,0.12), transparent 26rem),
-        radial-gradient(circle at 50% 110%, rgba(255,207,90,0.08), transparent 36rem),
-        linear-gradient(180deg, #080808 0%, #020202 100%);
+        radial-gradient(circle at 16% 10%, rgba(240,24,34,0.14), transparent 30rem),
+        radial-gradient(circle at 82% 18%, rgba(53,198,255,0.07), transparent 26rem),
+        radial-gradient(circle at 50% 115%, rgba(240,24,34,0.08), transparent 38rem),
+        linear-gradient(180deg, #050304 0%, #020203 58%, #040202 100%);
     color: var(--text);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     overflow-x: hidden;
     --scroll-progress: 0;
     --mouse-x: 50%;
@@ -2901,6 +2905,186 @@ footer button {
 
 .checkout-action {
     padding-top: 0;
+}
+
+.site-header {
+    min-height: 76px;
+    padding-top: 16px;
+    border-bottom-color: rgba(255,255,255,0.075);
+    background:
+        linear-gradient(90deg, rgba(240,24,34,0.11), rgba(5,6,8,0.76) 34%, rgba(2,10,12,0.84)),
+        rgba(4,4,5,0.88);
+    box-shadow: 0 18px 54px rgba(0,0,0,0.28);
+}
+
+.brand {
+    font-size: 16px;
+    letter-spacing: 0;
+}
+
+.brand-mark {
+    width: 38px;
+    height: 38px;
+    border-color: rgba(255,255,255,0.16);
+}
+
+nav a {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+h1,
+h2,
+h3,
+.modal-card h2,
+.policy-hero h1 {
+    font-family: "Space Grotesk", "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+h1 {
+    font-size: clamp(44px, 5.25vw, 86px);
+    line-height: 0.96;
+}
+
+h2 {
+    font-size: clamp(32px, 4.9vw, 66px);
+    line-height: 0.98;
+}
+
+.eyebrow {
+    color: #ff3942;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+}
+
+.hero {
+    min-height: 74vh;
+}
+
+.hero-copy > p:not(.eyebrow) {
+    max-width: 840px;
+    color: #c4c8d2;
+    font-size: clamp(16px, 1.45vw, 20px);
+    line-height: 1.75;
+}
+
+.hero-console,
+.proof-strip article,
+.lane-grid article,
+.tutorial-video,
+.tutorial-copy,
+.price-grid article,
+.support-section,
+.policy-block,
+.modal-card {
+    border-color: rgba(255,255,255,0.105);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(240,24,34,0.11), transparent 18rem),
+        linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.018)),
+        rgba(3,4,6,0.72);
+    box-shadow: 0 22px 76px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.045);
+}
+
+.ae-support-card {
+    border-color: rgba(255,255,255,0.11);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(240,24,34,0.13), transparent 14rem),
+        linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018)),
+        rgba(5,5,7,0.82);
+}
+
+.ae-support-card h3 {
+    font-size: clamp(24px, 2.2vw, 34px);
+    line-height: 1.04;
+}
+
+.section-head {
+    margin-bottom: 26px;
+}
+
+.section-copy,
+.orbit-head p:not(.eyebrow),
+.workflow-lane .section-head > p,
+.tutorial-section .section-head > p {
+    color: #b7bcc8;
+    line-height: 1.68;
+}
+
+.extension-section .section-head h2,
+.workflow-lane .section-head h2,
+.tutorial-section .section-head h2,
+.pricing .section-head h2,
+.command-copy h2 {
+    font-size: clamp(36px, 4.6vw, 72px);
+    line-height: 1.02;
+}
+
+.lane-grid article {
+    min-height: 240px;
+    padding: 24px;
+}
+
+.lane-grid h3 {
+    margin-top: 34px;
+    font-size: clamp(24px, 2.55vw, 36px);
+    line-height: 1.04;
+}
+
+.lane-grid p,
+.proof-strip p,
+.tutorial-copy p,
+.price-grid p:not(.plan),
+.support-section p:not(.eyebrow),
+.policy-block p,
+.policy-block li {
+    color: #b7bcc8;
+}
+
+.tutorial-copy h3 {
+    font-size: clamp(28px, 3vw, 42px);
+    line-height: 1.03;
+}
+
+.price-grid h3 {
+    font-family: "Space Grotesk", "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(42px, 5vw, 70px);
+    line-height: 1;
+}
+
+.modal-card {
+    background:
+        radial-gradient(circle at 10% 0%, rgba(240,24,34,0.18), transparent 19rem),
+        linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.018)),
+        rgba(4,4,6,0.96);
+}
+
+.modal-card h2 {
+    font-size: clamp(30px, 3.6vw, 44px);
+    line-height: 1.02;
+}
+
+.checkout-price strong {
+    font-family: "Space Grotesk", "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(38px, 4.2vw, 58px);
+    line-height: 1;
+}
+
+.checkout-field input,
+.checkout-terms,
+.checkout-product,
+.checkout-price {
+    background-color: rgba(5,6,8,0.66);
+    border-color: rgba(255,255,255,0.13);
+}
+
+.buy-btn,
+.primary-btn,
+.price-grid button.pricing-buy,
+.checkout-submit {
+    border-color: rgba(255,70,78,0.72);
+    background: linear-gradient(135deg, #ff3038, #c40008 54%, #630307);
 }
 
 .modal-close span {
