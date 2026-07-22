@@ -1127,13 +1127,13 @@ h2 {
 .extension-preview-stage {
     position: relative;
     min-height: 760px;
-    max-width: 1260px;
+    max-width: 1500px;
     margin: 0 auto;
 }
 
 .ae-support-card {
     position: absolute;
-    left: clamp(8px, 2vw, 30px);
+    left: 0;
     top: 158px;
     z-index: 3;
     overflow: hidden;
