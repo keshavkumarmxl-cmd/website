@@ -1,5 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap");
 
+@font-face {
+    font-family: "The Seasons";
+    src: url("TheSeasons-Bd.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     --bg: #030304;
     --panel: #08090d;
@@ -3337,6 +3345,314 @@ h2 {
 
     .buy-btn {
         padding: 0 12px;
+    }
+}
+
+.site-header,
+.brand,
+nav a,
+.buy-btn,
+.primary-btn,
+.ghost-btn,
+.frame-actions button,
+.price-grid button,
+.checkout-submit,
+input,
+button {
+    font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root {
+    --bg: #000000;
+    --panel: #050304;
+    --panel-2: #0b0506;
+    --line: rgba(255,255,255,0.095);
+    --text: #fffafa;
+    --muted: #b7adb1;
+    --red: #ff1b24;
+    --red-deep: #480004;
+    --red-soft: rgba(255,27,36,0.18);
+    --cyan: #18b9f0;
+    --green: #27d77b;
+    --gold: #f6c95a;
+}
+
+body {
+    background:
+        radial-gradient(circle at 12% 8%, rgba(255,27,36,0.18), transparent 34rem),
+        radial-gradient(circle at 88% 42%, rgba(18,128,150,0.08), transparent 34rem),
+        radial-gradient(circle at 44% 110%, rgba(120,0,8,0.22), transparent 44rem),
+        linear-gradient(180deg, #000000 0%, #020000 42%, #050101 100%);
+}
+
+.motion-bg {
+    background:
+        radial-gradient(circle at 10% 18%, rgba(125,0,8,0.18), transparent 34rem),
+        linear-gradient(180deg, #000000 0%, #040101 100%);
+}
+
+.motion-bg::after {
+    background:
+        radial-gradient(circle at var(--smooth-mouse-x) var(--smooth-mouse-y), rgba(255,27,36,0.24), transparent 18rem),
+        radial-gradient(circle at calc(100% - var(--smooth-mouse-x)) calc(100% - var(--smooth-mouse-y)), rgba(18,185,240,0.07), transparent 24rem),
+        linear-gradient(180deg, rgba(0,0,0,0.20), rgba(0,0,0,0.86));
+}
+
+.motion-bg::before {
+    opacity: 0.18;
+}
+
+.motion-grid {
+    opacity: 0.18;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.026) 1px, transparent 1px);
+}
+
+.aurora-one,
+.aurora-three {
+    background: #a80008;
+}
+
+.aurora-two {
+    background: #05272b;
+    opacity: 0.14;
+}
+
+h1,
+h2,
+h3,
+.modal-card h2,
+.policy-hero h1,
+.extension-section .section-head h2,
+.workflow-lane .section-head h2,
+.tutorial-section .section-head h2,
+.pricing .section-head h2,
+.command-copy h2,
+.price-grid h3,
+.checkout-price strong {
+    font-family: "The Seasons", "Space Grotesk", "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: clamp(58px, 5rem, 88px);
+    line-height: 0.94;
+}
+
+h2 {
+    font-size: clamp(42px, 4.25rem, 72px);
+    line-height: 0.96;
+}
+
+.hero-copy h1 {
+    max-width: 980px;
+    text-shadow: 0 18px 48px rgba(0,0,0,0.62), 0 0 34px rgba(255,27,36,0.12);
+}
+
+.extension-section .section-head h2,
+.workflow-lane .section-head h2,
+.tutorial-section .section-head h2,
+.pricing .section-head h2,
+.command-copy h2 {
+    max-width: 880px;
+    font-size: clamp(42px, 4.5rem, 76px);
+    line-height: 0.98;
+}
+
+.lane-grid h3,
+.tutorial-copy h3,
+.ae-support-card h3 {
+    font-size: clamp(30px, 2.45rem, 42px);
+    line-height: 1.02;
+}
+
+.price-grid h3,
+.checkout-price strong {
+    font-size: clamp(46px, 4.1rem, 70px);
+    line-height: 0.98;
+}
+
+.eyebrow {
+    color: #ff3b43;
+    text-shadow: 0 0 18px rgba(255,27,36,0.28);
+}
+
+.site-header {
+    min-height: 72px;
+    background:
+        linear-gradient(90deg, rgba(92,0,6,0.62), rgba(0,0,0,0.90) 35%, rgba(0,10,11,0.74)),
+        rgba(0,0,0,0.88);
+    border-bottom-color: rgba(255,255,255,0.08);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.52), inset 0 -1px 0 rgba(255,27,36,0.14);
+    backdrop-filter: blur(18px) saturate(130%);
+}
+
+.brand {
+    color: #fff;
+}
+
+.brand-mark {
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 24px rgba(255,27,36,0.18);
+}
+
+nav a {
+    color: rgba(255,255,255,0.68);
+}
+
+nav a:hover {
+    color: #fff;
+}
+
+.hero {
+    min-height: 76vh;
+}
+
+.hero-copy > p:not(.eyebrow),
+.section-copy,
+.orbit-head p:not(.eyebrow),
+.workflow-lane .section-head > p,
+.tutorial-section .section-head > p,
+.lane-grid p,
+.proof-strip p,
+.tutorial-copy p,
+.price-grid p:not(.plan),
+.support-section p:not(.eyebrow),
+.policy-block p,
+.policy-block li {
+    color: #c1b9bd;
+}
+
+.hero-console,
+.proof-strip article,
+.lane-grid article,
+.tutorial-video,
+.tutorial-copy,
+.price-grid article,
+.support-section,
+.policy-block,
+.modal-card,
+.ae-support-card,
+.checkout-summary,
+.checkout-action {
+    border-color: rgba(255,255,255,0.10);
+    background:
+        linear-gradient(135deg, rgba(255,27,36,0.13), rgba(255,255,255,0.026) 34%, rgba(4,4,5,0.84)),
+        rgba(0,0,0,0.72);
+    box-shadow:
+        0 26px 86px rgba(0,0,0,0.48),
+        inset 0 1px 0 rgba(255,255,255,0.045);
+}
+
+.lane-grid article,
+.price-grid article,
+.proof-strip article {
+    border-top-color: rgba(255,27,36,0.50);
+}
+
+.lane-grid article:hover,
+.price-grid article:hover,
+.proof-strip article:hover {
+    border-color: rgba(255,57,66,0.42);
+    box-shadow:
+        0 28px 92px rgba(0,0,0,0.58),
+        0 0 42px rgba(255,27,36,0.10),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.extension-frame-shell,
+.floating-panel-shell {
+    box-shadow:
+        0 30px 110px rgba(0,0,0,0.62),
+        0 0 0 1px rgba(255,27,36,0.18),
+        0 0 54px rgba(255,27,36,0.10);
+}
+
+.buy-btn,
+.primary-btn,
+.price-grid button.pricing-buy,
+.checkout-submit {
+    background:
+        linear-gradient(135deg, #ff3038 0%, #e0000a 48%, #650006 100%);
+    border-color: rgba(255,65,72,0.78);
+    box-shadow:
+        0 16px 42px rgba(255,27,36,0.26),
+        inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+.ghost-btn,
+.frame-actions button {
+    background: rgba(255,255,255,0.045);
+    border-color: rgba(255,255,255,0.13);
+    color: #fff;
+}
+
+.checkout-field input,
+.checkout-terms,
+.checkout-product,
+.checkout-price {
+    background-color: rgba(0,0,0,0.48);
+    border-color: rgba(255,255,255,0.13);
+}
+
+.checkout-field input:focus {
+    border-color: rgba(255,49,57,0.70);
+    box-shadow: 0 0 0 4px rgba(255,27,36,0.12);
+}
+
+.support-icon {
+    background: rgba(255,255,255,0.045);
+    border-color: rgba(255,255,255,0.14);
+    box-shadow:
+        0 16px 44px rgba(0,0,0,0.44),
+        inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+.support-material {
+    background:
+        radial-gradient(circle at 72% 22%, rgba(255,255,255,0.42), transparent 0.5rem),
+        linear-gradient(135deg, #3b0f38 0%, #7c1cff 28%, #ff1b89 55%, #ff5a18 100%);
+    border-color: rgba(255,255,255,0.24);
+}
+
+@media (max-width: 980px) {
+    h1 {
+        font-size: clamp(48px, 4.8rem, 78px);
+    }
+
+    h2,
+    .extension-section .section-head h2,
+    .workflow-lane .section-head h2,
+    .tutorial-section .section-head h2,
+    .pricing .section-head h2,
+    .command-copy h2 {
+        font-size: clamp(38px, 4rem, 64px);
+    }
+}
+
+@media (max-width: 560px) {
+    h1 {
+        font-size: clamp(40px, 3.8rem, 58px);
+        line-height: 0.98;
+    }
+
+    h2,
+    .extension-section .section-head h2,
+    .workflow-lane .section-head h2,
+    .tutorial-section .section-head h2,
+    .pricing .section-head h2,
+    .command-copy h2 {
+        font-size: clamp(34px, 3.35rem, 48px);
+        line-height: 1;
+    }
+
+    .lane-grid h3,
+    .tutorial-copy h3,
+    .ae-support-card h3 {
+        font-size: clamp(26px, 2.45rem, 34px);
     }
 }
 
