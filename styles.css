@@ -1902,9 +1902,17 @@ h2 {
 }
 
 .support-material {
-    border-color: rgba(37,215,123,0.50);
-    background: rgba(37,215,123,0.13);
-    box-shadow: 0 16px 42px rgba(37,215,123,0.12);
+    border-color: rgba(255,255,255,0.24);
+    background:
+        radial-gradient(circle at 28% 92%, #ffd76f 0 18%, transparent 36%),
+        radial-gradient(circle at 18% 18%, #7b5cff 0 16%, transparent 34%),
+        linear-gradient(135deg, #7b2cff 0%, #f72585 48%, #ff4d00 100%);
+    color: #fff;
+    box-shadow: 0 16px 42px rgba(247,37,133,0.20), inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+.support-material svg {
+    stroke-width: 1.8;
 }
 
 .support-youtube {
