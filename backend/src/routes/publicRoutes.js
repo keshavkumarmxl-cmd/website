@@ -6,7 +6,7 @@ import { config } from "../config.js";
 import { validate } from "../middleware/validate.js";
 import { activateSchema, downloadSchema, purchaseSchema, razorpayOrderSchema, verifyLicenseSchema } from "../schemas.js";
 import { sendPurchaseEmail } from "../services/emailService.js";
-import { createRazorpayOrder, verifyPayment } from "../services/paymentService.js";
+import { createRazorpayOrder, getCheckoutPlans, verifyPayment } from "../services/paymentService.js";
 import { createDownloadToken, readDownloadToken } from "../utils/downloadLink.js";
 import {
   expiryDate,
@@ -105,6 +105,10 @@ publicRoutes.get("/site-settings/tutorial", (req, res) => {
   });
 });
 
+publicRoutes.get("/pricing", (req, res) => {
+  res.json({ plans: getCheckoutPlans().filter((plan) => plan.isActive) });
+});
+
 publicRoutes.post("/razorpay/order", validate(razorpayOrderSchema), async (req, res, next) => {
   try {
     const body = req.body;
@@ -116,7 +120,8 @@ publicRoutes.post("/razorpay/order", validate(razorpayOrderSchema), async (req, 
       plan: body.plan,
       productId: body.productId,
       name: body.name,
-      email: body.email
+      email: body.email,
+      couponCode: body.couponCode
     });
 
     return res.status(201).json({
@@ -150,6 +155,7 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
 
     const buyerEmail = body.email || payment.raw?.email;
     const buyerName = body.name || payment.raw?.notes?.name || payment.raw?.contact || "Razorpay Customer";
+    const couponCode = String(payment.raw?.notes?.couponCode || (body.paymentProvider === "manual" ? body.couponCode : "") || "").trim().toUpperCase();
 
     if (!buyerEmail) {
       return res.status(400).json({
@@ -168,6 +174,7 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
         paymentId: body.paymentId,
         amount: payment.amount,
         currency: payment.currency,
+        couponCode,
         date: new Date().toISOString()
       };
 
@@ -177,6 +184,9 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
       `).run(user.id, body.productId, body.paymentProvider, body.paymentId, payment.amount || null, payment.currency || null, JSON.stringify(payment.raw || {}));
 
       appendPurchaseHistory(user.id, purchase);
+      if (couponCode) {
+        db.prepare("UPDATE coupons SET redeemed_count = redeemed_count + 1, updated_at = CURRENT_TIMESTAMP WHERE code = ?").run(couponCode);
+      }
       return { user, key };
     });
 

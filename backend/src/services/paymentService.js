@@ -2,6 +2,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import Stripe from "stripe";
 import { config } from "../config.js";
+import { db } from "../db/connection.js";
 
 const stripe = config.stripe.secretKey ? new Stripe(config.stripe.secretKey) : null;
 const razorpay = config.razorpay.keyId && config.razorpay.keySecret
@@ -23,14 +24,104 @@ export const checkoutPlans = {
   }
 };
 
-export async function createRazorpayOrder({ plan, productId, name, email }) {
+function formatPrice(amount, currency) {
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: amount % 100 === 0 ? 0 : 2
+  }).format(amount / 100).replace("₹", "Rs ");
+}
+
+function rowToPlan(row) {
+  return {
+    key: row.plan_key,
+    title: row.title,
+    amount: row.amount,
+    currency: row.currency,
+    price: formatPrice(row.amount, row.currency),
+    licenseType: row.license_type,
+    description: row.description,
+    isActive: Boolean(row.is_active)
+  };
+}
+
+export function getCheckoutPlans() {
+  const rows = db.prepare("SELECT * FROM product_plans ORDER BY rowid").all();
+  return rows.map(rowToPlan);
+}
+
+function getPlan(planKey) {
+  const row = db.prepare("SELECT * FROM product_plans WHERE plan_key = ? AND is_active = 1").get(planKey);
+  if (row) return rowToPlan(row);
+
+  const fallback = checkoutPlans[planKey] || checkoutPlans["India Launch"];
+  return {
+    key: planKey in checkoutPlans ? planKey : "India Launch",
+    title: planKey in checkoutPlans ? planKey : "India Launch",
+    amount: fallback.amount,
+    currency: fallback.currency,
+    price: formatPrice(fallback.amount, fallback.currency),
+    licenseType: fallback.licenseType,
+    description: fallback.description,
+    isActive: true
+  };
+}
+
+function normalizeCouponCode(code) {
+  return String(code || "").trim().toUpperCase();
+}
+
+export function calculateCheckout({ plan, couponCode }) {
+  const details = getPlan(plan);
+  const code = normalizeCouponCode(couponCode);
+  let discount = null;
+  let finalAmount = details.amount;
+
+  if (code) {
+    const coupon = db.prepare("SELECT * FROM coupons WHERE code = ?").get(code);
+    const now = new Date();
+    const expired = coupon?.expires_at && new Date(coupon.expires_at) < now;
+    const limitReached = coupon?.max_redemptions && coupon.redeemed_count >= coupon.max_redemptions;
+    const currencyMismatch = coupon?.currency && coupon.currency !== details.currency;
+
+    if (!coupon || !coupon.is_active || expired || limitReached || currencyMismatch) {
+      const error = new Error("Coupon is invalid or expired");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const discountAmount = coupon.discount_type === "percent"
+      ? Math.floor(details.amount * Math.min(coupon.discount_value, 100) / 100)
+      : Math.min(coupon.discount_value, details.amount);
+
+    finalAmount = Math.max(100, details.amount - discountAmount);
+    discount = {
+      code,
+      type: coupon.discount_type,
+      value: coupon.discount_value,
+      amount: discountAmount,
+      label: `-${formatPrice(discountAmount, details.currency)}`
+    };
+  }
+
+  return {
+    ...details,
+    originalAmount: details.amount,
+    amount: finalAmount,
+    price: formatPrice(finalAmount, details.currency),
+    originalPrice: formatPrice(details.amount, details.currency),
+    discount
+  };
+}
+
+export async function createRazorpayOrder({ plan, productId, name, email, couponCode }) {
   if (!razorpay) {
     const error = new Error("Razorpay is not configured");
     error.statusCode = 503;
     throw error;
   }
 
-  const details = checkoutPlans[plan] || checkoutPlans["India Launch"];
+  const details = calculateCheckout({ plan, couponCode });
   const receipt = `${productId}-${Date.now()}`.slice(0, 40);
 
   const order = await razorpay.orders.create({
@@ -41,7 +132,8 @@ export async function createRazorpayOrder({ plan, productId, name, email }) {
       productId,
       plan,
       name,
-      email
+      email,
+      couponCode: details.discount?.code || ""
     }
   });
 
@@ -51,7 +143,11 @@ export async function createRazorpayOrder({ plan, productId, name, email }) {
     amount: order.amount,
     currency: order.currency,
     receipt: order.receipt,
-    plan,
+    plan: details.key,
+    couponCode: details.discount?.code || "",
+    originalAmount: details.originalAmount,
+    finalAmount: details.amount,
+    discount: details.discount,
     licenseType: details.licenseType,
     description: details.description
   };

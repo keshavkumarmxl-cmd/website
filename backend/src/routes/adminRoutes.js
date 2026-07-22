@@ -3,7 +3,7 @@ import express from "express";
 import { db } from "../db/connection.js";
 import { validate } from "../middleware/validate.js";
 import { createAdminToken, requireAdmin } from "../middleware/auth.js";
-import { adminLoginSchema, manualLicenseSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
+import { adminLoginSchema, couponSchema, manualLicenseSchema, planSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
 import { expiryDate, generateLicenseKey, hashLicenseKey, licenseHint } from "../utils/license.js";
 
 export const adminRoutes = express.Router();
@@ -37,6 +37,90 @@ adminRoutes.post("/settings/tutorial", validate(tutorialVideoSchema), (req, res)
   `).run(req.body.youtubeUrl || "");
 
   res.json({ status: "success", youtubeUrl: req.body.youtubeUrl || "" });
+});
+
+adminRoutes.get("/pricing/plans", (req, res) => {
+  res.json(db.prepare("SELECT * FROM product_plans ORDER BY rowid").all().map((row) => ({
+    key: row.plan_key,
+    title: row.title,
+    amount: row.amount,
+    currency: row.currency,
+    licenseType: row.license_type,
+    description: row.description,
+    isActive: Boolean(row.is_active),
+    updatedAt: row.updated_at
+  })));
+});
+
+adminRoutes.put("/pricing/plans/:key", validate(planSchema), (req, res) => {
+  const result = db.prepare(`
+    UPDATE product_plans
+    SET title = ?, amount = ?, currency = ?, license_type = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE plan_key = ?
+  `).run(
+    req.body.title,
+    req.body.amount,
+    req.body.currency,
+    req.body.licenseType,
+    req.body.description,
+    req.body.isActive ? 1 : 0,
+    req.params.key
+  );
+
+  if (!result.changes) return res.status(404).json({ error: "Plan not found" });
+  return res.json({ status: "success" });
+});
+
+adminRoutes.get("/pricing/coupons", (req, res) => {
+  res.json(db.prepare("SELECT * FROM coupons ORDER BY created_at DESC").all().map((row) => ({
+    code: row.code,
+    discountType: row.discount_type,
+    discountValue: row.discount_value,
+    currency: row.currency || "",
+    maxRedemptions: row.max_redemptions,
+    redeemedCount: row.redeemed_count,
+    expiresAt: row.expires_at,
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  })));
+});
+
+adminRoutes.post("/pricing/coupons", validate(couponSchema), (req, res) => {
+  db.prepare(`
+    INSERT INTO coupons (code, discount_type, discount_value, currency, max_redemptions, expires_at, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(code) DO UPDATE SET
+      discount_type = excluded.discount_type,
+      discount_value = excluded.discount_value,
+      currency = excluded.currency,
+      max_redemptions = excluded.max_redemptions,
+      expires_at = excluded.expires_at,
+      is_active = excluded.is_active,
+      updated_at = CURRENT_TIMESTAMP
+  `).run(
+    req.body.code,
+    req.body.discountType,
+    req.body.discountValue,
+    req.body.currency || null,
+    req.body.maxRedemptions || null,
+    req.body.expiresAt || null,
+    req.body.isActive ? 1 : 0
+  );
+
+  res.status(201).json({ status: "success" });
+});
+
+adminRoutes.post("/pricing/coupons/:code/toggle", (req, res) => {
+  const result = db.prepare(`
+    UPDATE coupons
+    SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE code = ?
+  `).run(String(req.params.code || "").trim().toUpperCase());
+
+  if (!result.changes) return res.status(404).json({ error: "Coupon not found" });
+  res.json({ status: "success" });
 });
 
 adminRoutes.get("/users", (req, res) => {

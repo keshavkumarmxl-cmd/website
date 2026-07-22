@@ -340,15 +340,15 @@
             <div class="price-grid">
                 <article>
                     <p class="plan">India Launch</p>
-                    <h3>Rs 99</h3>
+                    <h3 data-plan-price="India Launch">Rs 99</h3>
                     <p>Full Keshav With Velo extension access for Indian editors. One license activates on one PC only.</p>
-                    <button class="pricing-buy" data-open-payment="India Launch"><span>Buy for Rs 99</span><i aria-hidden="true"></i></button>
+                    <button class="pricing-buy" data-open-payment="India Launch"><span data-plan-button="India Launch">Buy for Rs 99</span><i aria-hidden="true"></i></button>
                 </article>
                 <article>
                     <p class="plan">International</p>
-                    <h3>$1</h3>
+                    <h3 data-plan-price="International">$1</h3>
                     <p>Simple global pricing for editors outside India. One license activates on one PC only.</p>
-                    <button class="pricing-buy" data-open-payment="International"><span>Buy for $1</span><i aria-hidden="true"></i></button>
+                    <button class="pricing-buy" data-open-payment="International"><span data-plan-button="International">Buy for $1</span><i aria-hidden="true"></i></button>
                 </article>
             </div>
             <div class="terms-panel" id="terms">
@@ -437,6 +437,10 @@
                     <label class="checkout-field">
                         <span>Email for your license</span>
                         <input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="254" required>
+                    </label>
+                    <label class="checkout-field">
+                        <span>Coupon code</span>
+                        <input id="checkoutCoupon" name="couponCode" type="text" autocomplete="off" maxlength="40" placeholder="Optional">
                     </label>
                     <label class="checkout-terms">
                         <input id="checkoutTerms" name="terms" type="checkbox" required>

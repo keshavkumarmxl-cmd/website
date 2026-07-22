@@ -434,20 +434,54 @@ const checkoutPriceLabel = document.getElementById("checkoutPriceLabel");
 const checkoutButtonText = document.getElementById("checkoutButtonText");
 let selectedPlan = "India Launch";
 
-const planDetails = {
+let planDetails = {
     "India Launch": {
         title: "India Launch checkout",
         plan: "India Launch",
         price: "Rs 99",
+        amount: 9900,
+        currency: "INR",
         button: "Checkout"
     },
     International: {
         title: "International checkout",
         plan: "International",
         price: "$1",
+        amount: 100,
+        currency: "USD",
         button: "Checkout"
     }
 };
+
+function updateDisplayedPrices() {
+    Object.entries(planDetails).forEach(([key, details]) => {
+        const price = document.querySelector(`[data-plan-price="${key}"]`);
+        const button = document.querySelector(`[data-plan-button="${key}"]`);
+        if (price) price.textContent = details.price;
+        if (button) button.textContent = `Buy for ${details.price}`;
+    });
+}
+
+async function loadPricing() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/pricing`);
+        if (!response.ok) return;
+        const data = await response.json();
+        (data.plans || []).forEach((plan) => {
+            planDetails[plan.key] = {
+                title: `${plan.title} checkout`,
+                plan: plan.title,
+                price: plan.price,
+                amount: plan.amount,
+                currency: plan.currency,
+                button: "Checkout"
+            };
+        });
+        updateDisplayedPrices();
+    } catch (error) {
+        // Keep static fallback prices if the backend is waking up.
+    }
+}
 
 function setCheckoutStatus(message, mode = "") {
     checkoutStatus.className = `checkout-note${mode ? ` ${mode}` : ""}`;
@@ -521,13 +555,14 @@ modal.addEventListener("click", (event) => {
 checkoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(checkoutForm);
-    const name = String(formData.get("name") || "").trim();
-    const email = String(formData.get("email") || "").trim().toLowerCase();
-    if (!name || !email) {
-        setCheckoutStatus("Enter your name and email so we can deliver your license.", "error");
-        return;
-    }
+        const formData = new FormData(checkoutForm);
+        const name = String(formData.get("name") || "").trim();
+        const email = String(formData.get("email") || "").trim().toLowerCase();
+        const couponCode = String(formData.get("couponCode") || "").trim().toUpperCase();
+        if (!name || !email) {
+            setCheckoutStatus("Enter your name and email so we can deliver your license.", "error");
+            return;
+        }
 
     const submitButton = checkoutForm.querySelector("button");
     submitButton.disabled = true;
@@ -543,7 +578,8 @@ checkoutForm.addEventListener("submit", async (event) => {
                 productId: "keshav-with-velo",
                 plan: selectedPlan,
                 name,
-                email
+                email,
+                couponCode
             })
         });
 
@@ -552,6 +588,11 @@ checkoutForm.addEventListener("submit", async (event) => {
         if (!window.Razorpay) throw new Error("Razorpay checkout script is not loaded. Check internet connection.");
 
         const order = orderData.order;
+        if (order.discount) {
+            checkoutPriceLabel.textContent = `${order.discount.label} coupon applied. Pay ${formatCheckoutPrice(order.finalAmount, order.currency)}.`;
+        } else {
+            checkoutPriceLabel.textContent = details.price;
+        }
         setCheckoutStatus("Razorpay gateway is opening...", "loading");
 
         const payment = await new Promise((resolve, reject) => {
@@ -566,7 +607,8 @@ checkoutForm.addEventListener("submit", async (event) => {
                     productId: "keshav-with-velo",
                     plan: selectedPlan,
                     name,
-                    email
+                    email,
+                    couponCode: order.couponCode || ""
                 },
                 prefill: { name, email },
                 theme: {
@@ -599,6 +641,7 @@ checkoutForm.addEventListener("submit", async (event) => {
                 paymentId: payment.razorpay_payment_id,
                 razorpayOrderId: payment.razorpay_order_id,
                 razorpaySignature: payment.razorpay_signature,
+                couponCode: order.couponCode || "",
                 licenseType: order.licenseType || "standard"
             })
         });
@@ -616,3 +659,13 @@ checkoutForm.addEventListener("submit", async (event) => {
         checkoutButtonText.textContent = details.button;
     }
 });
+
+function formatCheckoutPrice(amount, currency) {
+    return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: amount % 100 === 0 ? 0 : 2
+    }).format(amount / 100).replace("₹", "Rs ");
+}
+
+loadPricing();

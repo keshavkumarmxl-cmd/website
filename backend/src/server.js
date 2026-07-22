@@ -20,6 +20,8 @@ app.use(helmet({
 
 const allowedOrigins = new Set([
   config.frontendOrigin,
+  "https://keshavwithvelo.in",
+  "https://www.keshavwithvelo.in",
   "https://website-0fny.onrender.com",
   "http://localhost:8080",
   "file://"

@@ -86,6 +86,30 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS product_plans (
+  plan_key TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  currency TEXT NOT NULL,
+  license_type TEXT NOT NULL DEFAULT 'standard',
+  description TEXT NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS coupons (
+  code TEXT PRIMARY KEY,
+  discount_type TEXT NOT NULL CHECK(discount_type IN ('percent', 'fixed')),
+  discount_value INTEGER NOT NULL,
+  currency TEXT,
+  max_redemptions INTEGER,
+  redeemed_count INTEGER NOT NULL DEFAULT 0,
+  expires_at TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_licenses_user_id ON licenses(user_id);
 CREATE INDEX IF NOT EXISTS idx_devices_license_id ON devices(license_id);
@@ -106,6 +130,18 @@ if (!activeVersion) {
     INSERT OR IGNORE INTO extension_versions (version, download_path, notes, is_active)
     VALUES (?, ?, ?, 1)
   `).run("1.0.0", config.extensionZipPath, "Initial extension ZIP");
+}
+
+const plans = [
+  ["India Launch", "India Launch", 9900, "INR", "standard", "Keshav With Velo India Launch"],
+  ["International", "International", 100, "USD", "standard", "Keshav With Velo International"]
+];
+
+for (const plan of plans) {
+  db.prepare(`
+    INSERT OR IGNORE INTO product_plans (plan_key, title, amount, currency, license_type, description)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(...plan);
 }
 
 console.log("Database initialized.");

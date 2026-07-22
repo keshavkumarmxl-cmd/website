@@ -21,6 +21,7 @@ export const purchaseSchema = z.object({
   paymentId: z.string().trim().min(2),
   razorpayOrderId: z.string().trim().optional(),
   razorpaySignature: z.string().trim().optional(),
+  couponCode: z.string().trim().max(40).optional(),
   licenseType: z.enum(["standard", "lifetime", "trial"]).default("standard")
 });
 
@@ -28,7 +29,8 @@ export const razorpayOrderSchema = z.object({
   productId: z.string().trim().min(2),
   plan: z.enum(["India Launch", "International"]).default("India Launch"),
   name: z.string().trim().min(2).max(80),
-  email: z.string().trim().email().toLowerCase()
+  email: z.string().trim().email().toLowerCase(),
+  couponCode: z.string().trim().max(40).optional()
 });
 
 export const activateSchema = z.object({
@@ -68,4 +70,23 @@ export const versionSchema = z.object({
 
 export const tutorialVideoSchema = z.object({
   youtubeUrl: z.string().trim().max(300).refine(isYoutubeUrl, "Enter a valid YouTube link or video ID")
+});
+
+export const planSchema = z.object({
+  title: z.string().trim().min(2).max(80),
+  amount: z.number().int().min(100).max(99999999),
+  currency: z.string().trim().min(3).max(3).transform((value) => value.toUpperCase()),
+  licenseType: z.enum(["standard", "lifetime", "trial"]).default("standard"),
+  description: z.string().trim().min(2).max(160),
+  isActive: z.boolean().default(true)
+});
+
+export const couponSchema = z.object({
+  code: z.string().trim().min(2).max(40).transform((value) => value.toUpperCase()),
+  discountType: z.enum(["percent", "fixed"]),
+  discountValue: z.number().int().min(1).max(99999999),
+  currency: z.string().trim().max(3).optional().transform((value) => value ? value.toUpperCase() : ""),
+  maxRedemptions: z.number().int().min(1).max(1000000).optional().nullable(),
+  expiresAt: z.string().trim().max(40).optional().nullable(),
+  isActive: z.boolean().default(true)
 });

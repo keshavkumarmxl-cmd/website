@@ -83,7 +83,8 @@
       text-transform: uppercase;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       min-height: 46px;
       border: 1px solid rgba(255,255,255,0.14);
@@ -95,9 +96,29 @@
       outline: none;
     }
 
-    input:focus {
+    input:focus,
+    select:focus {
       border-color: rgba(31,199,255,0.72);
       box-shadow: 0 0 0 3px rgba(31,199,255,0.12);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .item {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.22);
+    }
+
+    .item strong {
+      display: block;
+      margin-bottom: 8px;
     }
 
     button,
@@ -203,6 +224,44 @@
         <iframe id="previewFrame" title="Tutorial preview" allowfullscreen></iframe>
       </div>
     </section>
+
+    <section class="hidden" id="pricingPanel">
+      <h2>Pricing</h2>
+      <div id="planList"></div>
+      <p class="status" id="pricingStatus"></p>
+    </section>
+
+    <section class="hidden" id="couponPanel">
+      <h2>Coupons</h2>
+      <div class="grid">
+        <label>Code
+          <input id="couponCode" type="text" placeholder="LAUNCH50">
+        </label>
+        <label>Discount type
+          <select id="couponType">
+            <option value="percent">Percent</option>
+            <option value="fixed">Fixed amount</option>
+          </select>
+        </label>
+        <label>Discount value
+          <input id="couponValue" type="number" min="1" placeholder="50 or 5000 paise">
+        </label>
+        <label>Currency for fixed discount
+          <input id="couponCurrency" type="text" maxlength="3" placeholder="INR / USD">
+        </label>
+        <label>Max redemptions
+          <input id="couponMax" type="number" min="1" placeholder="Optional">
+        </label>
+        <label>Expires at
+          <input id="couponExpiry" type="datetime-local">
+        </label>
+      </div>
+      <div class="row">
+        <button id="saveCouponBtn" type="button">Save Coupon</button>
+      </div>
+      <p class="status" id="couponStatus"></p>
+      <div id="couponList"></div>
+    </section>
   </main>
 
   <script>
@@ -210,6 +269,8 @@
     const tokenKey = "velo_admin_token";
     const loginPanel = document.getElementById("loginPanel");
     const tutorialPanel = document.getElementById("tutorialPanel");
+    const pricingPanel = document.getElementById("pricingPanel");
+    const couponPanel = document.getElementById("couponPanel");
     const logoutBtn = document.getElementById("logoutBtn");
     const loginStatus = document.getElementById("loginStatus");
     const saveStatus = document.getElementById("saveStatus");
@@ -302,12 +363,16 @@
     function showAdmin() {
       loginPanel.classList.add("hidden");
       tutorialPanel.classList.remove("hidden");
+      pricingPanel.classList.remove("hidden");
+      couponPanel.classList.remove("hidden");
       logoutBtn.classList.remove("hidden");
     }
 
     function showLogin() {
       loginPanel.classList.remove("hidden");
       tutorialPanel.classList.add("hidden");
+      pricingPanel.classList.add("hidden");
+      couponPanel.classList.add("hidden");
       logoutBtn.classList.add("hidden");
     }
 
@@ -321,6 +386,49 @@
         localStorage.removeItem(tokenKey);
         showLogin();
         setStatus(loginStatus, "Please login again.", "error");
+      }
+    }
+
+    function money(amount, currency) {
+      return `${currency} ${(Number(amount || 0) / 100).toFixed(2)}`;
+    }
+
+    async function loadPricingTools() {
+      const pricingStatus = document.getElementById("pricingStatus");
+      const planList = document.getElementById("planList");
+      const couponList = document.getElementById("couponList");
+
+      try {
+        const [plans, coupons] = await Promise.all([
+          api("/api/admin/pricing/plans"),
+          api("/api/admin/pricing/coupons")
+        ]);
+
+        planList.innerHTML = plans.map((plan) => `
+          <div class="item" data-plan="${plan.key}">
+            <strong>${plan.key}</strong>
+            <div class="grid">
+              <label>Title <input data-field="title" value="${plan.title}"></label>
+              <label>Amount in paise/cents <input data-field="amount" type="number" min="100" value="${plan.amount}"></label>
+              <label>Currency <input data-field="currency" maxlength="3" value="${plan.currency}"></label>
+              <label>Description <input data-field="description" value="${plan.description}"></label>
+            </div>
+            <label><input data-field="isActive" type="checkbox" ${plan.isActive ? "checked" : ""}> Active</label>
+            <button type="button" data-save-plan="${plan.key}">Save Plan</button>
+          </div>
+        `).join("");
+
+        couponList.innerHTML = coupons.map((coupon) => `
+          <div class="item">
+            <strong>${coupon.code} ${coupon.isActive ? "" : "(inactive)"}</strong>
+            <p>${coupon.discountType} ${coupon.discountValue}${coupon.currency ? ` ${coupon.currency}` : ""} · used ${coupon.redeemedCount}${coupon.maxRedemptions ? `/${coupon.maxRedemptions}` : ""}</p>
+            <button class="secondary" type="button" data-toggle-coupon="${coupon.code}">${coupon.isActive ? "Disable" : "Enable"}</button>
+          </div>
+        `).join("");
+
+        setStatus(pricingStatus, "Pricing loaded.", "success");
+      } catch (error) {
+        setStatus(pricingStatus, error.error || "Could not load pricing tools.", "error");
       }
     }
 
@@ -339,6 +447,7 @@
         setStatus(loginStatus, "Logged in.", "success");
         showAdmin();
         await loadTutorial();
+        await loadPricingTools();
       } catch (error) {
         setStatus(loginStatus, error.error || "Login failed.", "error");
       }
@@ -365,6 +474,67 @@
       updatePreview("");
     });
 
+    document.getElementById("planList").addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-save-plan]");
+      if (!button) return;
+
+      const box = button.closest("[data-plan]");
+      const key = box.dataset.plan;
+      const value = (field) => box.querySelector(`[data-field="${field}"]`);
+
+      try {
+        setStatus(document.getElementById("pricingStatus"), "Saving plan...");
+        await api(`/api/admin/pricing/plans/${encodeURIComponent(key)}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            title: value("title").value.trim(),
+            amount: Number(value("amount").value),
+            currency: value("currency").value.trim(),
+            licenseType: "standard",
+            description: value("description").value.trim(),
+            isActive: value("isActive").checked
+          })
+        });
+        setStatus(document.getElementById("pricingStatus"), "Plan saved.", "success");
+        await loadPricingTools();
+      } catch (error) {
+        setStatus(document.getElementById("pricingStatus"), error.error || "Could not save plan.", "error");
+      }
+    });
+
+    document.getElementById("saveCouponBtn").addEventListener("click", async () => {
+      try {
+        setStatus(document.getElementById("couponStatus"), "Saving coupon...");
+        await api("/api/admin/pricing/coupons", {
+          method: "POST",
+          body: JSON.stringify({
+            code: document.getElementById("couponCode").value.trim(),
+            discountType: document.getElementById("couponType").value,
+            discountValue: Number(document.getElementById("couponValue").value),
+            currency: document.getElementById("couponCurrency").value.trim(),
+            maxRedemptions: document.getElementById("couponMax").value ? Number(document.getElementById("couponMax").value) : null,
+            expiresAt: document.getElementById("couponExpiry").value || null,
+            isActive: true
+          })
+        });
+        setStatus(document.getElementById("couponStatus"), "Coupon saved.", "success");
+        await loadPricingTools();
+      } catch (error) {
+        setStatus(document.getElementById("couponStatus"), error.error || "Could not save coupon.", "error");
+      }
+    });
+
+    document.getElementById("couponList").addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-toggle-coupon]");
+      if (!button) return;
+      try {
+        await api(`/api/admin/pricing/coupons/${encodeURIComponent(button.dataset.toggleCoupon)}/toggle`, { method: "POST" });
+        await loadPricingTools();
+      } catch (error) {
+        setStatus(document.getElementById("couponStatus"), error.error || "Could not update coupon.", "error");
+      }
+    });
+
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem(tokenKey);
       showLogin();
@@ -376,6 +546,7 @@
     if (token()) {
       showAdmin();
       loadTutorial();
+      loadPricingTools();
     } else {
       warmApi();
     }
