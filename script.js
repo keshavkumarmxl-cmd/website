@@ -469,6 +469,7 @@ const checkoutForm = document.getElementById("checkoutForm");
 const checkoutStatus = document.getElementById("checkoutStatus");
 const checkoutPlanLabel = document.getElementById("checkoutPlanLabel");
 const checkoutPriceLabel = document.getElementById("checkoutPriceLabel");
+const checkoutDiscountLine = document.getElementById("checkoutDiscountLine");
 const checkoutButtonText = document.getElementById("checkoutButtonText");
 let selectedPlan = "India Launch";
 
@@ -526,6 +527,12 @@ function setCheckoutStatus(message, mode = "") {
     checkoutStatus.textContent = message;
 }
 
+function setCheckoutDiscount(message = "") {
+    if (!checkoutDiscountLine) return;
+    checkoutDiscountLine.textContent = message;
+    checkoutDiscountLine.classList.toggle("hidden", !message);
+}
+
 function appendCheckoutLine(label, value) {
     const line = document.createElement("span");
     line.className = "checkout-note-line";
@@ -573,6 +580,7 @@ document.querySelectorAll("[data-open-payment]").forEach((button) => {
         modalTitle.textContent = details.title;
         checkoutPlanLabel.textContent = details.plan;
         checkoutPriceLabel.textContent = details.price;
+        setCheckoutDiscount("");
         checkoutButtonText.textContent = details.button;
         setCheckoutStatus("Secure license delivery after payment confirmation.");
         modal.classList.add("active");
@@ -627,9 +635,11 @@ checkoutForm.addEventListener("submit", async (event) => {
 
         const order = orderData.order;
         if (order.discount) {
-            checkoutPriceLabel.textContent = `${order.discount.label} coupon applied. Pay ${formatCheckoutPrice(order.finalAmount, order.currency)}.`;
+            checkoutPriceLabel.textContent = details.price;
+            setCheckoutDiscount(`${order.discount.code} applied: ${order.discount.label}. Pay ${formatCheckoutPrice(order.finalAmount, order.currency)}.`);
         } else {
             checkoutPriceLabel.textContent = details.price;
+            setCheckoutDiscount("");
         }
         setCheckoutStatus("Razorpay gateway is opening...", "loading");
 
@@ -690,6 +700,7 @@ checkoutForm.addEventListener("submit", async (event) => {
         setCheckoutSuccess(data);
         checkoutForm.reset();
     } catch (error) {
+        setCheckoutDiscount("");
         setCheckoutStatus(error.message || "Could not generate license. Check backend server.", "error");
     } finally {
         submitButton.disabled = false;

@@ -2641,6 +2641,19 @@ footer button {
     line-height: 0.9;
 }
 
+.checkout-discount {
+    display: block;
+    margin-top: 8px;
+    color: #b7ffd4;
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.35;
+}
+
+.checkout-discount.hidden {
+    display: none;
+}
+
 .checkout-price p {
     margin-top: 8px;
     color: var(--muted);
