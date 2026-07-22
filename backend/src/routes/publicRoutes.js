@@ -197,7 +197,6 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
         ? "Purchase confirmed. License generated and email sent."
         : "Purchase confirmed. License generated. Email delivery needs manual follow-up.",
       email: user.email,
-      licenseKey: key,
       downloadUrl,
       emailDelivery
     });

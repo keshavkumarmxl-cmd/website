@@ -474,15 +474,13 @@ function setCheckoutSuccess(data) {
     checkoutStatus.className = "checkout-note success";
     checkoutStatus.textContent = "";
 
-    appendCheckoutLine("License generated: ", data.licenseKey);
-
     const emailMessage = document.createElement("span");
     if (data.emailDelivery?.sent) {
-        emailMessage.textContent = `Email sent to ${data.email}.`;
+        emailMessage.textContent = `Payment confirmed. Activation email and key sent to ${data.email}.`;
     } else if (data.emailDelivery?.skipped) {
-        emailMessage.textContent = "Email delivery needs manual follow-up. Save this key now.";
+        emailMessage.textContent = "Payment confirmed. Email delivery needs manual follow-up; contact support with your payment ID.";
     } else {
-        emailMessage.textContent = "Email delivery failed. Save this key now and contact support if needed.";
+        emailMessage.textContent = "Payment confirmed. Email delivery failed; contact support with your payment ID.";
     }
     checkoutStatus.append(emailMessage);
 

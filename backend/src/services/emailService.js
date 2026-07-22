@@ -18,17 +18,20 @@ function createTransport() {
   });
 }
 
-function buildPurchaseEmail({ name, licenseKey, downloadUrl }) {
-  const subject = "Your Keshav With Velo license key";
+function buildPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
+  const subject = "Your Keshav With Velo activation details";
   const text = `Hi ${name},
 
 Thank you for buying Keshav With Velo.
 
+Activation email:
+${email}
+
+Activation key:
+${licenseKey}
+
 Download link (valid for ${config.downloadLinkExpiryHours} hours):
 ${downloadUrl}
-
-License key:
-${licenseKey}
 
 Activation:
 1. Download and install the extension ZIP.
@@ -49,7 +52,8 @@ Terms:
       <h2>Keshav With Velo License</h2>
       <p>Hi ${name}, thank you for buying Keshav With Velo.</p>
       <p><strong>Download:</strong> <a href="${downloadUrl}">Download Keshav With Velo</a> (valid for ${config.downloadLinkExpiryHours} hours).</p>
-      <p><strong>License key:</strong></p>
+      <p><strong>Activation email:</strong><br>${email}</p>
+      <p><strong>Activation key:</strong></p>
       <p style="font-size:22px;font-weight:700;letter-spacing:2px">${licenseKey}</p>
       <h3>Activation</h3>
       <ol>
@@ -102,7 +106,7 @@ async function sendWithResend({ email, subject, text, html }) {
 }
 
 export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
-  const { subject, text, html } = buildPurchaseEmail({ name, licenseKey, downloadUrl });
+  const { subject, text, html } = buildPurchaseEmail({ name, email, licenseKey, downloadUrl });
 
   const resendDelivery = await sendWithResend({ email, subject, text, html });
   if (resendDelivery) return resendDelivery;
