@@ -3,7 +3,7 @@ import express from "express";
 import { db } from "../db/connection.js";
 import { validate } from "../middleware/validate.js";
 import { createAdminToken, requireAdmin } from "../middleware/auth.js";
-import { adminLoginSchema, couponSchema, manualLicenseSchema, planSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
+import { adminLoginSchema, couponSchema, manualLicenseSchema, offerBannerSchema, planSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
 import { expiryDate, generateLicenseKey, hashLicenseKey, licenseHint } from "../utils/license.js";
 
 export const adminRoutes = express.Router();
@@ -37,6 +37,39 @@ adminRoutes.post("/settings/tutorial", validate(tutorialVideoSchema), (req, res)
   `).run(req.body.youtubeUrl || "");
 
   res.json({ status: "success", youtubeUrl: req.body.youtubeUrl || "" });
+});
+
+adminRoutes.get("/settings/offer-banner", (req, res) => {
+  const text = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("offer_banner_text");
+  const active = db.prepare("SELECT value FROM site_settings WHERE key = ?").get("offer_banner_active");
+  res.json({
+    text: text?.value || "",
+    isActive: active ? active.value === "1" : true,
+    updatedAt: text?.updated_at || null
+  });
+});
+
+adminRoutes.post("/settings/offer-banner", validate(offerBannerSchema), (req, res) => {
+  const tx = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES ('offer_banner_text', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(req.body.text || "");
+
+    db.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES ('offer_banner_active', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(req.body.isActive ? "1" : "0");
+  });
+
+  tx();
+  res.json({ status: "success", text: req.body.text || "", isActive: req.body.isActive });
 });
 
 adminRoutes.get("/pricing/plans", (req, res) => {

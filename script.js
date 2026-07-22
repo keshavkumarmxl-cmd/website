@@ -281,6 +281,44 @@ async function initTutorialVideo() {
 
 initTutorialVideo();
 
+function setOfferTicker(text, isActive = true) {
+    const ticker = document.getElementById("offerTicker");
+    const track = document.getElementById("offerTickerTrack");
+    const message = String(text || "").trim();
+    if (!ticker || !track) return;
+
+    if (!message || !isActive) {
+        ticker.classList.remove("active");
+        ticker.setAttribute("aria-hidden", "true");
+        track.textContent = "";
+        return;
+    }
+
+    track.textContent = "";
+    for (let i = 0; i < 8; i += 1) {
+        const item = document.createElement("span");
+        item.textContent = message;
+        track.append(item);
+    }
+    ticker.classList.add("active");
+    ticker.setAttribute("aria-hidden", "false");
+}
+
+async function initOfferTicker() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/site-settings/offer-banner`, {
+            headers: { Accept: "application/json" }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setOfferTicker(data.text, data.isActive);
+    } catch (error) {
+        setOfferTicker("");
+    }
+}
+
+initOfferTicker();
+
 function animateFeatureOrbit() {
     const orbit = document.querySelector(".feature-orbit");
     const cards = [...document.querySelectorAll(".orbit-card")];

@@ -225,6 +225,19 @@
       </div>
     </section>
 
+    <section class="hidden" id="offerPanel">
+      <h2>Header Offer Ticker</h2>
+      <label>Offer text
+        <input id="offerText" type="text" maxlength="220" placeholder="Use LAUNCH50 for 50% off today">
+      </label>
+      <label><input id="offerActive" type="checkbox" checked> Active</label>
+      <div class="row">
+        <button id="saveOfferBtn" type="button">Save Offer</button>
+        <button class="secondary" id="clearOfferBtn" type="button">Clear Offer</button>
+      </div>
+      <p class="status" id="offerStatus"></p>
+    </section>
+
     <section class="hidden" id="pricingPanel">
       <h2>Pricing</h2>
       <div id="planList"></div>
@@ -269,12 +282,16 @@
     const tokenKey = "velo_admin_token";
     const loginPanel = document.getElementById("loginPanel");
     const tutorialPanel = document.getElementById("tutorialPanel");
+    const offerPanel = document.getElementById("offerPanel");
     const pricingPanel = document.getElementById("pricingPanel");
     const couponPanel = document.getElementById("couponPanel");
     const logoutBtn = document.getElementById("logoutBtn");
     const loginStatus = document.getElementById("loginStatus");
     const saveStatus = document.getElementById("saveStatus");
+    const offerStatus = document.getElementById("offerStatus");
     const youtubeUrl = document.getElementById("youtubeUrl");
+    const offerText = document.getElementById("offerText");
+    const offerActive = document.getElementById("offerActive");
     const videoPreview = document.getElementById("videoPreview");
     const previewFrame = document.getElementById("previewFrame");
 
@@ -363,6 +380,7 @@
     function showAdmin() {
       loginPanel.classList.add("hidden");
       tutorialPanel.classList.remove("hidden");
+      offerPanel.classList.remove("hidden");
       pricingPanel.classList.remove("hidden");
       couponPanel.classList.remove("hidden");
       logoutBtn.classList.remove("hidden");
@@ -371,6 +389,7 @@
     function showLogin() {
       loginPanel.classList.remove("hidden");
       tutorialPanel.classList.add("hidden");
+      offerPanel.classList.add("hidden");
       pricingPanel.classList.add("hidden");
       couponPanel.classList.add("hidden");
       logoutBtn.classList.add("hidden");
@@ -386,6 +405,17 @@
         localStorage.removeItem(tokenKey);
         showLogin();
         setStatus(loginStatus, "Please login again.", "error");
+      }
+    }
+
+    async function loadOffer() {
+      try {
+        const data = await api("/api/admin/settings/offer-banner");
+        offerText.value = data.text || "";
+        offerActive.checked = data.isActive !== false;
+        setStatus(offerStatus, data.text ? "Current offer loaded." : "No offer text is saved yet.");
+      } catch (error) {
+        setStatus(offerStatus, error.error || "Could not load offer.", "error");
       }
     }
 
@@ -421,7 +451,7 @@
         couponList.innerHTML = coupons.map((coupon) => `
           <div class="item">
             <strong>${coupon.code} ${coupon.isActive ? "" : "(inactive)"}</strong>
-            <p>${coupon.discountType} ${coupon.discountValue}${coupon.currency ? ` ${coupon.currency}` : ""} · used ${coupon.redeemedCount}${coupon.maxRedemptions ? `/${coupon.maxRedemptions}` : ""}</p>
+            <p>${coupon.discountType} ${coupon.discountValue}${coupon.currency ? ` ${coupon.currency}` : ""} - used ${coupon.redeemedCount}${coupon.maxRedemptions ? `/${coupon.maxRedemptions}` : ""}</p>
             <button class="secondary" type="button" data-toggle-coupon="${coupon.code}">${coupon.isActive ? "Disable" : "Enable"}</button>
           </div>
         `).join("");
@@ -447,6 +477,7 @@
         setStatus(loginStatus, "Logged in.", "success");
         showAdmin();
         await loadTutorial();
+        await loadOffer();
         await loadPricingTools();
       } catch (error) {
         setStatus(loginStatus, error.error || "Login failed.", "error");
@@ -472,6 +503,28 @@
     document.getElementById("clearBtn").addEventListener("click", () => {
       youtubeUrl.value = "";
       updatePreview("");
+    });
+
+    document.getElementById("saveOfferBtn").addEventListener("click", async () => {
+      try {
+        setStatus(offerStatus, "Saving offer...");
+        const data = await api("/api/admin/settings/offer-banner", {
+          method: "POST",
+          body: JSON.stringify({
+            text: offerText.value.trim(),
+            isActive: offerActive.checked
+          })
+        });
+        offerText.value = data.text || "";
+        offerActive.checked = data.isActive !== false;
+        setStatus(offerStatus, "Offer ticker saved.", "success");
+      } catch (error) {
+        setStatus(offerStatus, error.error || "Could not save offer.", "error");
+      }
+    });
+
+    document.getElementById("clearOfferBtn").addEventListener("click", () => {
+      offerText.value = "";
     });
 
     document.getElementById("planList").addEventListener("click", async (event) => {
@@ -546,6 +599,7 @@
     if (token()) {
       showAdmin();
       loadTutorial();
+      loadOffer();
       loadPricingTools();
     } else {
       warmApi();
@@ -553,3 +607,4 @@
   </script>
 </body>
 </html>
+

@@ -72,6 +72,11 @@ export const tutorialVideoSchema = z.object({
   youtubeUrl: z.string().trim().max(300).refine(isYoutubeUrl, "Enter a valid YouTube link or video ID")
 });
 
+export const offerBannerSchema = z.object({
+  text: z.string().trim().max(220),
+  isActive: z.boolean().default(true)
+});
+
 export const planSchema = z.object({
   title: z.string().trim().min(2).max(80),
   amount: z.number().int().min(100).max(99999999),

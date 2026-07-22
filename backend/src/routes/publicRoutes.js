@@ -105,6 +105,16 @@ publicRoutes.get("/site-settings/tutorial", (req, res) => {
   });
 });
 
+publicRoutes.get("/site-settings/offer-banner", (req, res) => {
+  const text = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("offer_banner_text");
+  const active = db.prepare("SELECT value FROM site_settings WHERE key = ?").get("offer_banner_active");
+  res.json({
+    text: text?.value || "",
+    isActive: active ? active.value === "1" : true,
+    updatedAt: text?.updated_at || null
+  });
+});
+
 publicRoutes.get("/pricing", (req, res) => {
   res.json({ plans: getCheckoutPlans().filter((plan) => plan.isActive) });
 });

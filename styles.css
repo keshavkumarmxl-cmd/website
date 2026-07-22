@@ -410,16 +410,73 @@ button:hover::before,
     position: sticky;
     top: 0;
     z-index: 20;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
     gap: 18px;
-    padding: 14px clamp(16px, 4vw, 54px);
+    padding: 14px clamp(16px, 4vw, 54px) 0;
     border-bottom: 1px solid rgba(255,255,255,0.08);
     background:
         linear-gradient(90deg, rgba(255,21,21,0.08), transparent 28%, rgba(31,199,255,0.06)),
         rgba(4,4,4,0.78);
     backdrop-filter: blur(18px);
+}
+
+.offer-ticker {
+    grid-column: 1 / -1;
+    display: none;
+    width: calc(100% + clamp(32px, 8vw, 108px));
+    height: 34px;
+    margin-inline: calc(clamp(16px, 4vw, 54px) * -1);
+    overflow: hidden;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background:
+        linear-gradient(90deg, rgba(255,21,21,0.14), rgba(31,199,255,0.06), rgba(255,21,21,0.12)),
+        rgba(0,0,0,0.42);
+}
+
+.offer-ticker.active {
+    display: block;
+}
+
+.offer-ticker-track {
+    min-width: max-content;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    animation: offerTickerLoop 28s linear infinite;
+}
+
+.offer-ticker-track span {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.offer-ticker-track span::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 14px rgba(255,21,21,0.8);
+}
+
+@keyframes offerTickerLoop {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
 }
 
 .brand,
