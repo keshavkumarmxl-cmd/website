@@ -2,6 +2,14 @@ import fs from "fs";
 import path from "path";
 import express from "express";
 import { db } from "../db/connection.js";
+import {
+  activateMongoLicense,
+  findMongoLicenseByHash,
+  logMongoActivationAttempt,
+  mirrorPurchase,
+  mongoPurchaseExists,
+  verifyMongoLicense
+} from "../db/mongoBackup.js";
 import { config } from "../config.js";
 import { validate } from "../middleware/validate.js";
 import { activateSchema, downloadSchema, purchaseSchema, razorpayOrderSchema, verifyLicenseSchema } from "../schemas.js";
@@ -29,6 +37,15 @@ function logAttempt(req, { email, licenseKey, deviceHash, result, reason }) {
     INSERT INTO activation_attempts (email, license_hint, device_fingerprint_hash, ip_address, user_agent, result, reason)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(email || null, licenseKey ? licenseHint(licenseKey) : null, deviceHash || null, clientIp(req), req.headers["user-agent"] || "", result, reason || null);
+  logMongoActivationAttempt({
+    email: email || null,
+    licenseHint: licenseKey ? licenseHint(licenseKey) : null,
+    deviceHash: deviceHash || null,
+    ipAddress: clientIp(req),
+    userAgent: req.headers["user-agent"] || "",
+    result,
+    reason: reason || null
+  });
 }
 
 function failedAttemptCount(req, email) {
@@ -158,6 +175,11 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
       return res.status(409).json({ status: "failed", reason: "Payment was already used" });
     }
 
+    const existingMongoPurchase = await mongoPurchaseExists(body.paymentProvider, body.paymentId);
+    if (existingMongoPurchase) {
+      return res.status(409).json({ status: "failed", reason: "Payment was already used" });
+    }
+
     const payment = await verifyPayment(body);
     if (!payment.verified) {
       return res.status(402).json({ status: "failed", reason: payment.reason || "Payment verification failed" });
@@ -197,10 +219,27 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
       if (couponCode) {
         db.prepare("UPDATE coupons SET redeemed_count = redeemed_count + 1, updated_at = CURRENT_TIMESTAMP WHERE code = ?").run(couponCode);
       }
-      return { user, key };
+      return { user, key, purchase };
     });
 
-    const { user, key } = tx();
+    const { user, key, purchase } = tx();
+    const licenseHash = hashLicenseKey(key);
+    const licenseRow = db.prepare("SELECT * FROM licenses WHERE license_hash = ?").get(licenseHash);
+    await mirrorPurchase({
+      user,
+      license: {
+        licenseHash,
+        licenseHint: licenseHint(key),
+        status: licenseRow?.status || "inactive",
+        licenseType: licenseRow?.license_type || body.licenseType,
+        expiryDate: licenseRow?.expiry_date || null
+      },
+      purchase: {
+        ...purchase,
+        licenseHint: licenseHint(key)
+      }
+    });
+
     const downloadToken = createDownloadToken({ email: user.email, licenseKey: key });
     const downloadUrl = `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
     let emailDelivery = { sent: false };
@@ -225,7 +264,7 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
   }
 });
 
-function handleActivate(req, res) {
+async function handleActivate(req, res) {
   const { email, licenseKey, deviceFingerprint } = req.body;
   const normalizedKey = normalizeLicenseKey(licenseKey);
   const licenseHash = hashLicenseKey(normalizedKey);
@@ -249,6 +288,23 @@ function handleActivate(req, res) {
   `).get(licenseHash);
 
   if (!license || license.email !== email) {
+    const mongoActivation = await activateMongoLicense({ licenseHash, email, deviceHash });
+    if (mongoActivation?.status === "success") {
+      logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Activated from Mongo backup" });
+      return res.json({ status: "success", message: "License activated" });
+    }
+    if (mongoActivation?.status === "blocked") {
+      logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "License blocked in Mongo backup" });
+      return res.status(403).json({ status: "blocked", reason: "License is blocked" });
+    }
+    if (mongoActivation?.status === "expired") {
+      logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "License expired in Mongo backup" });
+      return res.status(403).json({ status: "expired", reason: "License is expired" });
+    }
+    if (mongoActivation?.status === "device_mismatch") {
+      logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Mongo backup license already activated on another device" });
+      return res.status(409).json({ status: "failed", reason: "License already activated on another device" });
+    }
     logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Invalid email or license" });
     return res.status(404).json({ status: "failed", reason: "Invalid email or license key" });
   }
@@ -297,6 +353,7 @@ function handleActivate(req, res) {
   });
 
   tx();
+  await activateMongoLicense({ licenseHash, email, deviceHash });
   logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Activated" });
   return res.json({ status: "success", message: "License activated" });
 }
@@ -304,7 +361,7 @@ function handleActivate(req, res) {
 publicRoutes.post("/activate", validate(activateSchema), handleActivate);
 publicRoutes.post("/licenses/activate", validate(activateSchema), handleActivate);
 
-function handleVerifyLicense(req, res) {
+async function handleVerifyLicense(req, res) {
   if (isMasterLicenseKey(req.body.licenseKey)) {
     return res.json({
       status: "valid",
@@ -317,7 +374,14 @@ function handleVerifyLicense(req, res) {
   const deviceHash = hashFingerprint(req.body.deviceFingerprint);
 
   const license = db.prepare("SELECT * FROM licenses WHERE license_hash = ?").get(licenseHash);
-  if (!license) return res.status(404).json({ status: "invalid" });
+  if (!license) {
+    const mongoResult = await verifyMongoLicense({ licenseHash, deviceHash });
+    if (!mongoResult) return res.status(404).json({ status: "invalid" });
+    if (mongoResult.status === "valid") return res.json(mongoResult);
+    if (mongoResult.status === "blocked") return res.status(403).json({ status: "blocked" });
+    if (mongoResult.status === "expired") return res.status(403).json({ status: "expired" });
+    return res.status(403).json(mongoResult);
+  }
   if (license.status === "blocked") return res.status(403).json({ status: "blocked" });
   if (isExpired(license.expiry_date) || license.status === "expired") {
     db.prepare("UPDATE licenses SET status = 'expired' WHERE id = ?").run(license.id);
@@ -333,6 +397,7 @@ function handleVerifyLicense(req, res) {
 
   db.prepare("UPDATE devices SET last_activity = CURRENT_TIMESTAMP WHERE id = ?").run(device.id);
   db.prepare("UPDATE licenses SET last_verification = CURRENT_TIMESTAMP WHERE id = ?").run(license.id);
+  await verifyMongoLicense({ licenseHash, deviceHash });
 
   return res.json({
     status: "valid",
@@ -344,7 +409,7 @@ function handleVerifyLicense(req, res) {
 publicRoutes.post("/verify-license", validate(verifyLicenseSchema), handleVerifyLicense);
 publicRoutes.post("/licenses/verify", validate(verifyLicenseSchema), handleVerifyLicense);
 
-publicRoutes.post("/download", validate(downloadSchema), (req, res) => {
+publicRoutes.post("/download", validate(downloadSchema), async (req, res) => {
   if (isMasterLicense({ email: req.body.email, licenseKey: req.body.licenseKey })) {
     const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
     const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
@@ -363,7 +428,19 @@ publicRoutes.post("/download", validate(downloadSchema), (req, res) => {
   `).get(licenseHash);
 
   if (!license || license.email !== req.body.email) {
-    return res.status(404).json({ status: "failed", reason: "Invalid email or license key" });
+    const mongoLicense = await findMongoLicenseByHash(licenseHash);
+    if (!mongoLicense || mongoLicense.email !== req.body.email) {
+      return res.status(404).json({ status: "failed", reason: "Invalid email or license key" });
+    }
+    if (mongoLicense.status === "blocked") return res.status(403).json({ status: "blocked" });
+    if (mongoLicense.expiryDate && new Date(mongoLicense.expiryDate).getTime() < Date.now()) return res.status(403).json({ status: "expired" });
+
+    const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
+    const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ status: "failed", reason: "Extension ZIP file is not uploaded yet" });
+    }
+    return res.download(filePath, "keshav-with-velo.zip");
   }
 
   if (license.status === "blocked") return res.status(403).json({ status: "blocked" });
@@ -379,7 +456,7 @@ publicRoutes.post("/download", validate(downloadSchema), (req, res) => {
   return res.download(filePath, "keshav-with-velo.zip");
 });
 
-publicRoutes.get("/download-link", (req, res) => {
+publicRoutes.get("/download-link", async (req, res) => {
   const token = readDownloadToken(req.query.token);
   if (!token) return res.status(403).send("This download link is invalid or has expired.");
 
@@ -392,7 +469,10 @@ publicRoutes.get("/download-link", (req, res) => {
   `).get(licenseHash);
 
   if (!license || license.email !== token.email || license.status === "blocked" || isExpired(license.expiry_date)) {
-    return res.status(403).send("This download is no longer available.");
+    const mongoLicense = await findMongoLicenseByHash(licenseHash);
+    if (!mongoLicense || mongoLicense.email !== token.email || mongoLicense.status === "blocked" || (mongoLicense.expiryDate && new Date(mongoLicense.expiryDate).getTime() < Date.now())) {
+      return res.status(403).send("This download is no longer available.");
+    }
   }
 
   const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
