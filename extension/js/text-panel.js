@@ -4,8 +4,8 @@
     const csInterface = new CSInterface();
     const run = (script) => csInterface.evalScript(script);
 
-    const presetCategories = ["TEXT", "EFFECTS", "SHAKE", "CC"];
-    const presetCategoryLabels = { TEXT: "Text", EFFECTS: "Effects", SHAKE: "Shakes", CC: "CC" };
+    const presetCategories = ["TEXT", "EFFECTS", "SHAKE", "CC", "CUSTOM"];
+    const presetCategoryLabels = { TEXT: "Text", EFFECTS: "Effects", SHAKE: "Shakes", CC: "CC", CUSTOM: "Custom" };
     const presetDisplayAliases = {
         "bounce animation": "Bounce Animation",
         "fade up words": "Fade Up Words",
@@ -38,7 +38,8 @@
         TEXT: ["Effects", "One Framer", "Warp", "Time Warp", "More Presets"],
         EFFECTS: ["Effects"],
         SHAKE: ["Camera Shake"],
-        CC: ["Color & FX"]
+        CC: ["Color & FX"],
+        CUSTOM: ["Custom Presets"]
     };
     const presetDefaultsStorageKey = "keshavwithvelo.presetDefaults.v1";
     const presetState = {
@@ -94,7 +95,74 @@
             }
             return pathCc;
         }
+        if (category === "CUSTOM") {
+            const userData = csInterface.getSystemPath(SystemPath.USER_DATA) || extPath;
+            return (userData + "/KeshavWithVelo/CustomPresets/").replace(/\\/g, "/");
+        }
         return (extPath + "/presets/" + category + "/").replace(/\\/g, "/");
+    }
+
+    function getNodeModules() {
+        if (typeof require !== "function") return null;
+        try {
+            return { fs: require("fs"), path: require("path") };
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function ensureFolder(folderPath) {
+        if (!folderPath) return false;
+        const node = getNodeModules();
+        if (node && node.fs) {
+            try {
+                const normalized = String(folderPath).replace(/\//g, "\\");
+                if (node.fs.existsSync(normalized)) return true;
+                const parts = normalized.split(/[\\\/]+/);
+                let current = "";
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i];
+                    if (!part) continue;
+                    if (!current) {
+                        current = part;
+                    } else if (/^[A-Za-z]:$/.test(current)) {
+                        current += "\\" + part;
+                    } else {
+                        current += "\\" + part;
+                    }
+                    if (/^[A-Za-z]:$/.test(current)) continue;
+                    if (!node.fs.existsSync(current)) node.fs.mkdirSync(current);
+                }
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+        if (window.cep && window.cep.fs && window.cep.fs.makedir) {
+            try { window.cep.fs.makedir(folderPath); } catch (err) {}
+        }
+        return !!(window.cep && window.cep.fs && window.cep.fs.stat(folderPath).err === 0);
+    }
+
+    function sanitizePresetFolderName(name) {
+        return String(name || "Custom Preset")
+            .replace(/\.ffx$/i, "")
+            .replace(/[<>:"\/\\|?*\x00-\x1F]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 80) || "Custom Preset";
+    }
+
+    function makeUniqueCustomPresetFolder(baseFolder, baseName) {
+        const node = getNodeModules();
+        const cleanName = sanitizePresetFolderName(baseName);
+        let candidate = cleanName;
+        let index = 2;
+        while (node && node.fs && node.fs.existsSync(baseFolder + candidate)) {
+            candidate = cleanName + " " + index;
+            index++;
+        }
+        return candidate;
     }
 
     function getPresetDisplayName(fileName) {
@@ -141,6 +209,7 @@
         if (category === "SHAKE") return "Camera Shake";
         if (category === "EFFECTS") return "Effects";
         if (category === "CC") return "Color & FX";
+        if (category === "CUSTOM") return "Custom Presets";
         if (category === "TEXT") {
             const mapped = presetTextCategoryMap[normalizePresetKey(name)];
             if (mapped) return mapped;
@@ -337,6 +406,7 @@
         if (presetState.cache[category]) return presetState.cache[category];
 
         const folderPath = getPresetFolderPath(category);
+        if (category === "CUSTOM") ensureFolder(folderPath);
         const readResult = window.cep && window.cep.fs ? window.cep.fs.readdir(folderPath) : null;
         if (!readResult || readResult.err !== 0 || !readResult.data) {
             presetState.cache[category] = [];
@@ -460,6 +530,110 @@
         return gear;
     }
 
+    function removeCustomPresetItem(item) {
+        if (!item || item.category !== "CUSTOM" || !item.path) return;
+        const node = getNodeModules();
+        try {
+            if (node && node.fs && node.path) {
+                const filePath = item.path.replace(/\//g, "\\");
+                if (node.fs.existsSync(filePath)) node.fs.unlinkSync(filePath);
+                const parent = node.path.dirname(filePath);
+                const customRoot = node.path.resolve(getPresetFolderPath("CUSTOM").replace(/\//g, "\\"));
+                const parentResolved = node.path.resolve(parent);
+                if (
+                    node.fs.existsSync(parentResolved) &&
+                    parentResolved !== customRoot &&
+                    parentResolved.indexOf(customRoot + node.path.sep) === 0
+                ) {
+                    if (node.fs.rmSync) {
+                        node.fs.rmSync(parentResolved, { recursive: true, force: true });
+                    } else if (node.fs.readdirSync(parentResolved).length === 0) {
+                        node.fs.rmdirSync(parentResolved);
+                    }
+                }
+            } else if (window.cep && window.cep.fs && window.cep.fs.deleteFile) {
+                window.cep.fs.deleteFile(item.path);
+            }
+            presetState.cache.CUSTOM = null;
+            renderPresetCategory("CUSTOM");
+            resetPresetPreview();
+        } catch (err) {
+            window.alert("Preset delete failed: " + err.message);
+        }
+    }
+
+    function ensureCustomPresetConfirmOverlay() {
+        let overlay = document.getElementById("customPresetConfirmOverlay");
+        if (overlay) return overlay;
+
+        const shell = document.getElementById("applePresetShell") || document.body;
+        overlay = document.createElement("div");
+        overlay.id = "customPresetConfirmOverlay";
+        overlay.className = "custom-preset-confirm-overlay";
+        overlay.setAttribute("aria-hidden", "true");
+        overlay.innerHTML = [
+            '<div class="custom-preset-confirm-card" role="dialog" aria-modal="true" aria-labelledby="customPresetConfirmTitle">',
+            '<p class="custom-preset-confirm-title" id="customPresetConfirmTitle">Delete preset</p>',
+            '<p class="custom-preset-confirm-copy">Delete <span class="custom-preset-confirm-name" id="customPresetConfirmName"></span> from custom presets?</p>',
+            '<div class="custom-preset-confirm-actions">',
+            '<button class="btn-primary" id="btnCustomPresetConfirmCancel" type="button">Cancel</button>',
+            '<button class="btn-primary danger" id="btnCustomPresetConfirmDelete" type="button">Delete</button>',
+            '</div>',
+            '</div>'
+        ].join("");
+        shell.appendChild(overlay);
+
+        overlay.addEventListener("click", (event) => {
+            if (event && event.target === overlay) closeCustomPresetConfirm();
+        });
+        return overlay;
+    }
+
+    function closeCustomPresetConfirm() {
+        const overlay = document.getElementById("customPresetConfirmOverlay");
+        if (!overlay) return;
+        overlay.classList.remove("active");
+        overlay.setAttribute("aria-hidden", "true");
+        overlay.__customPresetItem = null;
+    }
+
+    function openCustomPresetDeleteConfirm(item) {
+        if (!item) return;
+        const overlay = ensureCustomPresetConfirmOverlay();
+        const name = document.getElementById("customPresetConfirmName");
+        const cancel = document.getElementById("btnCustomPresetConfirmCancel");
+        const del = document.getElementById("btnCustomPresetConfirmDelete");
+        overlay.__customPresetItem = item;
+        if (name) name.textContent = '"' + getPresetDisplayName(item.name) + '"';
+        if (cancel) cancel.onclick = closeCustomPresetConfirm;
+        if (del) {
+            del.onclick = () => {
+                const target = overlay.__customPresetItem;
+                closeCustomPresetConfirm();
+                removeCustomPresetItem(target);
+            };
+        }
+        overlay.classList.add("active");
+        overlay.setAttribute("aria-hidden", "false");
+    }
+
+    function createPresetDeleteButton(item) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "apple-preset-row-delete";
+        button.setAttribute("aria-label", "Delete " + getPresetDisplayName(item.name));
+        button.title = "Delete preset";
+        button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M9 7V5h6v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10l.6 9h6.8l.6-9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        button.onclick = (event) => {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            openCustomPresetDeleteConfirm(item);
+        };
+        return button;
+    }
+
     function syncPresetVariantToggleState(group, variantKey) {
         if (!group) return;
         group.querySelectorAll(".apple-preset-variant-btn").forEach((node) => {
@@ -544,9 +718,17 @@
             gear.classList.add("apple-preset-row-gear-end");
         }
         row.appendChild(gear);
+        if (item.category === "CUSTOM") {
+            row.appendChild(createPresetDeleteButton(item));
+        }
         wrap.appendChild(row);
 
         return wrap;
+    }
+
+    function setCustomDropVisible(isVisible) {
+        const drop = document.getElementById("customPresetDropzone");
+        if (drop) drop.style.display = isVisible ? "flex" : "none";
     }
 
     function setPresetSettingsOpen(isOpen) {
@@ -672,6 +854,7 @@
 
     function renderPresetCategory(category) {
         setActivePresetCategory(category);
+        setCustomDropVisible(category === "CUSTOM");
         const items = getPresetItems(category);
         if (presetState.missing[category]) {
             renderPresetMessage("Folder missing.");
@@ -700,6 +883,85 @@
             const second = getPresetDisplayName(b.name);
             return first.localeCompare(second, undefined, { numeric: true, sensitivity: "base" });
         });
+    }
+
+    function importCustomPresetFile(filePath) {
+        if (!filePath || !/\.ffx$/i.test(filePath)) {
+            window.alert("Please add a .ffx preset file.");
+            return;
+        }
+        const node = getNodeModules();
+        if (!node || !node.fs || !node.path) {
+            window.alert("File import needs Node access in this CEP panel.");
+            return;
+        }
+        try {
+            const source = String(filePath).replace(/\//g, "\\");
+            if (!node.fs.existsSync(source)) {
+                window.alert("Preset file not found.");
+                return;
+            }
+            const customFolder = getPresetFolderPath("CUSTOM");
+            if (!ensureFolder(customFolder)) {
+                window.alert("Custom preset folder create nahi ho pa raha.");
+                return;
+            }
+            const sourceName = node.path.basename(source);
+            const folderName = makeUniqueCustomPresetFolder(customFolder, sourceName);
+            const targetFolder = node.path.join(customFolder.replace(/\//g, "\\"), folderName);
+            if (!ensureFolder(targetFolder)) {
+                window.alert("Preset folder create nahi ho pa raha.");
+                return;
+            }
+            const targetPath = node.path.join(targetFolder, sanitizePresetFolderName(sourceName) + ".ffx");
+            node.fs.copyFileSync(source, targetPath);
+            presetState.cache.CUSTOM = null;
+            loadCategory("CUSTOM");
+            resetPresetPreview();
+        } catch (err) {
+            window.alert("Preset import failed: " + err.message);
+        }
+    }
+
+    function getDroppedFilePath(file) {
+        return file && (file.path || file.fullPath || file.name) ? (file.path || file.fullPath || "") : "";
+    }
+
+    function initCustomPresetDropzone() {
+        const drop = document.getElementById("customPresetDropzone");
+        const fileInput = document.getElementById("customPresetFileInput");
+        if (!drop || drop.__customPresetDropBound) return;
+        drop.__customPresetDropBound = true;
+
+        const openPicker = () => {
+            if (fileInput) fileInput.click();
+        };
+
+        drop.onclick = openPicker;
+        drop.onkeydown = (event) => {
+            if (!event || (event.key !== "Enter" && event.key !== " ")) return;
+            event.preventDefault();
+            openPicker();
+        };
+        drop.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            drop.classList.add("dragging");
+            try { event.dataTransfer.dropEffect = "copy"; } catch (err) {}
+        });
+        drop.addEventListener("dragleave", () => drop.classList.remove("dragging"));
+        drop.addEventListener("drop", (event) => {
+            event.preventDefault();
+            drop.classList.remove("dragging");
+            const file = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files[0] : null;
+            importCustomPresetFile(getDroppedFilePath(file));
+        });
+        if (fileInput) {
+            fileInput.onchange = () => {
+                const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+                importCustomPresetFile(getDroppedFilePath(file));
+                fileInput.value = "";
+            };
+        }
     }
 
     function setPresetSearchOpen(isOpen) {
@@ -810,6 +1072,7 @@
 
         initPresetSearch();
         initPresetSettingsPopover();
+        initCustomPresetDropzone();
 
         const presetBody = document.querySelector(".apple-preset-body");
         if (presetBody && !presetBody.__presetPreviewResetBound) {
