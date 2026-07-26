@@ -2,16 +2,8 @@
     "use strict";
 
     var crypto = null;
-    var fs = null;
-    var path = null;
-    var os = null;
     try {
-        if (typeof require === "function") {
-            crypto = require("crypto");
-            fs = require("fs");
-            path = require("path");
-            os = require("os");
-        }
+        if (typeof require === "function") crypto = require("crypto");
     } catch (err) {}
 
     var STORAGE_KEY = "keshavwithvelo.license.secure.v1";
@@ -21,7 +13,6 @@
         "licenseKey",
         "activationKey"
     ];
-    var storageFilePath = "";
 
     function bufferToBase64(buffer) {
         if (typeof Buffer !== "undefined") return Buffer.from(buffer).toString("base64");
@@ -88,111 +79,26 @@
         });
     }
 
-    function getStorageFilePath() {
-        if (storageFilePath) return storageFilePath;
-        if (!fs || !path) return "";
-        var base = "";
-        try {
-            if (global.CSInterface && global.SystemPath) {
-                base = new global.CSInterface().getSystemPath(global.SystemPath.USER_DATA);
-            }
-        } catch (err) {}
-        if (!base && os) {
-            try {
-                base = process.platform === "win32"
-                    ? (process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"))
-                    : path.join(os.homedir(), ".config");
-            } catch (err2) {}
-        }
-        if (!base) return "";
-        storageFilePath = path.join(base, "KESHAVWITHVELO", "license.secure.json");
-        return storageFilePath;
-    }
-
-    function readFileRaw() {
-        var filePath = getStorageFilePath();
-        if (!filePath || !fs) return "";
-        try {
-            if (!fs.existsSync(filePath)) return "";
-            return String(fs.readFileSync(filePath, "utf8") || "");
-        } catch (err) {
-            return "";
-        }
-    }
-
-    function writeFileRaw(raw) {
-        var filePath = getStorageFilePath();
-        if (!filePath || !fs || !path) return false;
-        try {
-            var dir = path.dirname(filePath);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(filePath, String(raw || ""), "utf8");
-            return true;
-        } catch (err) {
-            return false;
-        }
-    }
-
-    function deleteFileRaw() {
-        var filePath = getStorageFilePath();
-        if (!filePath || !fs) return;
-        try {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        } catch (err) {}
-    }
-
-    function decryptRaw(raw) {
-        if (!raw) return null;
-        return decryptJson(JSON.parse(raw));
-    }
-
     function read() {
-        var raw = "";
         try {
             removePlaintextLegacyKeys();
-            raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                var localPayload = decryptRaw(raw);
-                if (localPayload) {
-                    writeFileRaw(raw);
-                    return localPayload;
-                }
-            }
+            var raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? decryptJson(JSON.parse(raw)) : null;
         } catch (err) {
-            raw = "";
-        }
-        try {
-            raw = readFileRaw();
-            if (!raw) return null;
-            var filePayload = decryptRaw(raw);
-            if (filePayload) {
-                try { localStorage.setItem(STORAGE_KEY, raw); } catch (localErr) {}
-                return filePayload;
-            }
-        } catch (fileErr) {
             return null;
         }
-        return null;
     }
 
     function write(payload) {
         removePlaintextLegacyKeys();
         var safePayload = Object.assign({}, payload || {});
         delete safePayload.activationKey;
-        var raw = JSON.stringify(encryptJson(safePayload));
-        var saved = false;
-        try {
-            localStorage.setItem(STORAGE_KEY, raw);
-            saved = true;
-        } catch (err) {}
-        saved = writeFileRaw(raw) || saved;
-        if (!saved) throw new Error("Could not save license activation locally.");
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(encryptJson(safePayload)));
     }
 
     function clear() {
         removePlaintextLegacyKeys();
         try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
-        deleteFileRaw();
     }
 
     global.KWVLocalSecureStorage = {

@@ -1,4 +1,4 @@
-﻿(function (global) {
+(function (global) {
     "use strict";
 
     global.KWV_LICENSE_CONFIG = {

@@ -13,7 +13,6 @@
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
     "@imgly/background-removal-node": "^1.4.5",
-    "adm-zip": "^0.6.0",
     "onnxruntime-web": "^1.21.0"
   },
   "devDependencies": {
