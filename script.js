@@ -140,6 +140,56 @@ function ensureFrameCursor(frameDocument) {
     return frameCursor;
 }
 
+function injectWebsitePreviewTabFix(frameDocument) {
+    if (!frameDocument || frameDocument.getElementById("websitePreviewTabFix")) return;
+
+    const style = frameDocument.createElement("style");
+    style.id = "websitePreviewTabFix";
+    style.textContent = `
+        .tabs-header::after {
+            display: none !important;
+            opacity: 0 !important;
+        }
+
+        .tabs-header .tab-btn,
+        body.kwv-theme-ready .tabs-header .tab-btn {
+            background: #111 !important;
+            border: 1px solid #202020 !important;
+            color: #777 !important;
+            box-shadow: none !important;
+            transform: none !important;
+            transition:
+                background-color 0.16s ease,
+                border-color 0.16s ease,
+                box-shadow 0.16s ease,
+                color 0.16s ease !important;
+        }
+
+        .tabs-header .tab-btn:hover,
+        body.kwv-theme-ready .tabs-header .tab-btn:hover {
+            background: #171717 !important;
+            border-color: #2a2a2a !important;
+            color: #dcdcdc !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .tabs-header .tab-btn.active,
+        body.kwv-theme-ready .tabs-header .tab-btn.active {
+            background: linear-gradient(180deg, #ff2028 0%, #f00008 100%) !important;
+            border-color: rgba(255, 72, 78, 0.95) !important;
+            color: #ffffff !important;
+            box-shadow:
+                inset 0 0 0 1px rgba(255,255,255,0.18),
+                inset 0 0 16px rgba(255,255,255,0.10),
+                0 0 12px rgba(255,21,21,0.48),
+                0 0 26px rgba(255,21,21,0.22) !important;
+            transform: none !important;
+        }
+    `;
+    frameDocument.head.appendChild(style);
+}
+
 function handlePointerMove(clientX, clientY, isInteractive = false, shouldAddEcho = true) {
     pointerTarget.x = clientX;
     pointerTarget.y = clientY;
@@ -381,6 +431,7 @@ function wireFramePointerEcho(frame) {
             const frameDocument = frame.contentDocument;
             if (!frameDocument || frame.dataset.echoWired === "true") return;
             frame.dataset.echoWired = "true";
+            injectWebsitePreviewTabFix(frameDocument);
             if (!frameDocument.getElementById("frameCursorHideStyle")) {
                 const hideCursorStyle = frameDocument.createElement("style");
                 hideCursorStyle.id = "frameCursorHideStyle";
