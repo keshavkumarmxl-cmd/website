@@ -239,27 +239,23 @@ function setTutorialVideo(url) {
     const video = document.querySelector(".tutorial-video");
     const frame = document.getElementById("tutorialFrame");
     const watchLink = document.getElementById("tutorialWatchLink");
-    if (!video || !frame) return;
+    if (!video || !frame || !watchLink) return;
 
     const videoId = getYoutubeId(url);
 
     if (!videoId) {
         video.classList.add("is-empty");
         frame.removeAttribute("src");
-        if (watchLink) {
-            watchLink.setAttribute("aria-disabled", "true");
-            watchLink.href = "#";
-        }
+        watchLink.setAttribute("aria-disabled", "true");
+        watchLink.href = "#";
         return;
     }
 
     const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
     video.classList.remove("is-empty");
     frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
-    if (watchLink) {
-        watchLink.href = watchUrl;
-        watchLink.setAttribute("aria-disabled", "false");
-    }
+    watchLink.href = watchUrl;
+    watchLink.setAttribute("aria-disabled", "false");
 }
 
 async function initTutorialVideo() {

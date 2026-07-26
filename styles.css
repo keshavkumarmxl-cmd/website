@@ -1600,7 +1600,7 @@ h2 {
 }
 
 .tutorial-section .section-head {
-    align-items: start;
+    align-items: end;
     margin-bottom: 18px;
 }
 
@@ -1609,10 +1609,14 @@ h2 {
 }
 
 .tutorial-shell {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.75fr);
+    gap: 14px;
+    align-items: stretch;
 }
 
-.tutorial-video {
+.tutorial-video,
+.tutorial-copy {
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.10);
@@ -1671,7 +1675,8 @@ h2 {
     display: none;
 }
 
-.tutorial-placeholder span {
+.tutorial-placeholder span,
+.tutorial-copy span {
     color: var(--cyan);
     font-size: 12px;
     font-weight: 950;
@@ -1686,10 +1691,55 @@ h2 {
     text-transform: uppercase;
 }
 
-.tutorial-placeholder p {
+.tutorial-placeholder p,
+.tutorial-copy p {
     margin: 0;
     color: var(--muted);
     line-height: 1.55;
+}
+
+.tutorial-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px;
+}
+
+.tutorial-copy h3 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(30px, 3.4vw, 48px);
+    line-height: 0.96;
+    text-transform: uppercase;
+}
+
+.tutorial-watch {
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 0 18px;
+    border: 1px solid rgba(255,21,21,0.62);
+    border-radius: 8px;
+    background: rgba(255,21,21,0.12);
+    color: #fff;
+    font-weight: 900;
+    text-decoration: none;
+    box-shadow: 0 16px 42px rgba(255,21,21,0.12);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tutorial-watch:hover {
+    transform: translateY(-3px);
+    border-color: rgba(31,199,255,0.58);
+    box-shadow: 0 22px 56px rgba(31,199,255,0.12);
+}
+
+.tutorial-watch[aria-disabled="true"] {
+    opacity: 0.52;
+    pointer-events: none;
 }
 
 .price-grid article::after {
@@ -2936,6 +2986,7 @@ h2 {
 .proof-strip article,
 .lane-grid article,
 .tutorial-video,
+.tutorial-copy,
 .price-grid article,
 .support-section,
 .policy-block,
@@ -2995,11 +3046,17 @@ h2 {
 
 .lane-grid p,
 .proof-strip p,
+.tutorial-copy p,
 .price-grid p:not(.plan),
 .support-section p:not(.eyebrow),
 .policy-block p,
 .policy-block li {
     color: #b7bcc8;
+}
+
+.tutorial-copy h3 {
+    font-size: clamp(28px, 3vw, 42px);
+    line-height: 1.03;
 }
 
 .price-grid h3 {
@@ -3226,6 +3283,7 @@ h2 {
     .hero-console,
     .proof-strip article,
     .lane-grid article,
+    .tutorial-copy,
     .support-section {
         padding: 16px;
     }
@@ -3410,6 +3468,7 @@ h2 {
 }
 
 .lane-grid h3,
+.tutorial-copy h3,
 .ae-support-card h3 {
     font-size: clamp(30px, 2.45rem, 42px);
     line-height: 1.02;
@@ -3464,6 +3523,7 @@ nav a:hover {
 .tutorial-section .section-head > p,
 .lane-grid p,
 .proof-strip p,
+.tutorial-copy p,
 .price-grid p:not(.plan),
 .support-section p:not(.eyebrow),
 .policy-block p,
@@ -3475,6 +3535,7 @@ nav a:hover {
 .proof-strip article,
 .lane-grid article,
 .tutorial-video,
+.tutorial-copy,
 .price-grid article,
 .support-section,
 .policy-block,
@@ -3593,6 +3654,7 @@ nav a:hover {
     }
 
     .lane-grid h3,
+    .tutorial-copy h3,
     .ae-support-card h3 {
         font-size: clamp(26px, 2.45rem, 34px);
     }
