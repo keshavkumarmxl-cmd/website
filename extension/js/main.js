@@ -283,21 +283,15 @@
     // 1. TABS SYSTEM
     const tabs = document.querySelectorAll(".tab-btn");
     const panes = document.querySelectorAll(".tab-pane");
-    let mainTabIndicatorFrame = 0;
     function syncMainTabIndicator() {
         const tabsHeader = document.querySelector(".tabs-header");
         const activeTab = tabsHeader ? tabsHeader.querySelector(".tab-btn.active") : null;
         if (!tabsHeader || !activeTab) return;
-        tabsHeader.style.setProperty("--kwv-tab-indicator-left", Math.round(activeTab.offsetLeft) + "px");
-        tabsHeader.style.setProperty("--kwv-tab-indicator-width", Math.round(activeTab.offsetWidth) + "px");
+        const headerRect = tabsHeader.getBoundingClientRect();
+        const tabRect = activeTab.getBoundingClientRect();
+        tabsHeader.style.setProperty("--kwv-tab-indicator-left", Math.round(tabRect.left - headerRect.left) + "px");
+        tabsHeader.style.setProperty("--kwv-tab-indicator-width", Math.round(tabRect.width) + "px");
         tabsHeader.style.setProperty("--kwv-tab-indicator-opacity", "1");
-    }
-    function scheduleMainTabIndicatorSync() {
-        if (mainTabIndicatorFrame) cancelAnimationFrame(mainTabIndicatorFrame);
-        mainTabIndicatorFrame = requestAnimationFrame(function() {
-            mainTabIndicatorFrame = 0;
-            syncMainTabIndicator();
-        });
     }
     function layoutTrimPackDock() {
         const dock = document.getElementById("trimpackDock");
@@ -331,16 +325,16 @@
             }
             if (target === "tab-beat") refreshBeatAudioLayers();
             if (target === "tab-color") initCocoPaletteStudio();
-            scheduleMainTabIndicatorSync();
+            syncMainTabIndicator();
             layoutTrimPackDock();
         });
     });
     window.addEventListener("resize", function() {
-        scheduleMainTabIndicatorSync();
+        syncMainTabIndicator();
         layoutTrimPackDock();
     });
     initKwvTooltipClamp();
-    setTimeout(scheduleMainTabIndicatorSync, 0);
+    setTimeout(syncMainTabIndicator, 0);
 
     function bind(id, script) {
         const el = document.getElementById(id);

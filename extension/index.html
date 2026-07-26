@@ -5637,36 +5637,22 @@
             background: #070707 !important;
             border: 1px solid #202020 !important;
             border-radius: 4px !important;
-            box-shadow: inset 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08) !important;
-            isolation: isolate !important;
-            --kwv-tab-indicator-left: 2px;
-            --kwv-tab-indicator-width: 0px;
-            --kwv-tab-indicator-opacity: 0;
+            box-shadow: none !important;
         }
 
         .tabs-header::after {
             content: "";
             position: absolute;
-            left: 0;
+            left: var(--kwv-tab-indicator-left, 2px);
             top: 2px;
             width: var(--kwv-tab-indicator-width, 0px);
             height: calc(100% - 4px);
             border-radius: 2px;
-            background:
-                radial-gradient(circle at 50% 16%, rgba(255,255,255,0.24), transparent 34%),
-                linear-gradient(180deg, rgba(var(--kwv-accent-rgb, 255, 0, 0), 1), rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.78));
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.22),
-                inset 0 0 14px rgba(255,255,255,0.12),
-                0 0 14px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.44),
-                0 0 28px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.20);
+            background: var(--kwv-accent, #ff0000);
+            box-shadow: 0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.30);
             opacity: var(--kwv-tab-indicator-opacity, 0);
-            transform: translate3d(var(--kwv-tab-indicator-left, 2px), 0, 0);
-            transition:
-                transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-                width 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.14s ease;
-            will-change: transform, width, opacity;
+            transform: translateZ(0);
+            transition: left 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.16s ease;
             pointer-events: none;
             z-index: 0;
         }
@@ -5683,11 +5669,7 @@
             transform: none !important;
             outline: none !important;
             -webkit-tap-highlight-color: transparent;
-            transition:
-                color 0.16s ease,
-                border-color 0.16s ease,
-                background-color 0.16s ease,
-                box-shadow 0.16s ease !important;
+            transition: color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
         }
 
         .tab-btn:focus,
@@ -5707,11 +5689,9 @@
 
         .tab-btn.active {
             background: transparent !important;
-            border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.58) !important;
+            border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.34) !important;
             color: #ffffff !important;
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.10),
-                0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.16) !important;
+            box-shadow: none !important;
         }
 
         .tabs-content {
@@ -5900,10 +5880,8 @@
 
         body.kwv-theme-ready .tab-btn.active {
             background: transparent !important;
-            border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.58) !important;
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.10),
-                0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.16) !important;
+            border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.34) !important;
+            box-shadow: none !important;
         }
 
         /* SRT Auto Caption AMOLED accent sync */
@@ -5920,11 +5898,9 @@
         body.kwv-theme-ready .tab-btn.active,
         .tab-btn.active {
             background: transparent !important;
-            border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.58) !important;
+            border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.34) !important;
             color: #ffffff !important;
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.10),
-                0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.16) !important;
+            box-shadow: none !important;
         }
 
         .srt-card,
