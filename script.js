@@ -390,6 +390,15 @@ function wireFramePointerEcho(frame) {
 
             frameDocument.addEventListener("pointermove", (event) => {
                 const rect = frame.getBoundingClientRect();
+                const shell = frame.closest(".extension-frame-shell, .floating-panel-shell");
+                if (shell) {
+                    const x = (event.clientX / Math.max(1, rect.width)) * 100;
+                    const y = (event.clientY / Math.max(1, rect.height)) * 100;
+                    shell.classList.add("is-frame-glowing");
+                    shell.style.setProperty("--frame-glow-opacity", "0.64");
+                    shell.style.setProperty("--frame-glow-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+                    shell.style.setProperty("--frame-glow-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+                }
                 handlePointerMove(rect.left + event.clientX, rect.top + event.clientY, true, false);
                 cursor.classList.add("in-frame");
                 const frameCursor = ensureFrameCursor(frameDocument);
@@ -399,6 +408,11 @@ function wireFramePointerEcho(frame) {
             });
 
             frameDocument.addEventListener("pointerleave", () => {
+                const shell = frame.closest(".extension-frame-shell, .floating-panel-shell");
+                if (shell) {
+                    shell.classList.remove("is-frame-glowing");
+                    shell.style.setProperty("--frame-glow-opacity", "0.42");
+                }
                 const frameCursor = frameDocument.getElementById("frameCursorEcho");
                 if (frameCursor) frameCursor.style.opacity = "0";
                 cursor.classList.remove("in-frame");
@@ -426,6 +440,21 @@ document.querySelectorAll(".extension-frame-shell, .floating-panel-shell").forEa
         if (event.target.querySelector(".real-extension-frame")) {
             document.querySelectorAll(".echo-dot").forEach((dot) => dot.remove());
         }
+        shell.classList.add("is-frame-glowing");
+        shell.style.setProperty("--frame-glow-opacity", "0.64");
+    });
+
+    shell.addEventListener("pointermove", (event) => {
+        const rect = shell.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 100;
+        const y = ((event.clientY - rect.top) / Math.max(1, rect.height)) * 100;
+        shell.style.setProperty("--frame-glow-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+        shell.style.setProperty("--frame-glow-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+    });
+
+    shell.addEventListener("pointerleave", () => {
+        shell.classList.remove("is-frame-glowing");
+        shell.style.setProperty("--frame-glow-opacity", "0.42");
     });
 });
 
