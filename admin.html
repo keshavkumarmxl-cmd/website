@@ -22,9 +22,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 18px;
+      padding: clamp(16px, 3vw, 32px);
       background:
         radial-gradient(circle at 18% 10%, rgba(255,21,21,0.18), transparent 28rem),
         radial-gradient(circle at 80% 72%, rgba(31,199,255,0.12), transparent 26rem),
@@ -34,7 +32,8 @@
     }
 
     main {
-      width: min(100%, 760px);
+      width: min(100%, 980px);
+      margin: 0 auto;
       display: grid;
       gap: 14px;
     }
@@ -57,8 +56,8 @@
 
     h1 {
       margin-bottom: 8px;
-      font-size: clamp(34px, 7vw, 64px);
-      line-height: 0.95;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1;
       text-transform: uppercase;
     }
 
@@ -96,6 +95,12 @@
       outline: none;
     }
 
+    input[type="checkbox"] {
+      width: 18px;
+      min-height: 18px;
+      accent-color: var(--red);
+    }
+
     input:focus,
     select:focus {
       border-color: rgba(31,199,255,0.72);
@@ -119,6 +124,10 @@
     .item strong {
       display: block;
       margin-bottom: 8px;
+    }
+
+    .item p {
+      margin-bottom: 12px;
     }
 
     button,
@@ -145,11 +154,46 @@
       color: var(--muted);
     }
 
+    button.danger {
+      border-color: rgba(255,107,107,0.45);
+      background: #241014;
+      color: #ffb2b2;
+    }
+
     .row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+    }
+
+    .panel-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .brand-mini {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .brand-mini img {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .checkbox-label {
+      display: flex;
+      grid-template-columns: none;
+      flex-direction: row;
+      align-items: center;
+      gap: 9px;
     }
 
     .hidden {
@@ -185,16 +229,34 @@
       height: 100%;
       border: 0;
     }
+
+    @media (max-width: 680px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-top {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
   <main>
     <section>
-      <h1>Admin Panel</h1>
-      <p>Upload or update the YouTube tutorial link shown on the main website.</p>
-      <div class="row">
-        <a class="secondary" href="index.html">Open Website</a>
-        <button class="secondary hidden" id="logoutBtn" type="button">Logout</button>
+      <div class="panel-top">
+        <div class="brand-mini">
+          <img src="assets/profile.png" alt="Keshav With Velo">
+          <div>
+            <h1>Admin Panel</h1>
+            <p>Manage website video, offer, pricing and coupons.</p>
+          </div>
+        </div>
+        <div class="row">
+          <a class="secondary" href="index.html">Open Website</a>
+          <button class="secondary hidden" id="logoutBtn" type="button">Logout</button>
+        </div>
       </div>
     </section>
 
@@ -230,7 +292,7 @@
       <label>Offer text
         <input id="offerText" type="text" maxlength="220" placeholder="Use LAUNCH50 for 50% off today">
       </label>
-      <label><input id="offerActive" type="checkbox" checked> Active</label>
+      <label class="checkbox-label"><input id="offerActive" type="checkbox" checked> Active</label>
       <div class="row">
         <button id="saveOfferBtn" type="button">Save Offer</button>
         <button class="secondary" id="clearOfferBtn" type="button">Clear Offer</button>
@@ -257,10 +319,10 @@
           </select>
         </label>
         <label>Discount value
-          <input id="couponValue" type="number" min="1" placeholder="50 or 5000 paise">
+          <input id="couponValue" type="number" min="1" step="0.01" placeholder="50% or 3500 rupees">
         </label>
         <label>Currency for fixed discount
-          <input id="couponCurrency" type="text" maxlength="3" placeholder="INR / USD">
+          <input id="couponCurrency" type="text" maxlength="3" placeholder="INR" value="INR">
         </label>
         <label>Max redemptions
           <input id="couponMax" type="number" min="1" placeholder="Optional">
@@ -419,8 +481,25 @@
       }
     }
 
-    function money(amount, currency) {
-      return `${currency} ${(Number(amount || 0) / 100).toFixed(2)}`;
+    function money(amount, currency = "INR") {
+      return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 2
+      }).format(Number(amount || 0) / 100);
+    }
+
+    function majorAmount(amount) {
+      return (Number(amount || 0) / 100).toFixed(2).replace(/\.00$/, "");
+    }
+
+    function minorAmount(value) {
+      return Math.round(Number(value || 0) * 100);
+    }
+
+    function discountLabel(coupon) {
+      if (coupon.discountType === "percent") return `${coupon.discountValue}%`;
+      return money(coupon.discountValue, coupon.currency || "INR");
     }
 
     async function loadPricingTools() {
@@ -439,11 +518,11 @@
             <strong>${plan.key}</strong>
             <div class="grid">
               <label>Title <input data-field="title" value="${plan.title}"></label>
-              <label>Amount in paise/cents <input data-field="amount" type="number" min="100" value="${plan.amount}"></label>
+              <label>Price (${plan.currency === "INR" ? "rupees" : "dollars"}) <input data-field="amount" type="number" min="1" step="0.01" value="${majorAmount(plan.amount)}"></label>
               <label>Currency <input data-field="currency" maxlength="3" value="${plan.currency}"></label>
               <label>Description <input data-field="description" value="${plan.description}"></label>
             </div>
-            <label><input data-field="isActive" type="checkbox" ${plan.isActive ? "checked" : ""}> Active</label>
+            <label class="checkbox-label"><input data-field="isActive" type="checkbox" ${plan.isActive ? "checked" : ""}> Active</label>
             <button type="button" data-save-plan="${plan.key}">Save Plan</button>
           </div>
         `).join("");
@@ -451,8 +530,11 @@
         couponList.innerHTML = coupons.map((coupon) => `
           <div class="item">
             <strong>${coupon.code} ${coupon.isActive ? "" : "(inactive)"}</strong>
-            <p>${coupon.discountType} ${coupon.discountValue}${coupon.currency ? ` ${coupon.currency}` : ""} - used ${coupon.redeemedCount}${coupon.maxRedemptions ? `/${coupon.maxRedemptions}` : ""}</p>
-            <button class="secondary" type="button" data-toggle-coupon="${coupon.code}">${coupon.isActive ? "Disable" : "Enable"}</button>
+            <p>${coupon.discountType} ${discountLabel(coupon)} - used ${coupon.redeemedCount}${coupon.maxRedemptions ? `/${coupon.maxRedemptions}` : ""}</p>
+            <div class="row">
+              <button class="secondary" type="button" data-toggle-coupon="${coupon.code}">${coupon.isActive ? "Disable" : "Enable"}</button>
+              <button class="danger" type="button" data-delete-coupon="${coupon.code}">Delete</button>
+            </div>
           </div>
         `).join("");
 
@@ -541,7 +623,7 @@
           method: "PUT",
           body: JSON.stringify({
             title: value("title").value.trim(),
-            amount: Number(value("amount").value),
+            amount: minorAmount(value("amount").value),
             currency: value("currency").value.trim(),
             licenseType: "standard",
             description: value("description").value.trim(),
@@ -563,8 +645,12 @@
           body: JSON.stringify({
             code: document.getElementById("couponCode").value.trim(),
             discountType: document.getElementById("couponType").value,
-            discountValue: Number(document.getElementById("couponValue").value),
-            currency: document.getElementById("couponCurrency").value.trim(),
+            discountValue: document.getElementById("couponType").value === "fixed"
+              ? minorAmount(document.getElementById("couponValue").value)
+              : Number(document.getElementById("couponValue").value),
+            currency: document.getElementById("couponType").value === "fixed"
+              ? document.getElementById("couponCurrency").value.trim()
+              : "",
             maxRedemptions: document.getElementById("couponMax").value ? Number(document.getElementById("couponMax").value) : null,
             expiresAt: document.getElementById("couponExpiry").value || null,
             isActive: true
@@ -578,10 +664,17 @@
     });
 
     document.getElementById("couponList").addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-toggle-coupon]");
+      const button = event.target.closest("[data-toggle-coupon], [data-delete-coupon]");
       if (!button) return;
       try {
-        await api(`/api/admin/pricing/coupons/${encodeURIComponent(button.dataset.toggleCoupon)}/toggle`, { method: "POST" });
+        if (button.dataset.deleteCoupon) {
+          if (!window.confirm(`Delete coupon ${button.dataset.deleteCoupon}? Users will not be able to use it after deletion.`)) return;
+          await api(`/api/admin/pricing/coupons/${encodeURIComponent(button.dataset.deleteCoupon)}`, { method: "DELETE" });
+          setStatus(document.getElementById("couponStatus"), "Coupon deleted.", "success");
+        } else {
+          await api(`/api/admin/pricing/coupons/${encodeURIComponent(button.dataset.toggleCoupon)}/toggle`, { method: "POST" });
+          setStatus(document.getElementById("couponStatus"), "Coupon updated.", "success");
+        }
         await loadPricingTools();
       } catch (error) {
         setStatus(document.getElementById("couponStatus"), error.error || "Could not update coupon.", "error");

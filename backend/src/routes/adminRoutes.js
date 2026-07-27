@@ -156,6 +156,13 @@ adminRoutes.post("/pricing/coupons/:code/toggle", (req, res) => {
   res.json({ status: "success" });
 });
 
+adminRoutes.delete("/pricing/coupons/:code", (req, res) => {
+  const result = db.prepare("DELETE FROM coupons WHERE code = ?").run(String(req.params.code || "").trim().toUpperCase());
+
+  if (!result.changes) return res.status(404).json({ error: "Coupon not found" });
+  res.json({ status: "success" });
+});
+
 adminRoutes.get("/users", (req, res) => {
   const rows = db.prepare(`
     SELECT users.id, users.name, users.email, users.purchase_history, users.created_at,

@@ -48,6 +48,31 @@ function logAttempt(req, { email, licenseKey, deviceHash, result, reason }) {
   });
 }
 
+function isExternalDownloadUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function sendActiveDownload(res) {
+  const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
+  const downloadPath = activeVersion?.download_path || config.extensionZipPath;
+
+  if (isExternalDownloadUrl(downloadPath)) {
+    return res.redirect(302, downloadPath);
+  }
+
+  const filePath = path.resolve(process.cwd(), downloadPath);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("The extension download is not available yet.");
+  }
+
+  return res.download(filePath, "keshav-with-velo.zip");
+}
+
 function failedAttemptCount(req, email) {
   return db.prepare(`
     SELECT COUNT(*) AS count
@@ -411,12 +436,7 @@ publicRoutes.post("/licenses/verify", validate(verifyLicenseSchema), handleVerif
 
 publicRoutes.post("/download", validate(downloadSchema), async (req, res) => {
   if (isMasterLicense({ email: req.body.email, licenseKey: req.body.licenseKey })) {
-    const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
-    const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ status: "failed", reason: "Extension ZIP file is not uploaded yet" });
-    }
-    return res.download(filePath, "keshav-with-velo.zip");
+    return sendActiveDownload(res);
   }
 
   const licenseHash = hashLicenseKey(req.body.licenseKey);
@@ -435,25 +455,13 @@ publicRoutes.post("/download", validate(downloadSchema), async (req, res) => {
     if (mongoLicense.status === "blocked") return res.status(403).json({ status: "blocked" });
     if (mongoLicense.expiryDate && new Date(mongoLicense.expiryDate).getTime() < Date.now()) return res.status(403).json({ status: "expired" });
 
-    const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
-    const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ status: "failed", reason: "Extension ZIP file is not uploaded yet" });
-    }
-    return res.download(filePath, "keshav-with-velo.zip");
+    return sendActiveDownload(res);
   }
 
   if (license.status === "blocked") return res.status(403).json({ status: "blocked" });
   if (isExpired(license.expiry_date)) return res.status(403).json({ status: "expired" });
 
-  const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
-  const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ status: "failed", reason: "Extension ZIP file is not uploaded yet" });
-  }
-
-  return res.download(filePath, "keshav-with-velo.zip");
+  return sendActiveDownload(res);
 });
 
 publicRoutes.get("/download-link", async (req, res) => {
@@ -475,9 +483,5 @@ publicRoutes.get("/download-link", async (req, res) => {
     }
   }
 
-  const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
-  const filePath = path.resolve(process.cwd(), activeVersion?.download_path || config.extensionZipPath);
-  if (!fs.existsSync(filePath)) return res.status(404).send("The extension download is not available yet.");
-
-  return res.download(filePath, "keshav-with-velo.zip");
+  return sendActiveDownload(res);
 });
