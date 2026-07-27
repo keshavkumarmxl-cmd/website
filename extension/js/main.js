@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const csInterface = new CSInterface();
     const run = (s) => csInterface.evalScript(s);
     let beatProgressTimer = null;
@@ -113,10 +113,11 @@
     const aiBrowserSessionStorageKey = "keshavwithvelo.aiBrowserSession.v2";
     const defaultYouTubeSearchQuery = "Keshav With Velo";
     const aiHubProviders = [
-        { id: "nvidia", label: "NVIDIA", model: "openai/gpt-oss-120b", baseUrl: "https://integrate.api.nvidia.com/v1", note: "NVIDIA Build uses a fixed OpenAI-compatible chat endpoint with model `openai/gpt-oss-120b`." }
+        { id: "google", label: "Google", model: "Google Search", baseUrl: "", note: "Google search tools are available without chat setup." }
     ];
+    const aiHubRequestTimeoutMs = 45000;
     const aiHubModelChoices = [
-        { id: "openai/gpt-oss-120b", label: "GPT OSS 120B" }
+        { id: "Google Search", label: "Google Search" }
     ];
     let captionFontInstallStarted = false;
 
@@ -954,8 +955,8 @@
     }
 
     function setAiHubMode(mode) {
-        aiHubRuntime.activeMode = mode === "search" ? "search" : "chat";
-        if (aiHubRuntime.activeMode === "search" && aiHubRuntime.settingsOpen) {
+        aiHubRuntime.activeMode = "search";
+        if (aiHubRuntime.settingsOpen) {
             setAiHubSettingsOpen(false);
         }
         const chatBtn = document.getElementById("btnAiHubChatTab");
@@ -974,14 +975,9 @@
         }
         if (chatView) chatView.classList.toggle("active", aiHubRuntime.activeMode === "chat");
         if (searchView) searchView.classList.toggle("active", aiHubRuntime.activeMode === "search");
-        if (aiHubRuntime.activeMode === "search") {
-            const input = document.getElementById("aiSearchInput");
-            if (input) window.setTimeout(() => input.focus(), 40);
-            requestKwvThemeRepaint();
-        } else {
-            const prompt = document.getElementById("aiHubPromptInput");
-            if (prompt) window.setTimeout(() => prompt.focus(), 40);
-        }
+        const input = document.getElementById("aiSearchInput");
+        if (input) window.setTimeout(() => input.focus(), 40);
+        requestKwvThemeRepaint();
     }
 
     function setAiHubPending(isPending) {
@@ -1082,7 +1078,7 @@
             const role = document.createElement("div");
             role.className = "ai-hub-msg-role";
             const roleLabel = document.createElement("span");
-            roleLabel.textContent = message.role === "user" ? "You" : "NVIDIA GPT";
+            roleLabel.textContent = message.role === "user" ? "You" : "Google";
             role.appendChild(roleLabel);
             if (message.role === "assistant" && aiHubTrim(message.content)) {
                 const tools = document.createElement("span");
@@ -1183,12 +1179,79 @@
         return aiHubTrim(baseUrl).replace(/\/+$/g, "");
     }
 
+    function aiHubNodeJsonRequest(url, headers, body) {
+        return new Promise(function(resolve, reject) {
+            try {
+                if (typeof require !== "function") {
+                    reject(new Error("CEP Node request is not available."));
+                    return;
+                }
+                const https = require("https");
+                const http = require("http");
+                const target = new URL(url);
+                const payload = JSON.stringify(body || {});
+                const requestHeaders = Object.assign({}, headers || {}, {
+                    "Content-Length": Buffer.byteLength(payload)
+                });
+                const client = target.protocol === "http:" ? http : https;
+                const req = client.request({
+                    protocol: target.protocol,
+                    hostname: target.hostname,
+                    port: target.port || (target.protocol === "http:" ? 80 : 443),
+                    path: target.pathname + target.search,
+                    method: "POST",
+                    headers: requestHeaders,
+                    timeout: aiHubRequestTimeoutMs
+                }, function(res) {
+                    let text = "";
+                    res.setEncoding("utf8");
+                    res.on("data", function(chunk) {
+                        text += chunk;
+                        if (text.length > 4000000) {
+                            try { req.destroy(new Error("Search response was too large.")); } catch (destroyErr) {}
+                        }
+                    });
+                    res.on("end", function() {
+                        let data = null;
+                        try { data = text ? JSON.parse(text) : null; } catch (parseErr) {}
+                        if (res.statusCode < 200 || res.statusCode >= 300) {
+                            const message = data && data.error ? (data.error.message || data.error) : (text || ("Request failed (" + res.statusCode + ")"));
+                            reject(new Error(message));
+                            return;
+                        }
+                        resolve(data || {});
+                    });
+                });
+                req.on("timeout", function() {
+                    try { req.destroy(new Error("Search request timed out. Try again.")); } catch (timeoutErr) {}
+                });
+                req.on("error", function(err) {
+                    reject(err && err.message ? err : new Error("Search request failed."));
+                });
+                req.write(payload);
+                req.end();
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
     function aiHubJsonRequest(url, headers, body) {
+        if (typeof require === "function") {
+            return aiHubNodeJsonRequest(url, headers, body);
+        }
         if (window.fetch) {
-            return window.fetch(url, {
+            const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+            const timeoutId = window.setTimeout(function() {
+                if (controller) {
+                    try { controller.abort(); } catch (abortErr) {}
+                }
+            }, aiHubRequestTimeoutMs);
+            const fetchPromise = window.fetch(url, {
                 method: "POST",
                 headers: headers,
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
+                signal: controller ? controller.signal : undefined
             }).then(function(response) {
                 return response.text().then(function(text) {
                     let data = null;
@@ -1199,11 +1262,30 @@
                     }
                     return data || {};
                 });
+            }).catch(function(err) {
+                if (err && err.name === "AbortError") throw new Error("Search request timed out. Try again.");
+                throw err;
+            });
+            let raceTimeoutId = null;
+            const timeoutPromise = new Promise(function(resolve, reject) {
+                raceTimeoutId = window.setTimeout(function() {
+                    reject(new Error("Search request timed out. Try again."));
+                }, aiHubRequestTimeoutMs + 250);
+            });
+            return Promise.race([fetchPromise, timeoutPromise]).then(function(data) {
+                window.clearTimeout(timeoutId);
+                if (raceTimeoutId) window.clearTimeout(raceTimeoutId);
+                return data;
+            }, function(err) {
+                window.clearTimeout(timeoutId);
+                if (raceTimeoutId) window.clearTimeout(raceTimeoutId);
+                throw err;
             });
         }
         return new Promise(function(resolve, reject) {
             const xhr = new XMLHttpRequest();
             xhr.open("POST", url, true);
+            xhr.timeout = aiHubRequestTimeoutMs;
             Object.keys(headers).forEach(function(key) {
                 xhr.setRequestHeader(key, headers[key]);
             });
@@ -1220,6 +1302,9 @@
             };
             xhr.onerror = function() {
                 reject(new Error("Network request failed."));
+            };
+            xhr.ontimeout = function() {
+                reject(new Error("Search request timed out. Try again."));
             };
             xhr.send(JSON.stringify(body));
         });
@@ -1249,18 +1334,18 @@
                     }).join("");
                 }
             }
-            throw new Error("NVIDIA did not return a readable response.");
+            throw new Error("Search did not return a readable response.");
         });
     }
 
     function requestAiHubReply(config, messages) {
         if (!config.apiKey) return Promise.reject(new Error(config.label + " API key is missing."));
         if (!config.model) return Promise.reject(new Error(config.label + " model is missing."));
-        if (!config.baseUrl) return Promise.reject(new Error("NVIDIA base URL is missing."));
+        if (!config.baseUrl) return Promise.reject(new Error("Chat is disabled. Use Google Search."));
         return aiHubRequestNvidia(config, messages).catch(function(err) {
-            const raw = err && err.message ? err.message : "NVIDIA request failed.";
+            const raw = err && err.message ? err.message : "Search request failed.";
             if (/not found|not supported|model/i.test(raw)) {
-                throw new Error("Model is not available. Use `openai/gpt-oss-120b`.");
+                throw new Error("Chat model is disabled. Use Google Search.");
             }
             throw err;
         });
@@ -1298,12 +1383,15 @@
 
     function openAiHubModal() {
         startAiGuestServer();
-        ensureAiHubGreeting();
-        renderAiHubProviderButtons();
-        fillAiHubFields();
-        renderAiHubMessages();
         setAiHubSettingsOpen(false);
-        setAiHubStatus("NVIDIA GPT is ready. Send a prompt or use a quick chip.", false);
+        setAiSearchAiMode(false);
+        setAiSearchEngine("google");
+        ensureAiSearchTabs();
+        setAiHubMode("search");
+        const activeTab = getActiveSearchTab();
+        if (!activeTab || !(activeTab.currentUrl || activeTab.url)) openAiSearchHome(true);
+        else loadAiSearchTab(activeTab);
+        setAiHubStatus("Google search ready.", false);
         setAiHubModalOpen(true);
     }
 
@@ -1332,18 +1420,10 @@
     }
 
     function openAiHubCompanion() {
-        const input = document.getElementById("aiHubPromptInput");
-        const prompt = aiHubTrim(input ? input.value : "");
-        const nvidiaApiKeysUrl = "https://build.nvidia.com/settings/api-keys";
-        const openNvidiaApiKeys = function() {
-            openExternalUrl(nvidiaApiKeysUrl);
-            setAiHubStatus(prompt ? "Prompt copied. Opening the NVIDIA API keys page." : "Opening the NVIDIA API keys page.", false);
-        };
-        if (prompt && navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(prompt).then(openNvidiaApiKeys).catch(openNvidiaApiKeys);
-            return;
-        }
-        openNvidiaApiKeys();
+        setAiHubMode("search");
+        setAiSearchEngine("google");
+        openAiSearchHome(true);
+        setAiHubStatus("Google search ready.", false);
     }
 
     function normalizeAiSearchUrl(value) {
@@ -1380,6 +1460,86 @@
         } else {
             fallback();
         }
+    }
+
+    function dataUrlToBlob(dataUrl) {
+        const match = /^data:([^;,]+);base64,(.+)$/i.exec(String(dataUrl || ""));
+        if (!match) throw new Error("Image data was invalid.");
+        const binary = atob(match[2]);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new Blob([bytes], { type: match[1] || "image/png" });
+    }
+
+    function copyImageFileToWindowsClipboard(filePath) {
+        return new Promise(function(resolve, reject) {
+            try {
+                if (typeof require !== "function") throw new Error("Node clipboard fallback is not available.");
+                const childProcess = require("child_process");
+                const safePath = String(filePath || "").replace(/\\/g, "\\\\").replace(/'/g, "''");
+                const script = [
+                    "Add-Type -AssemblyName System.Windows.Forms",
+                    "Add-Type -AssemblyName System.Drawing",
+                    "$img=[System.Drawing.Image]::FromFile('" + safePath + "')",
+                    "try { [System.Windows.Forms.Clipboard]::SetImage($img) } finally { $img.Dispose() }"
+                ].join("; ");
+                const child = childProcess.spawn("powershell.exe", [
+                    "-NoProfile",
+                    "-ExecutionPolicy", "Bypass",
+                    "-Command", script
+                ], { windowsHide: true });
+                let errorText = "";
+                child.stderr.on("data", function(chunk) { errorText += String(chunk || ""); });
+                child.on("error", reject);
+                child.on("close", function(code) {
+                    if (code === 0) resolve();
+                    else reject(new Error(errorText || "Windows clipboard copy failed."));
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    function copyImageDataUrlToClipboard(dataUrl, mimeType) {
+        return new Promise(function(resolve, reject) {
+            const type = String(mimeType || "image/png").toLowerCase();
+            const useBrowserClipboard = function() {
+                try {
+                    if (!navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem === "undefined") throw new Error("Browser image clipboard is not available.");
+                    const blob = dataUrlToBlob(dataUrl);
+                    const pngType = blob.type || type || "image/png";
+                    return navigator.clipboard.write([new ClipboardItem({ [pngType]: blob })]);
+                } catch (err) {
+                    return Promise.reject(err);
+                }
+            };
+            useBrowserClipboard().then(resolve).catch(function() {
+                const saved = writeClipboardImageFile(dataUrl, type);
+                if (!saved.ok) {
+                    reject(new Error(saved.error || "Image save failed."));
+                    return;
+                }
+                copyImageFileToWindowsClipboard(saved.path).then(resolve).catch(reject);
+            });
+        });
+    }
+
+    function copyAiFrameImageToClipboard(url) {
+        const safeUrl = String(url || "").trim();
+        if (!safeUrl) {
+            setAiHubStatus("Image nahi mili. Image ke center par right-click karo.", true);
+            return;
+        }
+        hideAiFrameImportMenu();
+        setAiHubStatus("Copying image...", false);
+        fetchAiFrameImageAsDataUrl(safeUrl).then(function(payload) {
+            return copyImageDataUrlToClipboard(payload.dataUrl, payload.mimeType || "image/png");
+        }).then(function() {
+            setAiHubStatus("Image copied.", false);
+        }).catch(function(err) {
+            setAiHubStatus(err && err.message ? err.message : "Image copy failed.", true);
+        });
     }
 
     function importAiImageDataUrl(dataUrl, mimeType) {
@@ -1710,6 +1870,39 @@
         });
     }
 
+    function processBgRemoverDataUrl(dataUrl, mimeType, name) {
+        if (bgRemoverPanelState.processing || aiBgRemovalRuntime.running) {
+            setBgRemoverPanelStatus("Background remover is already running.", true);
+            return;
+        }
+        bgRemoverPanelState.processing = true;
+        aiBgRemovalRuntime.running = true;
+        bgRemoverPanelState.outputPath = "";
+        const importBtn = document.getElementById("btnBgRemoverImport");
+        const preview = document.getElementById("bgRemoverPreview");
+        const image = document.getElementById("bgRemoverPreviewImage");
+        if (importBtn) importBtn.disabled = true;
+        if (preview) preview.classList.remove("ready");
+        if (image) image.removeAttribute("src");
+        setBgRemoverPanelStatus(name || "Processing image...", false);
+        setBgRemoverProgress(18, "Reading");
+        startBgRemoverProgressTimer();
+        removeAiImageBackgroundWithNode(dataUrl, mimeType || "image/png").then(function(outputPath) {
+            bgRemoverPanelState.processing = false;
+            aiBgRemovalRuntime.running = false;
+            stopBgRemoverProgressTimer();
+            setBgRemoverProgress(100, "Done");
+            showBgRemoverOutput(outputPath);
+            setBgRemoverPanelStatus("Removed image ready.", false);
+        }).catch(function(err) {
+            bgRemoverPanelState.processing = false;
+            aiBgRemovalRuntime.running = false;
+            stopBgRemoverProgressTimer();
+            setBgRemoverProgress(0, "Ready");
+            setBgRemoverPanelStatus(err && err.message ? err.message : "BG remove failed.", true);
+        });
+    }
+
     function processBgRemoverFile(file) {
         if (bgRemoverPanelState.processing || aiBgRemovalRuntime.running) {
             setBgRemoverPanelStatus("Background remover is already running.", true);
@@ -1820,21 +2013,39 @@
         hideAiFrameImportMenu();
         setAiSearchEngine("images", { silent: true });
         navigateAiSearch(query, true);
-        setAiHubStatus("Opening image import mode. Right-click an image and choose Import Image.", false);
+        setAiHubStatus("Opening image import mode. Drag a card to the Import popup or right-click Import Image.", false);
     }
 
     function normalizeAiFrameImageUrl(url, baseUrl) {
         const raw = String(url || "").trim();
-        if (!raw || /^blob:/i.test(raw)) return "";
+        if (!raw) return "";
+        if (/^blob:/i.test(raw)) return raw;
         if (/^data:image\//i.test(raw)) return raw;
         try {
             const parsed = new URL(raw, baseUrl || window.location.href);
-            const imageParam = parsed.searchParams.get("imgurl") || parsed.searchParams.get("img_url") || parsed.searchParams.get("mediaurl");
+            const imageParam = parsed.searchParams.get("imgurl") || parsed.searchParams.get("img_url") || parsed.searchParams.get("mediaurl") || parsed.searchParams.get("url");
             if (imageParam && /^https?:\/\//i.test(imageParam)) return imageParam;
             return parsed.toString();
         } catch (err) {
             return raw;
         }
+    }
+
+    function getAiFrameAnchorOriginalImageUrl(node, baseUrl) {
+        let current = node;
+        let depth = 0;
+        while (current && depth < 8) {
+            if (current.getAttribute) {
+                const href = current.getAttribute("href") || "";
+                if (href) {
+                    const normalized = normalizeAiFrameImageUrl(href, baseUrl);
+                    if (normalized && /^https?:\/\//i.test(normalized)) return normalized;
+                }
+            }
+            current = current.parentElement;
+            depth += 1;
+        }
+        return "";
     }
 
     function rememberAiFrameImportTarget(frame, imageUrl, event) {
@@ -1854,20 +2065,29 @@
         if (!node) return "";
         const tag = String(node.tagName || "").toLowerCase();
         if (tag === "img" || tag === "image") {
-            const direct = node.currentSrc || node.src || node.getAttribute("src") || node.getAttribute("data-src") || node.getAttribute("data-iurl");
+            const fromAnchor = getAiFrameAnchorOriginalImageUrl(node, baseUrl);
+            if (fromAnchor) return fromAnchor;
+            const attrs = ["data-iurl", "data-original", "data-lazy-src", "data-src"];
+            for (let i = 0; i < attrs.length; i++) {
+                const value = node.getAttribute && node.getAttribute(attrs[i]);
+                const normalized = normalizeAiFrameImageUrl(value, baseUrl);
+                if (normalized && (/^data:image\//i.test(normalized) || /^https?:\/\//i.test(normalized) || /^blob:/i.test(normalized))) return normalized;
+            }
+            const direct = node.currentSrc || node.src || node.getAttribute("src");
             const srcset = node.getAttribute && (node.getAttribute("srcset") || node.getAttribute("data-srcset"));
             if (direct) return normalizeAiFrameImageUrl(direct, baseUrl);
             if (srcset) {
-                const first = String(srcset).split(",")[0].trim().split(/\s+/)[0];
-                if (first) return normalizeAiFrameImageUrl(first, baseUrl);
+                const parts = String(srcset).split(",").map(function(part) { return part.trim().split(/\s+/)[0]; }).filter(Boolean);
+                const last = parts.length ? parts[parts.length - 1] : "";
+                if (last) return normalizeAiFrameImageUrl(last, baseUrl);
             }
         }
         if (node.getAttribute) {
-            const attrs = ["data-iurl", "data-ou", "data-src", "data-thumbnail-url", "href"];
+            const attrs = ["data-iurl", "data-ou", "data-original", "data-lazy-src", "data-src", "data-thumbnail-url", "href"];
             for (let i = 0; i < attrs.length; i++) {
                 const value = node.getAttribute(attrs[i]);
                 const normalized = normalizeAiFrameImageUrl(value, baseUrl);
-                if (normalized && (/^data:image\//i.test(normalized) || /^https?:\/\//i.test(normalized))) return normalized;
+                if (normalized && (/^data:image\//i.test(normalized) || /^https?:\/\//i.test(normalized) || /^blob:/i.test(normalized))) return normalized;
             }
         }
         try {
@@ -1962,9 +2182,10 @@
         }
         hideAiFrameImportMenu();
         removeBg = removeBg !== false;
-        setAiHubStatus("Preparing image for offline background removal...", false);
+        setAiHubStatus(removeBg ? "Preparing image for offline background removal..." : "Importing dragged image...", false);
         fetchAiFrameImageAsDataUrl(safeUrl).then(function(payload) {
-            importAiImageDataUrlWithRemovedBg(payload.dataUrl, payload.mimeType);
+            if (removeBg) importAiImageDataUrlWithRemovedBg(payload.dataUrl, payload.mimeType);
+            else importAiImageDataUrl(payload.dataUrl, payload.mimeType);
         }).catch(function(err) {
             setAiHubStatus(err && err.message ? err.message : "Image import failed. Use BG Remover for image processing.", true);
         });
@@ -1976,10 +2197,13 @@
         menu = document.createElement("div");
         menu.id = "aiFrameImportMenu";
         menu.className = "ai-frame-import-menu";
-        menu.innerHTML = '<button type="button">Import Image</button>';
-        const button = menu.querySelector("button");
-        if (button) button.onclick = function() {
-            importAiFrameImageUrl(getAiFramePendingImageUrl(), true);
+        menu.innerHTML = [
+            '<button type="button" data-ai-image-action="copy">Copy Image</button>'
+        ].join("");
+        const copyButton = menu.querySelector('[data-ai-image-action="copy"]');
+        if (copyButton) copyButton.onclick = function() {
+            const url = getAiFramePendingImageUrl();
+            copyAiFrameImageToClipboard(url);
         };
         document.body.appendChild(menu);
         document.addEventListener("click", hideAiFrameImportMenu, true);
@@ -1999,9 +2223,27 @@
 
     function showAiFrameImportMenu(event) {
         const frame = getActiveAiSearchFrame();
-        const imageUrl = event && event.imageUrl ? String(event.imageUrl || "") : "";
-        if (!isAiFrameImageImportContext(frame) || !imageUrl) {
+        let imageUrl = event && event.imageUrl ? String(event.imageUrl || "") : "";
+        if (!imageUrl && frame && event && typeof event.clientX === "number" && typeof event.clientY === "number") {
+            try {
+                const rect = frame.getBoundingClientRect();
+                const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+                if (doc && typeof doc.elementFromPoint === "function") {
+                    const tab = getAiSearchTabById(frame.getAttribute("data-tab-id") || "");
+                    const zoom = clampAiSearchZoom(tab && tab.zoom ? tab.zoom : 1);
+                    const node = doc.elementFromPoint((event.clientX - rect.left) / zoom, (event.clientY - rect.top) / zoom);
+                    imageUrl = findAiFrameImageUrlFromEvent({
+                        target: node,
+                        clientX: (event.clientX - rect.left) / zoom,
+                        clientY: (event.clientY - rect.top) / zoom
+                    }, frame);
+                }
+            } catch (err) {}
+        }
+        if (!imageUrl) imageUrl = getAiFramePendingImageUrl();
+        if (!imageUrl) {
             hideAiFrameImportMenu();
+            setAiHubStatus("Image URL nahi mila. Image ke center par right-click karke try karo.", true);
             return;
         }
         if (event) {
@@ -2011,9 +2253,8 @@
         const menu = ensureAiFrameImportMenu();
         const x = event && typeof event.clientX === "number" ? event.clientX : 160;
         const y = event && typeof event.clientY === "number" ? event.clientY : 180;
-        if (imageUrl) menu.setAttribute("data-image-url", imageUrl);
-        else if (aiHubRuntime.pendingImportImageUrl) menu.setAttribute("data-image-url", aiHubRuntime.pendingImportImageUrl);
-        else menu.removeAttribute("data-image-url");
+        menu.setAttribute("data-image-url", imageUrl);
+        aiHubRuntime.pendingImportImageUrl = imageUrl;
         menu.style.left = Math.min(x, window.innerWidth - 218) + "px";
         menu.style.top = Math.min(y, window.innerHeight - 80) + "px";
         menu.classList.add("active");
@@ -2026,7 +2267,6 @@
             if (!doc || doc.__kwvImportContextMenuBound) return;
             doc.__kwvImportContextMenuBound = true;
             const handler = function(event) {
-                if (!isAiFrameImageImportContext(frame)) return true;
                 const rect = frame.getBoundingClientRect();
                 const tab = getAiSearchTabById(frame.getAttribute("data-tab-id") || "");
                 const zoom = clampAiSearchZoom(tab && tab.zoom ? tab.zoom : 1);
@@ -2036,6 +2276,17 @@
                 event.stopPropagation();
                 event.returnValue = false;
                 rememberAiFrameImportTarget(frame, imageUrl, event);
+                try {
+                    if (frame.contentWindow && frame.contentWindow.parent) {
+                        frame.contentWindow.parent.postMessage({
+                            kwvAiCopyImageContext: {
+                                imageUrl: imageUrl,
+                                x: rect.left + (event.clientX * zoom),
+                                y: rect.top + (event.clientY * zoom)
+                            }
+                        }, "*");
+                    }
+                } catch (postErr) {}
                 showAiFrameImportMenu({
                     clientX: rect.left + (event.clientX * zoom),
                     clientY: rect.top + (event.clientY * zoom),
@@ -2045,16 +2296,35 @@
                 });
                 return false;
             };
+            const clickHandler = function(event) {
+                if (!event || event.button !== 0) return true;
+                const imageUrl = findAiFrameImageUrlFromEvent(event, frame);
+                if (!imageUrl) return true;
+                event.preventDefault();
+                event.stopPropagation();
+                event.returnValue = false;
+                rememberAiFrameImportTarget(frame, imageUrl, event);
+                try {
+                    if (frame.contentWindow && frame.contentWindow.parent) {
+                        frame.contentWindow.parent.postMessage({
+                            kwvAiCopyImageUrl: imageUrl
+                        }, "*");
+                    }
+                } catch (postErr) {}
+                return false;
+            };
             doc.oncontextmenu = handler;
             if (doc.body) doc.body.oncontextmenu = handler;
             if (doc.documentElement) doc.documentElement.oncontextmenu = handler;
             doc.addEventListener("contextmenu", handler, true);
+            doc.addEventListener("click", clickHandler, true);
             doc.addEventListener("mousedown", function(event) {
                 if (event && event.button === 2) handler(event);
             }, true);
             if (frame.contentWindow) {
                 frame.contentWindow.oncontextmenu = handler;
                 frame.contentWindow.addEventListener("contextmenu", handler, true);
+                frame.contentWindow.addEventListener("click", clickHandler, true);
                 frame.contentWindow.addEventListener("mousedown", function(event) {
                     if (event && event.button === 2) handler(event);
                 }, true);
@@ -2063,6 +2333,26 @@
             // Some hosts restore strict cross-origin isolation. The frame-level
             // handler remains available for pages CEP permits us to inspect.
         }
+    }
+
+    function injectAiBrowserScrollbarTheme(frame) {
+        if (!frame) return;
+        try {
+            const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+            if (!doc || doc.getElementById("kwvAiBrowserScrollbarTheme")) return;
+            const style = doc.createElement("style");
+            style.id = "kwvAiBrowserScrollbarTheme";
+            style.textContent = [
+                "html,body{color-scheme:dark;overflow-x:hidden!important;scrollbar-width:thin!important;scrollbar-color:#101010 #050505!important;}",
+                "::-webkit-scrollbar{width:7px!important;height:7px!important;background:#050505!important;}",
+                "::-webkit-scrollbar-track{background:#050505!important;border-left:1px solid #0d0d0d!important;}",
+                "::-webkit-scrollbar-corner{background:#050505!important;}",
+                "::-webkit-scrollbar-thumb{background:#101010!important;border:1px solid #050505!important;border-radius:999px!important;}",
+                "::-webkit-scrollbar-thumb:hover{background:#1f1f1f!important;}"
+            ].join("");
+            const head = doc.head || doc.documentElement;
+            if (head) head.appendChild(style);
+        } catch (err) {}
     }
 
     function initPanelContextMenuGuard() {
@@ -2501,7 +2791,7 @@
     function buildGuestImageSearchShell(query, localOrigin) {
         const safeQuery = escapeGuestHtml(query || "");
         const externalUrl = "https://www.google.com/search?udm=2&q=" + encodeURIComponent(query || "png");
-        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Google Image Search</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow-x:hidden;user-select:none;scrollbar-width:thin;scrollbar-color:#111 #000}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:#111;border:1px solid #000;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#1b1b1b}body{padding:10px}.img-head{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:8px 0 10px;background:#050505}.img-search{flex:1;display:flex;gap:7px}.img-search input{flex:1;min-width:0;height:30px;border:1px solid #262626;border-radius:999px;background:#0c0c0c;color:#fff;padding:0 11px;font-size:11px;outline:none;user-select:text}.img-search input:focus{border-color:#ff1b1b}.img-search button{height:30px;border:1px solid #ff1b1b;border-radius:999px;background:#160808;color:#fff;padding:0 12px;font-size:8px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}.img-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.img-card{min-width:0;border:1px solid #1f1f1f;border-radius:8px;background:#0d0d0d;overflow:hidden;cursor:pointer;color:#fff}.img-card:hover{border-color:#ff1b1b;background:#140909}.img-preview{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#101010}.img-preview img{width:100%;height:100%;object-fit:contain;display:block;-webkit-user-drag:none}.img-title{display:block;padding:6px;color:#a8a8a8;font-size:7px;font-weight:800;letter-spacing:.25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.img-empty,.img-loading{grid-column:1/-1;min-height:230px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#aaa;padding:25px}.img-empty h3{margin:0 0 8px;color:#fff;font-size:14px}.img-empty p{max-width:310px;margin:0 0 14px;font-size:10px;line-height:1.5}.dots{display:flex;gap:10px;margin-bottom:14px}.dots span{width:18px;height:18px;border-radius:50%;background:#2a2a2a;animation:pulse 1s infinite alternate}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}@keyframes pulse{to{background:#ff1b1b;transform:translateY(-4px)}}.img-menu{position:fixed;z-index:20;min-width:132px;padding:5px;border:1px solid #2a2a2a;border-radius:8px;background:#101010;box-shadow:0 18px 40px rgba(0,0,0,.44);display:none}.img-menu.active{display:block}.img-menu button{width:100%;height:29px;border:0;border-radius:6px;background:transparent;color:#fff;text-align:left;padding:0 9px;font-size:8px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;cursor:pointer}.img-menu button:hover{background:#ff0000;color:#fff}.img-warning{margin:0 0 8px;padding:8px;border:1px solid #2a1a1a;border-radius:8px;background:#120909;color:#ffb2b2;font-size:9px;line-height:1.45}.img-import-overlay{position:fixed;left:50%;bottom:14px;z-index:30;width:min(250px,calc(100% - 24px));padding:9px;border:1px solid rgba(255,0,0,.45);border-radius:10px;background:linear-gradient(180deg,#151515,#070707);box-shadow:0 18px 44px rgba(0,0,0,.58),0 0 18px rgba(255,0,0,.16);opacity:0;pointer-events:none;transform:translate(-50%,10px);transition:opacity .16s ease,transform .16s ease}.img-import-overlay.active{opacity:1;transform:translate(-50%,0)}.img-import-top{display:flex;justify-content:space-between;gap:8px;margin-bottom:7px;color:#fff;font-size:8px;font-weight:900;letter-spacing:.45px;text-transform:uppercase}.img-import-stage{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.img-import-track{height:5px;overflow:hidden;border-radius:999px;background:#050505;border:1px solid #202020}.img-import-fill{width:0%;height:100%;border-radius:999px;background:linear-gradient(90deg,#ff0000,#ff7676,#ff0000);box-shadow:0 0 10px rgba(255,0,0,.35);transition:width .28s ease}.img-import-overlay.active .img-import-fill::after{content:\"\";display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:imgProgressSweep .9s linear infinite}@keyframes imgProgressSweep{from{transform:translateX(-120%)}to{transform:translateX(260%)}}@media(max-width:300px){.img-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}</style></head><body><div class=\"img-head\"><form class=\"img-search\" onsubmit=\"doSearch(event)\"><input id=\"q\" value=\"" + safeQuery + "\" placeholder=\"Enter an element or object name\" autocomplete=\"off\"><button>Search</button></form></div><div id=\"status\"></div><div class=\"img-grid\" id=\"grid\"><div class=\"img-loading\"><div class=\"dots\"><span></span><span></span><span></span></div><div>Loading Google image results...</div></div></div><div class=\"img-menu\" id=\"imgMenu\"><button type=\"button\" id=\"importImageBtn\">Import Image</button></div><div class=\"img-import-overlay\" id=\"imgImportOverlay\"><div class=\"img-import-top\"><span class=\"img-import-stage\" id=\"imgImportStage\">Importing</span><span id=\"imgImportPct\">0%</span></div><div class=\"img-import-track\"><div class=\"img-import-fill\" id=\"imgImportFill\"></div></div></div><script>var query=\"" + safeQuery.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\";var activeUrl='';var currentPage=0;var loadingMore=false;var finished=false;var seenUrls={};var importTimer=null;function esc(s){return String(s||'').replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});}function doSearch(e){e.preventDefault();var q=document.getElementById('q').value||'png';location.href='/img-search?q='+encodeURIComponent(q);}function hideMenu(){document.getElementById('imgMenu').classList.remove('active');}function showMenu(evt,url){evt.preventDefault();evt.stopPropagation();activeUrl=url;var menu=document.getElementById('imgMenu');menu.style.left=Math.min(evt.clientX,window.innerWidth-145)+'px';menu.style.top=Math.min(evt.clientY,window.innerHeight-76)+'px';menu.classList.add('active');}function postStatus(msg,isError){try{parent.postMessage({kwvAiStatus:msg,kwvAiStatusError:!!isError},'*');}catch(err){}}function setImportProgress(pct,label){var overlay=document.getElementById('imgImportOverlay');var fill=document.getElementById('imgImportFill');var num=document.getElementById('imgImportPct');var stage=document.getElementById('imgImportStage');pct=Math.max(0,Math.min(100,Math.round(pct||0)));if(overlay)overlay.classList.add('active');if(fill)fill.style.width=pct+'%';if(num)num.textContent=pct+'%';if(stage&&label)stage.textContent=label;}function finishImportProgress(label,isError){window.clearInterval(importTimer);setImportProgress(isError?100:100,label||'Done');window.setTimeout(function(){var overlay=document.getElementById('imgImportOverlay');if(overlay)overlay.classList.remove('active');},isError?1400:950);}function blobToPng(blob){return new Promise(function(resolve,reject){var img=new Image();var objectUrl=URL.createObjectURL(blob);img.onload=function(){try{var canvas=document.createElement('canvas');canvas.width=img.naturalWidth||img.width;canvas.height=img.naturalHeight||img.height;var ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);canvas.toBlob(function(png){URL.revokeObjectURL(objectUrl);if(png)resolve(png);else reject(new Error('PNG conversion failed.'));},'image/png');}catch(err){URL.revokeObjectURL(objectUrl);reject(err);}};img.onerror=function(){URL.revokeObjectURL(objectUrl);reject(new Error('Image decode failed.'));};img.src=objectUrl;});}function importImage(url){if(!url)return;hideMenu();window.clearInterval(importTimer);var soft=8;setImportProgress(soft,'Fetching image');importTimer=window.setInterval(function(){soft=Math.min(92,soft+Math.max(1,(96-soft)*.08));setImportProgress(soft,soft<42?'Fetching image':soft<68?'Converting PNG':soft<86?'Preparing import':'Importing to AE');},320);postStatus('Importing image...',false);fetch('/img-proxy?url='+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('Image fetch failed.');setImportProgress(42,'Fetched');return r.blob();}).then(function(blob){setImportProgress(58,'Converting PNG');return blobToPng(blob);}).then(function(png){setImportProgress(76,'Reading file');return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=function(){reject(new Error('Image read failed.'));};reader.readAsDataURL(png);});}).then(function(dataUrl){setImportProgress(94,'Sending to AE');parent.postMessage({kwvAiImportImageRemoveBgData:dataUrl,kwvAiImportImageType:'image/png'},'*');postStatus('Image sent to AE. Background remover is processing...',false);finishImportProgress('Sent to AE',false);}).catch(function(err){postStatus(err&&err.message?err.message:'Image import failed.',true);finishImportProgress('Import failed',true);});}function empty(msg){document.getElementById('grid').innerHTML='<div class=\"img-empty\"><h3>Images did not load.</h3><p>'+esc(msg||'Google is slow or blocked. Change the query.')+'</p></div>';}function render(items){var grid=document.getElementById('grid');if(!items||!items.length){if(currentPage===0)empty('No image URLs were found. Try another search.');else finished=true;return;}if(currentPage===0)grid.innerHTML='';var html='';items.forEach(function(item){var url=item.url||'';if(!url||seenUrls[url])return;seenUrls[url]=true;var thumb=item.thumb||item.url;html+='<div class=\"img-card\" data-url=\"'+esc(url)+'\" title=\"Right click to import image\"><div class=\"img-preview\"><img loading=\"lazy\" decoding=\"async\" src=\"'+esc(thumb)+'\" alt=\"'+esc(item.title||'Image')+'\"></div><span class=\"img-title\">'+esc(item.title||item.source||'Image')+'</span></div>';});if(html)grid.insertAdjacentHTML('beforeend',html);Array.prototype.forEach.call(document.querySelectorAll('.img-card:not([data-bound])'),function(card){card.setAttribute('data-bound','1');var url=card.getAttribute('data-url')||'';card.addEventListener('contextmenu',function(evt){showMenu(evt,url);});card.addEventListener('dblclick',function(){importImage(url);});});}function loadPage(page){if(loadingMore||finished)return;loadingMore=true;if(page>0)postStatus('Loading more images...',false);fetch('/img-results?q='+encodeURIComponent(query)+'&page='+encodeURIComponent(page)).then(function(r){return r.json();}).then(function(data){if(data.warning&&page===0){document.getElementById('status').innerHTML='<div class=\"img-warning\">'+esc(data.warning)+'</div>';}currentPage=page;render(data.items||[]);loadingMore=false;if(page<2){window.setTimeout(function(){loadPage(page+1);},220);}}).catch(function(err){loadingMore=false;if(page===0)empty(err&&err.message?err.message:'Image search failed.');else finished=true;});}window.addEventListener('scroll',function(){if(finished||loadingMore)return;if((window.innerHeight+window.scrollY)>(document.body.scrollHeight-520)){loadPage(currentPage+1);}});document.getElementById('importImageBtn').onclick=function(){if(activeUrl)importImage(activeUrl);};document.addEventListener('contextmenu',function(evt){if(!evt.target.closest('.img-card')){evt.preventDefault();hideMenu();}},true);document.addEventListener('click',hideMenu,true);loadPage(0);console.log('[Keshav Velo Search] Local Google image shell',\"" + escapeGuestHtml(localOrigin || "") + "\");</script></body></html>";
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Google Image Search</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow-x:hidden;user-select:none;scrollbar-width:thin;scrollbar-color:#101010 #050505}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#050505;border-left:1px solid #111}::-webkit-scrollbar-thumb{background:#101010;border:1px solid #050505;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#1f1f1f}body{padding:10px}.img-head{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:8px 0 10px;background:#050505}.img-search{flex:1;display:flex;gap:7px}.img-search input{flex:1;min-width:0;height:30px;border:1px solid #262626;border-radius:999px;background:#0c0c0c;color:#fff;padding:0 11px;font-size:11px;outline:none;user-select:text}.img-search input:focus{border-color:#ff1b1b}.img-search button{height:30px;border:1px solid #ff1b1b;border-radius:999px;background:#160808;color:#fff;padding:0 12px;font-size:8px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}.img-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.img-card{min-width:0;border:1px solid #1f1f1f;border-radius:8px;background:#0d0d0d;overflow:hidden;cursor:pointer;color:#fff}.img-card:hover{border-color:#ff1b1b;background:#140909}.img-preview{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#101010}.img-preview img{width:100%;height:100%;object-fit:contain;display:block;-webkit-user-drag:none}.img-title{display:block;padding:6px;color:#a8a8a8;font-size:7px;font-weight:800;letter-spacing:.25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.img-empty,.img-loading{grid-column:1/-1;min-height:230px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#aaa;padding:25px}.img-empty h3{margin:0 0 8px;color:#fff;font-size:14px}.img-empty p{max-width:310px;margin:0 0 14px;font-size:10px;line-height:1.5}.dots{display:flex;gap:10px;margin-bottom:14px}.dots span{width:18px;height:18px;border-radius:50%;background:#2a2a2a;animation:pulse 1s infinite alternate}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}@keyframes pulse{to{background:#ff1b1b;transform:translateY(-4px)}}.img-menu{position:fixed;z-index:20;min-width:148px;padding:5px;border:1px solid #2a2a2a;border-radius:8px;background:#101010;box-shadow:0 18px 40px rgba(0,0,0,.44);display:none}.img-menu.active{display:block}.img-menu button{width:100%;height:29px;border:0;border-radius:6px;background:transparent;color:#fff;text-align:left;padding:0 9px;font-size:8px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;cursor:pointer}.img-menu button:hover{background:#ff0000;color:#fff}.kwv-gloss-tooltip{position:fixed;z-index:60;max-width:190px;padding:6px 8px;border:1px solid rgba(255,255,255,.18);border-radius:6px;background:#121212;color:#fff;font-size:9px;font-weight:800;line-height:1.25;box-shadow:0 12px 28px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translateY(3px);transition:opacity .12s ease,transform .12s ease}.kwv-gloss-tooltip.active{opacity:1;transform:translateY(0)}.img-warning{margin:0 0 8px;padding:8px;border:1px solid #2a1a1a;border-radius:8px;background:#120909;color:#ffb2b2;font-size:9px;line-height:1.45}.img-import-overlay{position:fixed;left:50%;bottom:14px;z-index:30;width:min(250px,calc(100% - 24px));padding:9px;border:1px solid rgba(255,0,0,.45);border-radius:10px;background:linear-gradient(180deg,#151515,#070707);box-shadow:0 18px 44px rgba(0,0,0,.58),0 0 18px rgba(255,0,0,.16);opacity:0;pointer-events:none;transform:translate(-50%,10px);transition:opacity .16s ease,transform .16s ease}.img-import-overlay.active{opacity:1;transform:translate(-50%,0)}.img-import-top{display:flex;justify-content:space-between;gap:8px;margin-bottom:7px;color:#fff;font-size:8px;font-weight:900;letter-spacing:.45px;text-transform:uppercase}.img-import-stage{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.img-import-track{height:5px;overflow:hidden;border-radius:999px;background:#050505;border:1px solid #202020}.img-import-fill{width:0%;height:100%;border-radius:999px;background:linear-gradient(90deg,#ff0000,#ff7676,#ff0000);box-shadow:0 0 10px rgba(255,0,0,.35);transition:width .28s ease}.img-import-overlay.active .img-import-fill::after{content:\"\";display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:imgProgressSweep .9s linear infinite}@keyframes imgProgressSweep{from{transform:translateX(-120%)}to{transform:translateX(260%)}}@media(max-width:300px){.img-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}</style></head><body><div class=\"img-head\"><form class=\"img-search\" onsubmit=\"doSearch(event)\"><input id=\"q\" value=\"" + safeQuery + "\" placeholder=\"Enter an element or object name\" autocomplete=\"off\"><button>Search</button></form></div><div id=\"status\"></div><div class=\"img-grid\" id=\"grid\"><div class=\"img-loading\"><div class=\"dots\"><span></span><span></span><span></span></div><div>Loading Google image results...</div></div></div><div class=\"img-menu\" id=\"imgMenu\"><button type=\"button\" id=\"importImageBtn\">Import Image</button></div><div class=\"img-import-overlay\" id=\"imgImportOverlay\"><div class=\"img-import-top\"><span class=\"img-import-stage\" id=\"imgImportStage\">Importing</span><span id=\"imgImportPct\">0%</span></div><div class=\"img-import-track\"><div class=\"img-import-fill\" id=\"imgImportFill\"></div></div></div><script>var query=\"" + safeQuery.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\";var activeUrl='';var currentPage=0;var loadingMore=false;var finished=false;var seenUrls={};var importTimer=null;function esc(s){return String(s||'').replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});}function doSearch(e){e.preventDefault();var q=document.getElementById('q').value||'png';location.href='/img-search?q='+encodeURIComponent(q);}function ensureTooltip(){var t=document.getElementById('kwvGlossTooltip');if(!t){t=document.createElement('div');t.id='kwvGlossTooltip';t.className='kwv-gloss-tooltip';document.body.appendChild(t);}return t;}function moveTooltip(evt){var t=ensureTooltip();var margin=8;var x=(evt&&typeof evt.clientX==='number'?evt.clientX:0)+14;var y=(evt&&typeof evt.clientY==='number'?evt.clientY:0)+14;var rect=t.getBoundingClientRect();var maxX=Math.max(margin,window.innerWidth-(rect.width||160)-margin);var maxY=Math.max(margin,window.innerHeight-(rect.height||28)-margin);if(x>maxX)x=(evt.clientX||0)-(rect.width||160)-14;if(y>maxY)y=(evt.clientY||0)-(rect.height||28)-14;t.style.left=Math.round(Math.min(Math.max(margin,x),maxX))+'px';t.style.top=Math.round(Math.min(Math.max(margin,y),maxY))+'px';}function bindTooltip(el,text){if(!el||!text)return;el.setAttribute('data-kwv-tooltip',text);el.removeAttribute('title');el.addEventListener('mouseenter',function(evt){var t=ensureTooltip();t.textContent=el.getAttribute('data-kwv-tooltip')||'';t.classList.add('active');moveTooltip(evt);});el.addEventListener('mousemove',moveTooltip);el.addEventListener('mouseleave',function(){ensureTooltip().classList.remove('active');});}function hideMenu(){document.getElementById('imgMenu').classList.remove('active');}function showMenu(evt,url){evt.preventDefault();evt.stopPropagation();ensureTooltip().classList.remove('active');activeUrl=url;var menu=document.getElementById('imgMenu');menu.style.left=Math.min(evt.clientX,window.innerWidth-158)+'px';menu.style.top=Math.min(evt.clientY,window.innerHeight-104)+'px';menu.classList.add('active');}function postStatus(msg,isError){try{parent.postMessage({kwvAiStatus:msg,kwvAiStatusError:!!isError},'*');}catch(err){}}function postParent(payload){try{parent.postMessage(payload,'*');}catch(err){}}function setImportProgress(pct,label){var overlay=document.getElementById('imgImportOverlay');var fill=document.getElementById('imgImportFill');var num=document.getElementById('imgImportPct');var stage=document.getElementById('imgImportStage');pct=Math.max(0,Math.min(100,Math.round(pct||0)));if(overlay)overlay.classList.add('active');if(fill)fill.style.width=pct+'%';if(num)num.textContent=pct+'%';if(stage&&label)stage.textContent=label;}function finishImportProgress(label,isError){window.clearInterval(importTimer);setImportProgress(isError?100:100,label||'Done');window.setTimeout(function(){var overlay=document.getElementById('imgImportOverlay');if(overlay)overlay.classList.remove('active');},isError?1400:950);}function blobToPng(blob){return new Promise(function(resolve,reject){var img=new Image();var objectUrl=URL.createObjectURL(blob);img.onload=function(){try{var canvas=document.createElement('canvas');canvas.width=img.naturalWidth||img.width;canvas.height=img.naturalHeight||img.height;var ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);canvas.toBlob(function(png){URL.revokeObjectURL(objectUrl);if(png)resolve(png);else reject(new Error('PNG conversion failed.'));},'image/png');}catch(err){URL.revokeObjectURL(objectUrl);reject(err);}};img.onerror=function(){URL.revokeObjectURL(objectUrl);reject(new Error('Image decode failed.'));};img.src=objectUrl;});}function importImage(url){if(!url)return;hideMenu();window.clearInterval(importTimer);var soft=8;setImportProgress(soft,'Fetching image');importTimer=window.setInterval(function(){soft=Math.min(92,soft+Math.max(1,(96-soft)*.08));setImportProgress(soft,soft<42?'Fetching image':soft<68?'Converting PNG':soft<86?'Preparing import':'Importing to AE');},320);postStatus('Importing image...',false);fetch('/img-proxy?url='+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('Image fetch failed.');setImportProgress(42,'Fetched');return r.blob();}).then(function(blob){setImportProgress(58,'Converting PNG');return blobToPng(blob);}).then(function(png){setImportProgress(76,'Reading file');return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=function(){reject(new Error('Image read failed.'));};reader.readAsDataURL(png);});}).then(function(dataUrl){setImportProgress(94,'Sending to AE');parent.postMessage({kwvAiImportImageData:dataUrl,kwvAiImportImageType:'image/png'},'*');postStatus('Image sent to AE for import.',false);finishImportProgress('Sent to AE',false);}).catch(function(err){postStatus(err&&err.message?err.message:'Image import failed.',true);finishImportProgress('Import failed',true);});}function empty(msg){document.getElementById('grid').innerHTML='<div class=\"img-empty\"><h3>Images did not load.</h3><p>'+esc(msg||'Google is slow or blocked. Change the query.')+'</p></div>';}function render(items){var grid=document.getElementById('grid');if(!items||!items.length){if(currentPage===0)empty('No image URLs were found. Try another search.');else finished=true;return;}if(currentPage===0)grid.innerHTML='';var html='';items.forEach(function(item){var url=item.url||'';if(!url||seenUrls[url])return;seenUrls[url]=true;var thumb=item.thumb||item.url;html+='<div class=\"img-card\" data-url=\"'+esc(url)+'\" data-kwv-tooltip=\"Right click to import\"><div class=\"img-preview\"><img loading=\"lazy\" decoding=\"async\" src=\"'+esc(thumb)+'\" alt=\"'+esc(item.title||'Image')+'\"></div><span class=\"img-title\">'+esc(item.title||item.source||'Image')+'</span></div>';});if(html)grid.insertAdjacentHTML('beforeend',html);Array.prototype.forEach.call(document.querySelectorAll('.img-card:not([data-bound])'),function(card){card.setAttribute('data-bound','1');var url=card.getAttribute('data-url')||'';bindTooltip(card,'Right click to import');card.addEventListener('contextmenu',function(evt){showMenu(evt,url);});card.addEventListener('dblclick',function(){importImage(url);});});}function loadPage(page){if(loadingMore||finished)return;loadingMore=true;if(page>0)postStatus('Loading more images...',false);fetch('/img-results?q='+encodeURIComponent(query)+'&page='+encodeURIComponent(page)).then(function(r){return r.json();}).then(function(data){if(data.warning&&page===0){document.getElementById('status').innerHTML='<div class=\"img-warning\">'+esc(data.warning)+'</div>';}currentPage=page;render(data.items||[]);loadingMore=false;if(page<2){window.setTimeout(function(){loadPage(page+1);},220);}}).catch(function(err){loadingMore=false;if(page===0)empty(err&&err.message?err.message:'Image search failed.');else finished=true;});}window.addEventListener('scroll',function(){if(finished||loadingMore)return;if((window.innerHeight+window.scrollY)>(document.body.scrollHeight-520)){loadPage(currentPage+1);}});document.getElementById('importImageBtn').onclick=function(){if(activeUrl)importImage(activeUrl);};document.addEventListener('contextmenu',function(evt){if(!evt.target.closest('.img-card')){evt.preventDefault();hideMenu();}},true);document.addEventListener('click',hideMenu,true);loadPage(0);console.log('[Keshav Velo Search] Local Google image shell',\"" + escapeGuestHtml(localOrigin || "") + "\");</script></body></html>";
     }
 
     function buildGuestYouTubeSearchPage(query, items, localOrigin, warning) {
@@ -2521,7 +2811,7 @@
         }).join("");
         const empty = "<div class=\"yt-empty\"><h3>Search results did not load.</h3><p>YouTube blocked or slowed the search page. You can open it externally.</p><button onclick=\"openExternal()\">Open YouTube</button></div>";
         const warn = warning ? "<div class=\"yt-warning\">" + escapeGuestHtml(warning) + "</div>" : "";
-        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Keshav Velo YouTube Search</title><style>:root{--kwv-accent:" + accent + ";--kwv-accent-rgb:" + rgb + ";--kwv-accent-soft:" + soft + ";--kwv-accent-strong:" + strong + "}*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:Arial,sans-serif;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#111 #000}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:#111;border:1px solid #000;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#1b1b1b}body{padding:10px}.yt-head{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;padding:8px 0 10px;background:#050505}.yt-search{flex:1;display:flex;gap:7px}.yt-search input{flex:1;min-width:0;height:30px;border:1px solid #262626;border-radius:999px;background:#0c0c0c;color:#fff;padding:0 11px;font-size:11px;outline:none}.yt-search button,.yt-empty button{height:30px;border:1px solid var(--kwv-accent);border-radius:999px;background:rgba(var(--kwv-accent-rgb),.10);color:#fff;padding:0 12px;font-size:8px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;box-shadow:0 0 12px var(--kwv-accent-soft)}.yt-open{color:#aaa;text-decoration:none;border:1px solid #262626;border-radius:999px;padding:8px 10px;font-size:8px;font-weight:900}.yt-grid{display:grid;grid-template-columns:1fr;gap:8px}.yt-card{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px;min-height:72px;padding:7px;border:1px solid #1f1f1f;border-radius:9px;background:linear-gradient(180deg,#101010 0%,#080808 100%);color:#fff;text-decoration:none}.yt-card:hover{border-color:var(--kwv-accent);background:rgba(var(--kwv-accent-rgb),.10);box-shadow:0 0 13px var(--kwv-accent-soft)}.yt-thumb{position:relative;display:block;overflow:hidden;border-radius:6px;background:#111;aspect-ratio:16/9}.yt-thumb img{width:100%;height:100%;object-fit:cover;display:block}.yt-info{display:flex;flex-direction:column;justify-content:center;gap:7px;min-width:0}.yt-info strong{font-size:10px;line-height:1.35;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.yt-info small{font-size:8px;line-height:1.35;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.yt-empty{min-height:220px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#aaa;padding:25px}.yt-empty h3{margin:0 0 8px;color:#fff;font-size:14px}.yt-empty p{max-width:320px;margin:0 0 14px;font-size:10px;line-height:1.5}.yt-warning{margin:0 0 8px;padding:8px;border:1px solid rgba(var(--kwv-accent-rgb),.32);border-radius:8px;background:rgba(var(--kwv-accent-rgb),.08);color:#ffb2b2;font-size:9px;line-height:1.45}</style></head><body><div class=\"yt-head\"><form class=\"yt-search\" onsubmit=\"doSearch(event)\"><input id=\"q\" value=\"" + safeQuery + "\" autocomplete=\"off\"><button>Search</button></form></div>" + warn + "<div class=\"yt-grid\">" + (cards || empty) + "</div><script>var localOrigin=\"" + escapeGuestHtml(localOrigin || "") + "\";function openExternal(){location.href=\"" + escapeGuestHtml(externalUrl) + "\";}function doSearch(e){e.preventDefault();var q=document.getElementById('q').value||'" + escapeGuestHtml(defaultYouTubeSearchQuery) + "';location.href='/yt-search?q='+encodeURIComponent(q);}console.log('[Keshav Velo Search] Local YouTube search page',localOrigin);</script></body></html>";
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Keshav Velo YouTube Search</title><style>:root{--kwv-accent:" + accent + ";--kwv-accent-rgb:" + rgb + ";--kwv-accent-soft:" + soft + ";--kwv-accent-strong:" + strong + "}*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:Arial,sans-serif;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#101010 #050505}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#050505;border-left:1px solid #111}::-webkit-scrollbar-thumb{background:#101010;border:1px solid #050505;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#1f1f1f}body{padding:10px}.yt-head{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;padding:8px 0 10px;background:#050505}.yt-search{flex:1;display:flex;gap:7px}.yt-search input{flex:1;min-width:0;height:30px;border:1px solid #262626;border-radius:999px;background:#0c0c0c;color:#fff;padding:0 11px;font-size:11px;outline:none}.yt-search button,.yt-empty button{height:30px;border:1px solid var(--kwv-accent);border-radius:999px;background:rgba(var(--kwv-accent-rgb),.10);color:#fff;padding:0 12px;font-size:8px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;box-shadow:0 0 12px var(--kwv-accent-soft)}.yt-open{color:#aaa;text-decoration:none;border:1px solid #262626;border-radius:999px;padding:8px 10px;font-size:8px;font-weight:900}.yt-grid{display:grid;grid-template-columns:1fr;gap:8px}.yt-card{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px;min-height:72px;padding:7px;border:1px solid #1f1f1f;border-radius:9px;background:linear-gradient(180deg,#101010 0%,#080808 100%);color:#fff;text-decoration:none}.yt-card:hover{border-color:var(--kwv-accent);background:rgba(var(--kwv-accent-rgb),.10);box-shadow:0 0 13px var(--kwv-accent-soft)}.yt-thumb{position:relative;display:block;overflow:hidden;border-radius:6px;background:#111;aspect-ratio:16/9}.yt-thumb img{width:100%;height:100%;object-fit:cover;display:block}.yt-info{display:flex;flex-direction:column;justify-content:center;gap:7px;min-width:0}.yt-info strong{font-size:10px;line-height:1.35;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.yt-info small{font-size:8px;line-height:1.35;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.yt-empty{min-height:220px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#aaa;padding:25px}.yt-empty h3{margin:0 0 8px;color:#fff;font-size:14px}.yt-empty p{max-width:320px;margin:0 0 14px;font-size:10px;line-height:1.5}.yt-warning{margin:0 0 8px;padding:8px;border:1px solid rgba(var(--kwv-accent-rgb),.32);border-radius:8px;background:rgba(var(--kwv-accent-rgb),.08);color:#ffb2b2;font-size:9px;line-height:1.45}</style></head><body><div class=\"yt-head\"><form class=\"yt-search\" onsubmit=\"doSearch(event)\"><input id=\"q\" value=\"" + safeQuery + "\" autocomplete=\"off\"><button>Search</button></form></div>" + warn + "<div class=\"yt-grid\">" + (cards || empty) + "</div><script>var localOrigin=\"" + escapeGuestHtml(localOrigin || "") + "\";function openExternal(){location.href=\"" + escapeGuestHtml(externalUrl) + "\";}function doSearch(e){e.preventDefault();var q=document.getElementById('q').value||'" + escapeGuestHtml(defaultYouTubeSearchQuery) + "';location.href='/yt-search?q='+encodeURIComponent(q);}console.log('[Keshav Velo Search] Local YouTube search page',localOrigin);</script></body></html>";
     }
 
     function buildGuestYouTubeSearchShell(query, localOrigin) {
@@ -2532,7 +2822,7 @@
         const soft = escapeGuestHtml(theme.soft);
         const strong = escapeGuestHtml(theme.strong);
         const externalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query || defaultYouTubeSearchQuery);
-        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Keshav Velo YouTube Search</title><style>:root{--kwv-accent:" + accent + ";--kwv-accent-rgb:" + rgb + ";--kwv-accent-soft:" + soft + ";--kwv-accent-strong:" + strong + "}*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:Arial,sans-serif;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#111 #000}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:#111;border:1px solid #000;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#1b1b1b}body{padding:10px}.yt-head{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;padding:8px 0 10px;background:#050505}.yt-search{flex:1;display:flex;gap:7px}.yt-search input{flex:1;min-width:0;height:30px;border:1px solid #262626;border-radius:999px;background:#0c0c0c;color:#fff;padding:0 11px;font-size:11px;outline:none}.yt-search button,.yt-empty a{height:30px;border:1px solid var(--kwv-accent);border-radius:999px;background:rgba(var(--kwv-accent-rgb),.10);color:#fff;padding:0 12px;font-size:8px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;box-shadow:0 0 12px var(--kwv-accent-soft)}.yt-open{color:#aaa;text-decoration:none;border:1px solid #262626;border-radius:999px;padding:8px 10px;font-size:8px;font-weight:900}.yt-grid{display:grid;grid-template-columns:1fr;gap:8px}.yt-card{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px;min-height:72px;padding:7px;border:1px solid #1f1f1f;border-radius:9px;background:linear-gradient(180deg,#101010 0%,#080808 100%);color:#fff;text-decoration:none}.yt-card:hover{border-color:var(--kwv-accent);background:rgba(var(--kwv-accent-rgb),.10);box-shadow:0 0 13px var(--kwv-accent-soft)}.yt-thumb{display:block;overflow:hidden;border-radius:6px;background:#111;aspect-ratio:16/9}.yt-thumb img{width:100%;height:100%;object-fit:cover;display:block}.yt-info{display:flex;flex-direction:column;justify-content:center;gap:7px;min-width:0}.yt-info strong{font-size:10px;line-height:1.35;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.yt-info small{font-size:8px;line-height:1.35;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.yt-empty,.yt-loading{min-height:220px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#aaa;padding:25px}.yt-empty h3{margin:0 0 8px;color:#fff;font-size:14px}.yt-empty p{max-width:320px;margin:0 0 14px;font-size:10px;line-height:1.5}.dots{display:flex;gap:10px;margin-bottom:14px}.dots span{width:18px;height:18px;border-radius:50%;background:#2a2a2a;animation:pulse 1s infinite alternate}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}@keyframes pulse{to{background:var(--kwv-accent);transform:translateY(-4px)}}.yt-warning{margin:0 0 8px;padding:8px;border:1px solid rgba(var(--kwv-accent-rgb),.32);border-radius:8px;background:rgba(var(--kwv-accent-rgb),.08);color:#ffb2b2;font-size:9px;line-height:1.45}</style></head><body><div class=\"yt-head\"><form class=\"yt-search\" onsubmit=\"doSearch(event)\"><input id=\"q\" value=\"" + safeQuery + "\" autocomplete=\"off\"><button>Search</button></form></div><div id=\"status\"></div><div class=\"yt-grid\" id=\"grid\"><div class=\"yt-loading\"><div class=\"dots\"><span></span><span></span><span></span></div><div>Loading clean YouTube results...</div></div></div><script>var query=\"" + safeQuery.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\";var externalUrl=\"" + escapeGuestHtml(externalUrl) + "\";function esc(s){return String(s||'').replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});}function doSearch(e){e.preventDefault();var q=document.getElementById('q').value||'" + escapeGuestHtml(defaultYouTubeSearchQuery) + "';location.href='/yt-search?q='+encodeURIComponent(q);}function empty(msg){document.getElementById('grid').innerHTML='<div class=\"yt-empty\"><h3>Search results did not load.</h3><p>'+esc(msg||'YouTube is slow or blocked. You can open it externally.')+'</p><a target=\"_blank\" rel=\"noopener\" href=\"'+esc(externalUrl)+'\">Open YouTube</a></div>';}function render(items){if(!items||!items.length){empty('No results were found. Try opening externally.');return;}document.getElementById('grid').innerHTML=items.map(function(item){var thumb=item.thumb||('https://i.ytimg.com/vi/'+item.id+'/hqdefault.jpg');return '<a class=\"yt-card\" href=\"/yt-player?v='+encodeURIComponent(item.id)+'\"><span class=\"yt-thumb\"><img src=\"'+esc(thumb)+'\" alt=\"\"></span><span class=\"yt-info\"><strong>'+esc(item.title||'YouTube Video')+'</strong><small>'+esc(item.meta||'YouTube')+'</small></span></a>';}).join('');}fetch('/yt-results?q='+encodeURIComponent(query)).then(function(r){return r.json();}).then(function(data){if(data.warning){document.getElementById('status').innerHTML='<div class=\"yt-warning\">'+esc(data.warning)+'</div>';}render(data.items||[]);}).catch(function(err){empty(err&&err.message?err.message:'Search failed.');});console.log('[Keshav Velo Search] Local YouTube search shell',\"" + escapeGuestHtml(localOrigin || "") + "\");</script></body></html>";
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"strict-origin-when-cross-origin\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Keshav Velo YouTube Search</title><style>:root{--kwv-accent:" + accent + ";--kwv-accent-rgb:" + rgb + ";--kwv-accent-soft:" + soft + ";--kwv-accent-strong:" + strong + "}*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:Arial,sans-serif;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#101010 #050505}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#050505;border-left:1px solid #111}::-webkit-scrollbar-thumb{background:#101010;border:1px solid #050505;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#1f1f1f}body{padding:10px}.yt-head{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;padding:8px 0 10px;background:#050505}.yt-search{flex:1;display:flex;gap:7px}.yt-search input{flex:1;min-width:0;height:30px;border:1px solid #262626;border-radius:999px;background:#0c0c0c;color:#fff;padding:0 11px;font-size:11px;outline:none}.yt-search button,.yt-empty a{height:30px;border:1px solid var(--kwv-accent);border-radius:999px;background:rgba(var(--kwv-accent-rgb),.10);color:#fff;padding:0 12px;font-size:8px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;box-shadow:0 0 12px var(--kwv-accent-soft)}.yt-open{color:#aaa;text-decoration:none;border:1px solid #262626;border-radius:999px;padding:8px 10px;font-size:8px;font-weight:900}.yt-grid{display:grid;grid-template-columns:1fr;gap:8px}.yt-card{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px;min-height:72px;padding:7px;border:1px solid #1f1f1f;border-radius:9px;background:linear-gradient(180deg,#101010 0%,#080808 100%);color:#fff;text-decoration:none}.yt-card:hover{border-color:var(--kwv-accent);background:rgba(var(--kwv-accent-rgb),.10);box-shadow:0 0 13px var(--kwv-accent-soft)}.yt-thumb{display:block;overflow:hidden;border-radius:6px;background:#111;aspect-ratio:16/9}.yt-thumb img{width:100%;height:100%;object-fit:cover;display:block}.yt-info{display:flex;flex-direction:column;justify-content:center;gap:7px;min-width:0}.yt-info strong{font-size:10px;line-height:1.35;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.yt-info small{font-size:8px;line-height:1.35;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.yt-empty,.yt-loading{min-height:220px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#aaa;padding:25px}.yt-empty h3{margin:0 0 8px;color:#fff;font-size:14px}.yt-empty p{max-width:320px;margin:0 0 14px;font-size:10px;line-height:1.5}.dots{display:flex;gap:10px;margin-bottom:14px}.dots span{width:18px;height:18px;border-radius:50%;background:#2a2a2a;animation:pulse 1s infinite alternate}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}@keyframes pulse{to{background:var(--kwv-accent);transform:translateY(-4px)}}.yt-warning{margin:0 0 8px;padding:8px;border:1px solid rgba(var(--kwv-accent-rgb),.32);border-radius:8px;background:rgba(var(--kwv-accent-rgb),.08);color:#ffb2b2;font-size:9px;line-height:1.45}</style></head><body><div class=\"yt-head\"><form class=\"yt-search\" onsubmit=\"doSearch(event)\"><input id=\"q\" value=\"" + safeQuery + "\" autocomplete=\"off\"><button>Search</button></form></div><div id=\"status\"></div><div class=\"yt-grid\" id=\"grid\"><div class=\"yt-loading\"><div class=\"dots\"><span></span><span></span><span></span></div><div>Loading clean YouTube results...</div></div></div><script>var query=\"" + safeQuery.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\";var externalUrl=\"" + escapeGuestHtml(externalUrl) + "\";function esc(s){return String(s||'').replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});}function doSearch(e){e.preventDefault();var q=document.getElementById('q').value||'" + escapeGuestHtml(defaultYouTubeSearchQuery) + "';location.href='/yt-search?q='+encodeURIComponent(q);}function empty(msg){document.getElementById('grid').innerHTML='<div class=\"yt-empty\"><h3>Search results did not load.</h3><p>'+esc(msg||'YouTube is slow or blocked. You can open it externally.')+'</p><a target=\"_blank\" rel=\"noopener\" href=\"'+esc(externalUrl)+'\">Open YouTube</a></div>';}function render(items){if(!items||!items.length){empty('No results were found. Try opening externally.');return;}document.getElementById('grid').innerHTML=items.map(function(item){var thumb=item.thumb||('https://i.ytimg.com/vi/'+item.id+'/hqdefault.jpg');return '<a class=\"yt-card\" href=\"/yt-player?v='+encodeURIComponent(item.id)+'\"><span class=\"yt-thumb\"><img src=\"'+esc(thumb)+'\" alt=\"\"></span><span class=\"yt-info\"><strong>'+esc(item.title||'YouTube Video')+'</strong><small>'+esc(item.meta||'YouTube')+'</small></span></a>';}).join('');}fetch('/yt-results?q='+encodeURIComponent(query)).then(function(r){return r.json();}).then(function(data){if(data.warning){document.getElementById('status').innerHTML='<div class=\"yt-warning\">'+esc(data.warning)+'</div>';}render(data.items||[]);}).catch(function(err){empty(err&&err.message?err.message:'Search failed.');});console.log('[Keshav Velo Search] Local YouTube search shell',\"" + escapeGuestHtml(localOrigin || "") + "\");</script></body></html>";
     }
 
     function buildGuestHomePage(localOrigin) {
@@ -2541,7 +2831,7 @@
         const rgb = escapeGuestHtml(theme.rgb);
         const soft = escapeGuestHtml(theme.soft);
         const strong = escapeGuestHtml(theme.strong);
-        return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="referrer" content="strict-origin-when-cross-origin"><title>Keshav With Velo</title><style>:root{--kwv-accent:${accent};--kwv-accent-rgb:${rgb};--kwv-accent-soft:${soft};--kwv-accent-strong:${strong}}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}body{background:radial-gradient(circle at 84% 10%,rgba(var(--kwv-accent-rgb),.15),rgba(0,0,0,0) 34%),linear-gradient(180deg,#050505 0%,#000 56%);scrollbar-width:thin;scrollbar-color:#111 #000}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:#111;border-radius:999px;border:1px solid #000}::-webkit-scrollbar-thumb:hover{background:#1b1b1b}.wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;padding:14px}.brand{text-align:center}.brand h1{margin:0;color:#fff;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:900;font-style:normal;letter-spacing:.2px;text-transform:uppercase}.brand .red{color:var(--kwv-accent);text-shadow:0 0 12px var(--kwv-accent-strong)}.search{display:flex;align-items:center;gap:7px;width:100%;max-width:330px;padding:7px;border:1px solid rgba(var(--kwv-accent-rgb),.18);border-radius:999px;background:#060606;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 0 18px rgba(var(--kwv-accent-rgb),.06)}.search:focus-within{border-color:rgba(var(--kwv-accent-rgb),.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 0 0 1px rgba(var(--kwv-accent-rgb),.12),0 0 18px rgba(var(--kwv-accent-rgb),.10)}.search input{flex:1;min-width:0;height:25px;border:0;background:transparent;color:#f5f5f5;outline:0;font-size:9px;font-weight:700}.search input::placeholder{color:#606060}.search button{width:29px;height:29px;border:0;border-radius:50%;background:var(--kwv-accent);color:#fff;padding:0;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 0 12px var(--kwv-accent-soft)}.search button:hover{background:var(--kwv-accent);color:#fff;filter:brightness(1.08)}.grid{width:100%;max-width:210px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;justify-content:center}.tile{min-width:0;min-height:74px;padding:8px 6px;border:0;border-radius:0;background:transparent;text-decoration:none;color:#fff;text-align:center;box-shadow:none}.tile:hover{background:transparent;color:var(--kwv-accent)}.mark{height:39px;display:flex;align-items:center;justify-content:center;margin-bottom:6px}.logo-img{display:block;max-width:38px;max-height:34px;object-fit:contain}.logo-google{max-width:34px;max-height:34px}.logo-youtube{max-width:43px;max-height:31px}.tile span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;font-size:7px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}</style></head><body><main class="wrap"><div class="brand"><h1>KESHAV <span class="red">WITH VELO</span></h1></div><form class="search" action="/go" method="get"><input name="q" placeholder="Search Google or type a URL" autofocus autocomplete="off"><button title="Search">&#8594;</button></form><div class="grid"><a class="tile" href="/go?q=google"><div class="mark"><img class="logo-img logo-google" alt="Google" src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png"></div><span>Google</span></a><a class="tile" href="/yt-search?q=${encodeURIComponent(defaultYouTubeSearchQuery)}"><div class="mark"><img class="logo-img logo-youtube" alt="YouTube" src="https://www.gstatic.com/youtube/img/branding/favicon/favicon_144x144.png"></div><span>YouTube</span></a></div></main><script>console.log('[Keshav Velo Search] Home',"${escapeGuestHtml(localOrigin || "")}");</script></body></html>`;
+        return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="referrer" content="strict-origin-when-cross-origin"><title>Keshav With Velo</title><style>:root{--kwv-accent:${accent};--kwv-accent-rgb:${rgb};--kwv-accent-soft:${soft};--kwv-accent-strong:${strong}}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}body{background:radial-gradient(circle at 84% 10%,rgba(var(--kwv-accent-rgb),.15),rgba(0,0,0,0) 34%),linear-gradient(180deg,#050505 0%,#000 56%);scrollbar-width:thin;scrollbar-color:#101010 #050505}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#050505;border-left:1px solid #111}::-webkit-scrollbar-thumb{background:#111;border-radius:999px;border:1px solid #000}::-webkit-scrollbar-thumb:hover{background:#1f1f1f}.wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;padding:14px}.brand{text-align:center}.brand h1{margin:0;color:#fff;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:900;font-style:normal;letter-spacing:.2px;text-transform:uppercase}.brand .red{color:var(--kwv-accent);text-shadow:0 0 12px var(--kwv-accent-strong)}.search{display:flex;align-items:center;gap:7px;width:100%;max-width:330px;padding:7px;border:1px solid rgba(var(--kwv-accent-rgb),.18);border-radius:999px;background:#060606;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 0 18px rgba(var(--kwv-accent-rgb),.06)}.search:focus-within{border-color:rgba(var(--kwv-accent-rgb),.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 0 0 1px rgba(var(--kwv-accent-rgb),.12),0 0 18px rgba(var(--kwv-accent-rgb),.10)}.search input{flex:1;min-width:0;height:25px;border:0;background:transparent;color:#f5f5f5;outline:0;font-size:9px;font-weight:700}.search input::placeholder{color:#606060}.search button{width:29px;height:29px;border:0;border-radius:50%;background:var(--kwv-accent);color:#fff;padding:0;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 0 12px var(--kwv-accent-soft)}.search button:hover{background:var(--kwv-accent);color:#fff;filter:brightness(1.08)}.grid{width:100%;max-width:210px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;justify-content:center}.tile{min-width:0;min-height:74px;padding:8px 6px;border:0;border-radius:0;background:transparent;text-decoration:none;color:#fff;text-align:center;box-shadow:none}.tile:hover{background:transparent;color:var(--kwv-accent)}.mark{height:39px;display:flex;align-items:center;justify-content:center;margin-bottom:6px}.logo-img{display:block;max-width:38px;max-height:34px;object-fit:contain}.logo-google{max-width:34px;max-height:34px}.logo-youtube{max-width:43px;max-height:31px}.tile span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;font-size:7px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}</style></head><body><main class="wrap"><div class="brand"><h1>KESHAV <span class="red">WITH VELO</span></h1></div><form class="search" onsubmit="goSearch(event)"><input id="homeQ" name="q" placeholder="Search" autofocus autocomplete="off"><button title="Search">&#8594;</button></form><div class="grid"><a class="tile" href="#" onclick="goSearch(null,'google');return false;"><div class="mark"><img class="logo-img logo-google" alt="Google" src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png"></div><span>Google</span></a><a class="tile" href="/yt-search?q=${encodeURIComponent(defaultYouTubeSearchQuery)}"><div class="mark"><img class="logo-img logo-youtube" alt="YouTube" src="https://www.gstatic.com/youtube/img/branding/favicon/favicon_144x144.png"></div><span>YouTube</span></a></div></main><script>function goSearch(e,v){if(e)e.preventDefault();var input=document.getElementById('homeQ');var q=String(v||input&&input.value||'google').trim()||'google';try{parent.postMessage({kwvAiSearchNavigate:q},'*');}catch(err){location.href='/go?q='+encodeURIComponent(q);}}console.log('[Keshav Velo Search] Home',"${escapeGuestHtml(localOrigin || "")}");</script></body></html>`;
     }
 
     function buildBlockedSitePage(site, targetUrl) {
@@ -2566,7 +2856,7 @@
 
     function buildGuestRedirectPage(targetUrl) {
         const safeTarget = escapeGuestHtml(targetUrl || "");
-        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Opening...</title><style>html,body{margin:0;width:100%;height:100%;background:#050505;color:#777;font:11px Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style></head><body>Opening...</body><script>var target=\"" + safeTarget.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\";try{parent.postMessage({kwvAiSearchNavigate:target},\"*\");}catch(e){location.href=target;}setTimeout(function(){location.href=target;},800);</script></html>";
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Opening...</title><style>html,body{margin:0;width:100%;height:100%;background:#050505;color:#777;font:11px Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style></head><body>Opening in panel...</body><script>var target=\"" + safeTarget.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\";try{parent.postMessage({kwvAiSearchNavigate:target},\"*\");}catch(e){}</script></html>";
     }
 
     function buildPinterestGuestInjectionScript() {
@@ -2977,6 +3267,32 @@
                     done(err);
                 });
             }
+            function normalizeRemoteImageForImport(buffer, contentType, done) {
+                try {
+                    const inputType = String(contentType || "").split(";")[0].trim().toLowerCase();
+                    if (inputType === "image/png") {
+                        done(null, buffer, "image/png");
+                        return;
+                    }
+                    let sharp = null;
+                    try { sharp = require("sharp"); } catch (sharpErr) {}
+                    if (!sharp) {
+                        done(null, buffer, /^image\//i.test(contentType || "") ? contentType : "image/png");
+                        return;
+                    }
+                    sharp(buffer, { animated: false, limitInputPixels: 80000000 })
+                        .png({ compressionLevel: 9 })
+                        .toBuffer(function(err, output) {
+                            if (err || !output) {
+                                done(null, buffer, /^image\//i.test(contentType || "") ? contentType : "image/png");
+                                return;
+                            }
+                            done(null, output, "image/png");
+                        });
+                } catch (err) {
+                    done(null, buffer, /^image\//i.test(contentType || "") ? contentType : "image/png");
+                }
+            }
             aiHubRuntime.guestServerStarting = true;
             const server = http.createServer(function(req, res) {
                 try {
@@ -3089,14 +3405,25 @@
                                 res.end(err ? err.message : "Image fetch failed.");
                                 return;
                             }
-                            res.writeHead(200, {
-                                "Content-Type": /^image\//i.test(contentType || "") ? contentType : "image/png",
-                                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-                                "Pragma": "no-cache",
-                                "Access-Control-Allow-Origin": "*",
-                                "X-Content-Type-Options": "nosniff"
+                            normalizeRemoteImageForImport(buffer, contentType, function(normalizeErr, outputBuffer, outputType) {
+                                if (normalizeErr || !outputBuffer) {
+                                    res.writeHead(502, {
+                                        "Content-Type": "text/plain; charset=utf-8",
+                                        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                                        "X-Content-Type-Options": "nosniff"
+                                    });
+                                    res.end(normalizeErr ? normalizeErr.message : "Image conversion failed.");
+                                    return;
+                                }
+                                res.writeHead(200, {
+                                    "Content-Type": /^image\//i.test(outputType || "") ? outputType : "image/png",
+                                    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                                    "Pragma": "no-cache",
+                                    "Access-Control-Allow-Origin": "*",
+                                    "X-Content-Type-Options": "nosniff"
+                                });
+                                res.end(outputBuffer);
                             });
-                            res.end(buffer);
                         });
                         return;
                     }
@@ -3129,7 +3456,7 @@
                     if (parsedUrl.pathname === "/go") {
                         const query = parsedUrl.searchParams.get("q") || "";
                         let target = normalizeAiSearchUrl(query || "google");
-                        if (!/^https?:\/\//i.test(target)) target = "https://www.google.com/search?igu=1&q=" + encodeURIComponent(query || "google");
+                        if (!/^https?:\/\//i.test(target)) target = "https://www.google.com/search?q=" + encodeURIComponent(query || "google");
                         const loginSite = getLoginBrowserSite(target);
                         if (loginSite) {
                             res.writeHead(200, htmlHeaders);
@@ -3296,14 +3623,17 @@
         return document.querySelector(".ai-search-stage");
     }
 
+    function syncAiExternalScrollbarCover() {
+        const stage = getAiSearchStage();
+        if (!stage) return;
+        const frame = getActiveAiSearchFrame();
+        stage.classList.toggle("external-scroll-cover", !!(frame && frame.classList.contains("active") && frame.classList.contains("external-scroll-hide")));
+    }
+
     function bindAiSearchFrameEvents(frame) {
         if (!frame || frame.__kwvAiSearchBound) return;
         frame.__kwvAiSearchBound = true;
-        frame.setAttribute("oncontextmenu", "return false");
-        frame.addEventListener("contextmenu", showAiFrameImportMenu, true);
-        frame.addEventListener("mousedown", function(event) {
-            if (event && event.button === 2) showAiFrameImportMenu(event);
-        }, true);
+        frame.removeAttribute("oncontextmenu");
         frame.onload = function() {
             handleAiSearchFrameLoad(frame);
         };
@@ -3333,7 +3663,7 @@
         } else {
             frame = document.createElement("iframe");
             frame.className = "ai-browser-frame";
-            frame.setAttribute("oncontextmenu", "return false");
+            frame.removeAttribute("oncontextmenu");
             frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
             frame.setAttribute("allow", "accelerometer; autoplay; clipboard-read; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share");
             frame.setAttribute("allowfullscreen", "");
@@ -3366,19 +3696,22 @@
         const label = document.getElementById("aiSearchZoomValue");
         const outBtn = document.getElementById("btnAiSearchZoomOut");
         const inBtn = document.getElementById("btnAiSearchZoomIn");
+        const fitWidthBtn = document.getElementById("btnAiSearchFitWidth");
+        const fitHeightBtn = document.getElementById("btnAiSearchFitHeight");
         if (label) label.textContent = Math.round(zoom * 100) + "%";
         if (outBtn) outBtn.disabled = zoom <= 0.3;
         if (inBtn) inBtn.disabled = zoom >= 1.25;
+        if (fitWidthBtn) fitWidthBtn.classList.toggle("active", zoom >= 0.95);
+        if (fitHeightBtn) fitHeightBtn.classList.toggle("active", zoom < 0.95);
     }
 
     function applyAiSearchFrameZoom(frame, tab) {
         if (!frame || !tab) return;
         const zoom = clampAiSearchZoom(tab.zoom || 1);
-        const isExternal = !isLocalAiSearchUrl(tab.currentUrl || tab.url || "");
-        const extra = isExternal ? Math.ceil(18 / zoom) : 0;
+        const externalFrame = !isLocalAiSearchUrl(tab.currentUrl || tab.url || "");
         frame.style.transformOrigin = "0 0";
         frame.style.transform = zoom === 1 ? "" : "scale(" + zoom + ")";
-        frame.style.width = "calc(" + (100 / zoom).toFixed(4) + "% + " + extra + "px)";
+        frame.style.width = zoom === 1 ? (externalFrame ? "calc(100% + 12px)" : "calc(100% - 9px)") : (externalFrame ? "calc(" + (100 / zoom).toFixed(4) + "% + 12px)" : (100 / zoom).toFixed(4) + "%");
         frame.style.height = (100 / zoom).toFixed(4) + "%";
         frame.classList.toggle("zoomed", zoom !== 1);
         updateAiSearchZoomUi();
@@ -3397,6 +3730,7 @@
         setBgRemoverPanelVisible(bgRemoverActive);
         updateAiSearchNavState();
         updateAiSearchZoomUi();
+        syncAiExternalScrollbarCover();
     }
 
     function setBgRemoverPanelVisible(visible) {
@@ -3435,7 +3769,7 @@
         tab.input = options.input || "";
         tab.title = options.title || tab.title || "New Tab";
         tab.engine = options.engine || tab.engine || "google";
-        tab.zoom = clampAiSearchZoom(Object.prototype.hasOwnProperty.call(options, "zoom") ? options.zoom : (tab.zoom && tab.zoom !== 1 ? tab.zoom : (isLocalAiSearchUrl(url) ? 1 : 0.3)));
+        tab.zoom = clampAiSearchZoom(Object.prototype.hasOwnProperty.call(options, "zoom") ? options.zoom : (tab.zoom || 1));
         tab.zoomed = !!options.zoomed;
         tab.loading = true;
         if (options.addHistory !== false) {
@@ -3455,6 +3789,7 @@
                 frame.classList.toggle("external-scroll-hide", !isLocalAiSearchUrl(url));
                 applyAiSearchFrameZoom(frame, tab);
                 frame.src = getAiSearchFrameUrl(url);
+                syncAiSearchFrameVisibility();
             }
         }
         renderAiSearchTabs();
@@ -3578,7 +3913,7 @@
         });
         const input = document.getElementById("aiSearchInput");
         const homeInput = document.getElementById("aiSearchHomeInput");
-        const placeholder = aiHubRuntime.searchEngine === "youtube" ? "Search YouTube videos" : (aiHubRuntime.searchEngine === "images" ? "Search images: element, object, PNG..." : (aiHubRuntime.searchEngine === "bgremover" ? "Drop image below to remove background" : "Search Google or type a URL"));
+        const placeholder = "Search";
         if (input) {
             input.placeholder = placeholder;
             if (aiHubRuntime.searchEngine !== "bgremover") input.focus();
@@ -3597,6 +3932,7 @@
         const host = getAiSearchUrlHost(url);
         if (!host) return false;
         if (host === "accounts.google.com") return true;
+        if (/(^|\.)google\.[a-z.]+$/i.test(host || "") && /\/signin|\/ServiceLogin|\/AccountChooser|\/InteractiveLogin/i.test(url || "")) return true;
         if (/\/accounts|\/login|\/signin/i.test(url)) return true;
         if ((host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") && !getYouTubeVideoId(url)) return false;
         return false;
@@ -3633,6 +3969,7 @@
                 frame.classList.remove("external-scroll-hide");
             });
         }
+        syncAiExternalScrollbarCover();
         if (fallback) fallback.classList.remove("active");
         updateAiSearchZoomUi();
     }
@@ -3653,6 +3990,16 @@
         tab.zoom = clampAiSearchZoom(value);
         const frame = getActiveAiSearchFrame();
         if (frame) applyAiSearchFrameZoom(frame, tab);
+    }
+
+    function fitAiSearchWidth() {
+        setAiSearchZoom(1);
+        setAiHubStatus("Fit to width.", false);
+    }
+
+    function fitAiSearchHeight() {
+        setAiSearchZoom(0.55);
+        setAiHubStatus("Fit to height.", false);
     }
 
     function stepAiSearchZoom(delta) {
@@ -3855,14 +4202,7 @@
             setAiHubStatus("Loading Google image results. Right-click an image and choose Import Image.", false);
             return;
         }
-        if (aiHubRuntime.searchAiMode) {
-            const prompt = "Search the web mentally and help me with this query in a practical way: " + value;
-            const promptInput = document.getElementById("aiHubPromptInput");
-            setAiHubMode("chat");
-            if (promptInput) promptInput.value = prompt;
-            sendAiHubPrompt();
-            return;
-        }
+        if (aiHubRuntime.searchAiMode) setAiSearchAiMode(false);
         let url = normalizeAiSearchUrl(value);
         if (!url) return;
         if (/^https?:\/\/(www\.)?pinterest\.com\/?$/i.test(url)) {
@@ -4032,7 +4372,11 @@
         tab.loading = false;
         persistAiBrowserSession();
         initAiFrameImportContextMenu();
+        injectAiBrowserScrollbarTheme(frame);
         installAiFrameContextMenu(frame);
+        window.setTimeout(function() { injectAiBrowserScrollbarTheme(frame); }, 250);
+        window.setTimeout(function() { injectAiBrowserScrollbarTheme(frame); }, 800);
+        window.setTimeout(function() { injectAiBrowserScrollbarTheme(frame); }, 1800);
         window.setTimeout(function() { installAiFrameContextMenu(frame); }, 250);
         window.setTimeout(function() { installAiFrameContextMenu(frame); }, 800);
         window.setTimeout(function() { installAiFrameContextMenu(frame); }, 1800);
@@ -4159,7 +4503,7 @@
         }
         renderAiHubProviderButtons();
         setAiHubSettingsOpen(false);
-        setAiHubStatus(provider.label + " config saved. You can now chat with this provider.", false);
+        setAiHubStatus("Google search settings ready.", false);
     }
 
     function initAiHubModal() {
@@ -4186,9 +4530,10 @@
         const searchBackBtn = document.getElementById("btnAiSearchBack");
         const searchForwardBtn = document.getElementById("btnAiSearchForward");
         const searchReloadBtn = document.getElementById("btnAiSearchReload");
+        const searchFitWidthBtn = document.getElementById("btnAiSearchFitWidth");
+        const searchFitHeightBtn = document.getElementById("btnAiSearchFitHeight");
         const searchZoomOutBtn = document.getElementById("btnAiSearchZoomOut");
         const searchZoomInBtn = document.getElementById("btnAiSearchZoomIn");
-        const searchExternalBtn = document.getElementById("btnAiSearchExternal");
         const searchFallbackOpenBtn = document.getElementById("btnAiSearchFallbackOpen");
         const searchFrame = document.getElementById("aiSearchFrame");
         const searchNewTabBtn = document.getElementById("btnAiSearchNewTab");
@@ -4218,6 +4563,26 @@
                     importAiImageDataUrlWithRemovedBg(String(data.kwvAiImportImageRemoveBgData || ""), String(data.kwvAiImportImageType || "image/png"));
                     return;
                 }
+                if (data.kwvAiCopyImageContext) {
+                    const payload = data.kwvAiCopyImageContext || {};
+                    showAiFrameImportMenu({
+                        imageUrl: String(payload.imageUrl || ""),
+                        clientX: Number(payload.x) || 160,
+                        clientY: Number(payload.y) || 180,
+                        preventDefault: function() {},
+                        stopPropagation: function() {}
+                    });
+                    return;
+                }
+                if (data.kwvAiCopyImageUrl) {
+                    const imageUrl = String(data.kwvAiCopyImageUrl || "");
+                    if (imageUrl) {
+                        copyAiTextToClipboard(imageUrl, "Image URL copied: " + imageUrl);
+                    } else {
+                        setAiHubStatus("Image URL nahi mila.", true);
+                    }
+                    return;
+                }
                 if (data.kwvAiCopyText) {
                     copyAiTextToClipboard(String(data.kwvAiCopyText || ""), String(data.kwvAiCopyLabel || "Copied."));
                     return;
@@ -4232,22 +4597,23 @@
         if (closeBtn) closeBtn.onclick = closeAiHubModal;
         if (cancelBtn) cancelBtn.onclick = () => setAiHubSettingsOpen(false);
         if (saveBtn) saveBtn.onclick = saveAiHubProvider;
-        if (sendBtn) sendBtn.onclick = sendAiHubPrompt;
-        if (clearBtn) clearBtn.onclick = clearAiHubConversation;
-        if (attachBtn) attachBtn.onclick = openAiHubCompanion;
-        if (chatTab) chatTab.onclick = () => setAiHubMode("chat");
+        if (sendBtn) sendBtn.onclick = function() {};
+        if (clearBtn) clearBtn.onclick = function() {};
+        if (attachBtn) attachBtn.onclick = function() {};
+        if (chatTab) chatTab.onclick = () => setAiHubMode("search");
         if (searchTab) searchTab.onclick = () => {
             setAiHubMode("search");
             const activeTab = getActiveSearchTab();
             if (!activeTab || !(activeTab.currentUrl || activeTab.url)) openAiSearchHome(true);
         };
-        if (searchModeBtn) searchModeBtn.onclick = () => setAiSearchAiMode(!aiHubRuntime.searchAiMode);
+        if (searchModeBtn) searchModeBtn.onclick = () => setAiSearchAiMode(false);
         if (searchBackBtn) searchBackBtn.onclick = () => moveAiSearchHistory(-1);
         if (searchForwardBtn) searchForwardBtn.onclick = () => moveAiSearchHistory(1);
         if (searchReloadBtn) searchReloadBtn.onclick = reloadAiSearch;
+        if (searchFitWidthBtn) searchFitWidthBtn.onclick = fitAiSearchWidth;
+        if (searchFitHeightBtn) searchFitHeightBtn.onclick = fitAiSearchHeight;
         if (searchZoomOutBtn) searchZoomOutBtn.onclick = () => stepAiSearchZoom(-0.05);
         if (searchZoomInBtn) searchZoomInBtn.onclick = () => stepAiSearchZoom(0.05);
-        if (searchExternalBtn) searchExternalBtn.onclick = openAiSearchExternal;
         if (searchFallbackOpenBtn) searchFallbackOpenBtn.onclick = openAiSearchExternal;
         if (searchNewTabBtn) searchNewTabBtn.onclick = () => activateAiSearchTab(aiHubRuntime.activeSearchTabId);
         if (searchNewTabPlusBtn) searchNewTabPlusBtn.onclick = createAiSearchTab;
@@ -4281,10 +4647,8 @@
             };
         });
         if (settingsBtn) settingsBtn.onclick = () => {
-            renderAiHubProviderButtons();
-            fillAiHubFields();
-            if (aiHubRuntime.activeMode === "search") setAiHubMode("chat");
-            setAiHubSettingsOpen(!aiHubRuntime.settingsOpen);
+            setAiHubSettingsOpen(false);
+            setAiHubMode("search");
         };
         if (backBtn) backBtn.onclick = () => setAiHubSettingsOpen(false);
         if (overlay) {
@@ -4300,7 +4664,8 @@
                 }
                 if (evt.key === "Enter" && !evt.shiftKey) {
                     evt.preventDefault();
-                    sendAiHubPrompt();
+                    setAiHubMode("search");
+                    navigateAiSearch(promptInput.value || "google", true);
                 }
             };
         }
@@ -4321,16 +4686,12 @@
             };
         });
         startAiGuestServer();
-        ensureAiHubGreeting();
         ensureAiSearchTabs();
         if (getActiveSearchTab() && (getActiveSearchTab().currentUrl || getActiveSearchTab().url)) loadAiSearchTab(getActiveSearchTab());
         else renderAiSearchTabs();
         syncAiSearchGlobalsFromTab(getActiveSearchTab());
         updateAiSearchNavState();
-        renderAiHubProviderButtons();
-        fillAiHubFields();
-        renderAiHubMessages();
-        setAiHubMode("chat");
+        setAiHubMode("search");
         setAiSearchAiMode(false);
         setAiSearchEngine("google");
         setAiHubPending(false);
@@ -4338,15 +4699,14 @@
 
     window.keshavAiHub = {
         getActiveProvider: function() {
-            return getAiHubProviderConfig("nvidia");
+            return getAiHubProviderConfig("google");
         },
         getProviderConfig: function(providerId) {
-            return getAiHubProviderConfig("nvidia");
+            return getAiHubProviderConfig("google");
         },
         send: function(prompt) {
-            const input = document.getElementById("aiHubPromptInput");
-            if (input) input.value = String(prompt || "");
-            sendAiHubPrompt();
+            setAiHubMode("search");
+            navigateAiSearch(String(prompt || "google"), true);
         }
     };
 
@@ -9574,8 +9934,71 @@
         return items.length ? [{ folder: "Overlays", path: getPngFolderPath(), items: items }] : [];
     }
 
+    function getRecursivePngGroups() {
+        if (typeof require !== "function") return null;
+        try {
+            const fs = require("fs");
+            const pathModule = require("path");
+            const basePath = getPngFolderPath();
+            const roots = [
+                { label: "Overlays", path: pathModule.join(basePath, "Overlays") },
+                { label: "GIF", path: pathModule.join(basePath, "GIF") }
+            ];
+            const groups = [];
+
+            function toPanelPath(filePath) {
+                return String(filePath || "").replace(/\\/g, "/");
+            }
+
+            function scanFolder(folderPath, labelParts) {
+                if (!fs.existsSync(folderPath)) return;
+                const entries = fs.readdirSync(folderPath);
+                const items = [];
+                const folders = [];
+
+                entries.forEach((entry) => {
+                    const entryName = String(entry || "");
+                    const fullPath = pathModule.join(folderPath, entryName);
+                    const stat = fs.statSync(fullPath);
+                    if (stat && stat.isDirectory()) {
+                        folders.push({ name: entryName, path: fullPath });
+                        return;
+                    }
+                    if (!stat || !stat.isFile() || !/\.(png|gif)$/i.test(entryName)) return;
+                    items.push({
+                        name: entryName,
+                        path: toPanelPath(fullPath),
+                        kind: /\.gif$/i.test(entryName) ? "gif" : "png"
+                    });
+                });
+
+                if (items.length) {
+                    groups.push({
+                        folder: labelParts.join(" / "),
+                        path: toPanelPath(folderPath),
+                        items: items
+                    });
+                }
+
+                folders
+                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }))
+                    .forEach((folder) => scanFolder(folder.path, labelParts.concat(folder.name)));
+            }
+
+            roots.forEach((root) => scanFolder(root.path, [root.label]));
+            return sortPngGroups(groups);
+        } catch (err) {
+            return null;
+        }
+    }
+
     function scanPngGroups(done) {
         ensurePngFolder();
+        const localGroups = getRecursivePngGroups();
+        if (localGroups) {
+            done(localGroups, "");
+            return;
+        }
         if (!csInterface || !csInterface.evalScript) {
             done(getFallbackPngGroups(), "");
             return;
@@ -10094,6 +10517,21 @@
 
         previewShell.appendChild(image);
         card.appendChild(previewShell);
+
+        const badge = document.createElement("span");
+        badge.className = "overlay-media-badge";
+        badge.textContent = isGif ? "GIF" : "PNG";
+        previewShell.appendChild(badge);
+
+        const body = document.createElement("div");
+        body.className = "overlay-item-body";
+
+        const name = document.createElement("p");
+        name.className = "overlay-item-name";
+        name.textContent = getOverlayDisplayName(item.name);
+
+        body.appendChild(name);
+        card.appendChild(body);
 
         card.addEventListener("click", function() {
             const now = Date.now();

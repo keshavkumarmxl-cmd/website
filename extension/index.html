@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -358,13 +358,22 @@
         }
         .png-folder-grid {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 5px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
         }
-        .png-folder-grid .overlay-item { border-radius: 10px; background: #111; }
+        .png-folder-grid .overlay-item {
+            border-radius: 6px;
+            background: #111;
+            border-color: #2a2a2a;
+            overflow: hidden;
+        }
+        .png-folder-grid .overlay-item:hover {
+            border-color: var(--kwv-accent, #ff0000);
+            box-shadow: 0 0 12px var(--kwv-accent-soft, rgba(255, 0, 0, 0.28)) !important;
+        }
         .png-folder-grid .overlay-preview-shell {
             aspect-ratio: 1 / 1;
-            border-bottom: 0;
+            border-bottom: 1px solid #202020;
             background-color: #d7c5a4;
             background-image:
                 linear-gradient(45deg, rgba(0,0,0,0.08) 25%, transparent 25%),
@@ -376,7 +385,7 @@
         }
         .png-folder-grid .overlay-preview {
             object-fit: contain;
-            padding: 3px;
+            padding: 8px;
             box-sizing: border-box;
             background: transparent;
         }
@@ -388,10 +397,19 @@
             border-radius: 6px;
             background: rgba(255,255,255,0.16);
         }
-        .png-folder-grid .overlay-item-body { padding: 5px 5px 6px; }
+        .png-folder-grid .overlay-item-body {
+            display: block;
+            min-height: 31px;
+            padding: 5px 6px 6px;
+            background: #050505;
+        }
         .png-folder-grid .overlay-item-name {
-            min-height: 16px;
-            font-size: 6px;
+            min-height: 18px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 6.5px;
             line-height: 1.25;
         }
         .png-folder-grid .overlay-media-badge {
@@ -588,6 +606,7 @@
 
         /* PNG / Transparent background checkerboard pattern */
         .ov-card.is-png .ov-card-preview-area {
+            aspect-ratio: 1 / 1;
             background-color: #cec4b3;
             background-image:
                 linear-gradient(45deg, rgba(0,0,0,0.09) 25%, transparent 25%),
@@ -596,6 +615,20 @@
                 linear-gradient(-45deg, transparent 75%, rgba(0,0,0,0.09) 75%);
             background-size: 8px 8px;
             background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+        }
+        .ov-card.is-png .ov-card-preview-area img {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            width: calc(100% - 16px);
+            height: calc(100% - 16px);
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            object-position: center;
+            background: transparent;
         }
 
         /* Improved preview image size + centering */
@@ -1164,12 +1197,52 @@
             gap: 6px;
             padding: 6px 8px !important;
         }
+        .ov-card-grid.is-png-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 6px;
+            padding: 6px 8px !important;
+        }
 
         /* Center and balance the GIF grid inside the panel with equal side margins */
         .folder-children > .ov-card-grid.is-gif-grid {
             margin-left: 0 !important;
             margin-right: 0 !important;
             border-left: none !important;
+        }
+        .folder-children > .ov-card-grid.is-png-grid {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            border-left: none !important;
+        }
+        .ov-card-grid.is-png-grid .ov-card,
+        .ov-card-grid.is-gif-grid .ov-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .ov-card-grid.is-png-grid .ov-card-preview-area,
+        .ov-card-grid.is-gif-grid .ov-card-preview-area {
+            height: 0 !important;
+            padding-top: 100% !important;
+            flex: 0 0 auto;
+        }
+        .ov-card-grid.is-png-grid .ov-card-info,
+        .ov-card-grid.is-gif-grid .ov-card-info {
+            min-height: 32px;
+            flex: 0 0 32px;
+            margin-top: auto;
+            box-sizing: border-box;
+        }
+        .ov-card-grid.is-png-grid .ov-card-name,
+        .ov-card-grid.is-gif-grid .ov-card-name {
+            display: block;
+            height: 10px;
+            line-height: 10px;
+        }
+        .ov-card-grid.is-png-grid .ov-card-meta,
+        .ov-card-grid.is-gif-grid .ov-card-meta {
+            height: 11px;
+            align-items: center;
         }
 
         /* Prevent nested indentation shift in the GIF section to ensure perfect centering */
@@ -1201,6 +1274,11 @@
             background: #0d0d0d !important; /* Keep preview clean dark background without checkerboard */
             background-image: none !important;
             overflow: hidden;
+            border-bottom: 1px solid #222222;
+        }
+        .ov-card-grid.is-png-grid .ov-card.is-png .ov-card-preview-area {
+            background: #0d0d0d !important;
+            background-image: none !important;
             border-bottom: 1px solid #222222;
         }
 
@@ -2483,6 +2561,23 @@
         .preset-item-chip { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; padding: 2px 5px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #FF6A6A; font-size: 7px; font-weight: bold; letter-spacing: 0.5px; }
         .preset-item-name { width: 100%; color: inherit; font-size: 8px; line-height: 1.35; word-break: break-word; }
         .preset-empty { color: #666; font-size: 9px; text-align: center; width: 100%; padding: 12px 4px; }
+        .custom-preset-dropzone { display: none; min-height: 58px; margin-bottom: 9px; padding: 9px; border: 1px dashed rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.48); border-radius: 7px; background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.055); align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
+        .custom-preset-dropzone.dragging, .custom-preset-dropzone:hover { border-color: var(--kwv-accent, #ff0000); background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 14px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.11); }
+        .custom-preset-file { display: none; }
+        .custom-preset-drop-copy { display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+        .custom-preset-drop-title { color: #f4f4f4; font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; }
+        .custom-preset-drop-hint { color: #858585; font-size: 7px; font-weight: 700; }
+        .apple-preset-row-delete { width: 22px; min-width: 22px; height: 22px; padding: 0; border: 1px solid rgba(255,255,255,0.07); border-radius: 5px; background: #101010; color: #858585; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; }
+        .apple-preset-row-delete:hover { border-color: rgba(255, 75, 75, 0.65); color: #fff; background: rgba(255, 0, 0, 0.12); }
+        .apple-preset-row-delete svg { width: 13px; height: 13px; display: block; }
+        .custom-preset-confirm-overlay { position: absolute; inset: 0; z-index: 35; display: none; align-items: center; justify-content: center; padding: 14px; background: rgba(0,0,0,0.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+        .custom-preset-confirm-overlay.active { display: flex; }
+        .custom-preset-confirm-card { width: min(245px, 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: linear-gradient(180deg, #121212 0%, #080808 100%); box-shadow: 0 18px 34px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04); padding: 12px; }
+        .custom-preset-confirm-title { margin: 0 0 7px; color: #fff; font-size: 9px; font-weight: 900; letter-spacing: 0.9px; text-transform: uppercase; }
+        .custom-preset-confirm-copy { margin: 0; color: #aaa; font-size: 8px; line-height: 1.45; word-break: break-word; }
+        .custom-preset-confirm-name { color: #fff; font-weight: 900; }
+        .custom-preset-confirm-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 12px; }
+        .custom-preset-confirm-actions .danger { border-color: rgba(255, 60, 60, 0.55) !important; background: rgba(255, 0, 0, 0.16) !important; color: #fff !important; }
         .srt-card {
             padding: 12px;
             background:
@@ -2852,33 +2947,28 @@
             border-bottom: 1px solid #171717;
         }
         .apple-section-head::after {
-            content: "›";
-            width: 12px;
-            height: 18px;
-            flex: 0 0 12px;
-            display: inline-flex !important;
-            align-items: center;
-            justify-content: center;
-            border: 0;
-            border-radius: 0;
-            background: transparent;
-            color: #5f5f5f;
-            font-size: 14px;
-            font-weight: 500;
-            line-height: 1;
-            transform: rotate(90deg);
-            transition: transform 0.16s ease, color 0.16s ease;
+            content: "";
+            width: 4px;
+            height: 4px;
+            flex: 0 0 4px;
+            margin-right: 2px;
+            border-right: 1.2px solid #ffffff;
+            border-bottom: 1.2px solid #ffffff;
+            opacity: 0.82;
+            transform: rotate(45deg);
+            transition: transform 0.16s ease, opacity 0.16s ease;
         }
         .apple-preset-shell .apple-section-head::after,
         .apple-liquid-shell .apple-section-head::after,
         .apple-silence-shell .apple-section-head::after,
         .apple-audio-cleaner-shell .apple-section-head::after,
         .apple-mp3-converter-shell .apple-section-head::after {
-            content: "›" !important;
+            content: "" !important;
+            display: block !important;
         }
         .apple-section:not(.collapsed) .apple-section-head::after {
-            transform: rotate(-90deg);
-            color: #bdbdbd;
+            transform: rotate(225deg);
+            opacity: 1;
         }
         .apple-section-head .card-title { margin: 0; }
         .apple-preset-title-row {
@@ -4074,6 +4164,7 @@
         .branding-side-btn:active { transform: translateY(-50%) scale(0.98); }
         .branding-side-btn.active { border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.60); box-shadow: 0 0 9px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.12); }
         .branding-side-btn svg { width: 20px; height: 20px; }
+        .kwv-white-google-mark { color: #fff; filter: drop-shadow(0 0 8px rgba(255,255,255,0.10)); }
         .graph-launch-btn svg {
             animation: kwvGraphIconLive 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
             transform-origin: 50% 50%;
@@ -4441,6 +4532,173 @@
             line-height: 1.45;
             flex-shrink: 0;
         }
+        .kwv-update-strip {
+            position: relative;
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr) 112px;
+            gap: 8px;
+            align-items: center;
+            margin: 10px 0 0;
+            padding: 9px 10px;
+            border: 1px solid #222;
+            border-radius: 8px;
+            background:
+                radial-gradient(circle at 0% 50%, rgba(var(--kwv-accent-rgb,255,0,0),0.15), transparent 36%),
+                linear-gradient(180deg, rgba(16,16,16,0.98), rgba(6,6,6,0.98));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+            flex-shrink: 0;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .kwv-update-strip::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 9px;
+            bottom: 9px;
+            width: 2px;
+            z-index: 1;
+            border-radius: 999px;
+            background: var(--kwv-accent, #ff0000);
+            opacity: 0.78;
+            box-shadow: 0 0 9px rgba(var(--kwv-accent-rgb,255,0,0),0.36);
+            animation: kwvSocialAccentFlow 1.9s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .kwv-update-strip::after {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            z-index: -1;
+            background:
+                repeating-linear-gradient(100deg,
+                    rgba(255,255,255,0.00) 0px,
+                    rgba(255,255,255,0.00) 44px,
+                    rgba(255,255,255,0.045) 68px,
+                    rgba(var(--kwv-accent-rgb,255,0,0),0.075) 92px,
+                    rgba(255,255,255,0.035) 116px,
+                    rgba(255,255,255,0.00) 140px,
+                    rgba(255,255,255,0.00) 220px
+                ),
+                linear-gradient(90deg, rgba(var(--kwv-accent-rgb,255,0,0),0.10), rgba(255,255,255,0.01) 42%, rgba(0,0,0,0) 100%);
+            background-size: 220px 100%, 100% 100%;
+            opacity: 0.36;
+            animation: kwvSocialFlow 3.4s linear infinite;
+            pointer-events: none;
+        }
+        .kwv-update-mark {
+            position: relative;
+            z-index: 2;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 7px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--kwv-accent-rgb,255,0,0),0.16);
+            color: #ffffff;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 10px rgba(var(--kwv-accent-rgb,255,0,0),0.12);
+        }
+        .kwv-update-mark svg {
+            width: 16px;
+            height: 16px;
+        }
+        .kwv-update-info {
+            position: relative;
+            z-index: 2;
+            min-width: 0;
+        }
+        .kwv-update-title {
+            color: #fff;
+            font-family: "LEMON MILK", "Lemon Milk", "Arial Black", Arial, sans-serif;
+            font-size: 8.4px;
+            font-weight: 900;
+            letter-spacing: 0.35px;
+            line-height: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kwv-update-version {
+            margin-top: 4px;
+            color: #888;
+            font-size: 6.5px;
+            font-weight: 800;
+            letter-spacing: 0.35px;
+            text-transform: uppercase;
+        }
+        .kwv-update-status {
+            margin-top: 4px;
+            color: #777;
+            font-size: 6.4px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            line-height: 1.25;
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .kwv-update-status.ok {
+            color: #a8a8a8;
+        }
+        .kwv-update-status.error {
+            color: #ffb0b0;
+        }
+        .kwv-update-button {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 30px;
+            border: 1px solid rgba(var(--kwv-accent-rgb,255,0,0),0.38);
+            border-radius: 7px;
+            background: rgba(var(--kwv-accent-rgb,255,0,0),0.12);
+            color: #fff;
+            cursor: pointer;
+            font-size: 7px;
+            font-weight: 900;
+            letter-spacing: 0.55px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .kwv-update-button:hover {
+            border-color: rgba(var(--kwv-accent-rgb,255,0,0),0.68);
+            background: rgba(var(--kwv-accent-rgb,255,0,0),0.20);
+            box-shadow: 0 0 12px rgba(var(--kwv-accent-rgb,255,0,0),0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .kwv-update-button:disabled {
+            cursor: default;
+            opacity: 0.72;
+        }
+        .kwv-license-test-button {
+            width: 100%;
+            height: 24px;
+            margin-top: 7px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 7px;
+            background: #080808;
+            color: #8f8f8f;
+            cursor: pointer;
+            font-size: 6.6px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kwv-license-test-button:hover {
+            border-color: rgba(var(--kwv-accent-rgb,255,0,0),0.42);
+            color: #fff;
+            background: rgba(var(--kwv-accent-rgb,255,0,0),0.08);
+        }
         @keyframes kwvSocialFlow {
             0% { background-position: -220px 0, 0 0; }
             100% { background-position: 0 0, 0 0; }
@@ -4455,6 +4713,8 @@
         }
         body.kwv-reduce-animations .kwv-social-link::before,
         body.kwv-reduce-animations .kwv-social-link::after,
+        body.kwv-reduce-animations .kwv-update-strip::before,
+        body.kwv-reduce-animations .kwv-update-strip::after,
         body.kwv-reduce-animations .kwv-social-link:hover .kwv-social-mark {
             animation: none !important;
         }
@@ -4863,6 +5123,7 @@
         .ai-hub-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
         .ai-hub-logo { width: 28px; height: 28px; border-radius: 7px; border: 1px solid #202020; background: #111; display: flex; align-items: center; justify-content: center; color: #efefef; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); flex-shrink: 0; }
         .ai-hub-logo svg { width: 16px; height: 16px; }
+        .ai-hub-logo .kwv-white-google-mark { width: 16px; height: 16px; }
         .ai-hub-title { margin: 0; color: #fff; font-size: 11px; line-height: 1.12; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
         .ai-hub-head-actions { display: flex; gap: 6px; flex-shrink: 0; }
         .ai-hub-icon-btn {
@@ -4892,6 +5153,13 @@
         .ai-hub-icon-btn svg { width: 16px; height: 16px; }
         .ai-hub-icon-btn.settings svg { width: 17px; height: 17px; }
         .ai-hub-icon-btn.close svg { width: 15px; height: 15px; }
+        .ai-hub-icon-btn.attach,
+        .ai-hub-icon-btn.settings,
+        .ai-hub-mode-tabs,
+        #aiHubChatView,
+        #aiHubSettingsPanel {
+            display: none !important;
+        }
         .ai-hub-provider-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; background: rgba(255,255,255,0.03); color: #bfbfbf; font-size: 8px; font-weight: bold; letter-spacing: 0.8px; text-transform: uppercase; }
         .ai-hub-provider-pill strong { color: #ffffff; font-size: 8px; }
         .ai-hub-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px 8px 7px; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.16); }
@@ -4962,27 +5230,30 @@
         .ai-search-shell.ai-hub-view { display: none; }
         .ai-hub-chat-frame.ai-hub-view.active,
         .ai-search-shell.ai-hub-view.active { display: flex; flex-direction: column; }
-        .ai-search-shell { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 0%, rgba(var(--kwv-accent-rgb, 255, 0, 0),0.14) 0%, rgba(0,0,0,0) 42%), #030303; }
-        .ai-browser-tabs { position: relative; z-index: 21; flex: 0 0 auto; display: flex; align-items: flex-end; gap: 4px; padding: 6px 8px 0; background: #040404; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .ai-browser-tab { min-width: 0; max-width: 142px; height: 27px; display: inline-flex; align-items: center; gap: 7px; padding: 0 8px; border: 1px solid rgba(255,255,255,0.08); border-bottom-color: transparent; border-radius: 9px 9px 0 0; background: linear-gradient(180deg, #101010 0%, #080808 100%); color: #bdbdbd; cursor: pointer; font-size: 8px; font-weight: 800; letter-spacing: 0.2px; }
-        .ai-browser-tab.active { background: linear-gradient(180deg, #151515 0%, #090909 100%); color: #ffffff; border-color: rgba(var(--kwv-accent-rgb,255,0,0),0.34); border-bottom-color: transparent; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+        .ai-search-shell { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; background: #030303; }
+        .ai-browser-tabs { position: relative; z-index: 21; flex: 0 0 auto; display: flex; align-items: flex-end; gap: 4px; padding: 6px 8px 0; background: #050505; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .ai-browser-tab { min-width: 0; max-width: 142px; height: 27px; display: inline-flex; align-items: center; gap: 7px; padding: 0 8px; border: 1px solid rgba(255,255,255,0.08); border-bottom-color: transparent; border-radius: 8px 8px 0 0; background: #0b0b0b; color: #bdbdbd; cursor: pointer; font-size: 8px; font-weight: 800; letter-spacing: 0; }
+        .ai-browser-tab.active { background: #111111; color: #ffffff; border-color: rgba(var(--kwv-accent-rgb,255,0,0),0.36); border-bottom-color: transparent; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
         .ai-browser-tab-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ai-browser-tab-close { flex: 0 0 auto; width: 12px; height: 14px; display: inline-flex; align-items: center; justify-content: center; color: #777; font-size: 10px; font-weight: 900; line-height: 1; }
         .ai-browser-tab:hover .ai-browser-tab-close { color: #ffffff; }
         .ai-browser-tab-close:hover { color: var(--kwv-accent, #ff0000) !important; }
-        .ai-browser-new-tab { width: 25px; height: 25px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: #0b0b0b; color: #8f8f8f; cursor: pointer; font-size: 14px; line-height: 1; }
+        .ai-browser-new-tab { width: 25px; height: 25px; border: 1px solid rgba(255,255,255,0.08); border-radius: 7px; background: #0b0b0b; color: #8f8f8f; cursor: pointer; font-size: 14px; line-height: 1; }
         .ai-browser-new-tab:hover, .ai-browser-tab:hover { border-color: rgba(var(--kwv-accent-rgb,255,0,0),0.36); color: #fff; }
-        .ai-browser-top { position: relative; z-index: 20; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid rgba(var(--kwv-accent-rgb, 255, 0, 0),0.20); background: linear-gradient(180deg, #101010 0%, #060606 100%); box-shadow: 0 8px 18px rgba(0,0,0,0.22); }
-        .ai-browser-nav { width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.08); border-radius: 7px; background: #090909; color: #efefef; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1; }
+        .ai-browser-top { position: relative; z-index: 20; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid rgba(var(--kwv-accent-rgb, 255, 0, 0),0.18); background: #070707; box-shadow: 0 8px 16px rgba(0,0,0,0.24); }
+        .ai-browser-nav { width: 25px; height: 25px; border: 1px solid rgba(255,255,255,0.09); border-radius: 7px; background: #0d0d0d; color: #efefef; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1; }
         .ai-browser-nav:disabled { opacity: 0.34; cursor: default; color: #777; box-shadow: none; }
-        #btnAiSearchExternal { display: none !important; }
         .ai-browser-nav:hover { border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.44); background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08); color: #ffffff; box-shadow: 0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0),0.12); }
-        .ai-browser-zoom-control { flex: 0 0 auto; height: 26px; display: inline-grid; grid-template-columns: 22px 38px 22px; align-items: center; border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; background: #090909; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.035); }
+        .ai-browser-nav.active { border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.44); color: #fff; background: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.10); }
+        .ai-browser-fit { flex: 0 0 auto; height: 26px; display: inline-grid; grid-template-columns: 26px 26px; align-items: center; border: 1px solid rgba(255,255,255,0.09); border-radius: 8px; background: #0d0d0d; overflow: hidden; }
+        .ai-browser-fit-btn { width: 26px; height: 24px; border: 0; background: transparent; color: #d8d8d8; cursor: pointer; font-size: 7px; font-weight: 900; letter-spacing: 0; text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center; }
+        .ai-browser-fit-btn:hover, .ai-browser-fit-btn.active { color: #ffffff; background: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.13); }
+        .ai-browser-zoom-control { flex: 0 0 auto; height: 26px; display: inline-grid; grid-template-columns: 22px 38px 22px; align-items: center; border: 1px solid rgba(255,255,255,0.09); border-radius: 999px; background: #0d0d0d; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.035); }
         .ai-browser-zoom-btn { width: 22px; height: 24px; border: 0; background: transparent; color: #d8d8d8; cursor: pointer; font-size: 13px; font-weight: 900; line-height: 1; display: inline-flex; align-items: center; justify-content: center; outline: none; -webkit-tap-highlight-color: transparent; }
         .ai-browser-zoom-btn:hover { color: #ffffff; background: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.12); }
         .ai-browser-zoom-btn:disabled { opacity: 0.35; cursor: default; background: transparent; }
         .ai-browser-zoom-value { min-width: 0; color: #a9a9a9; font-size: 7px; font-weight: 900; letter-spacing: 0.15px; text-align: center; user-select: none; }
-        .ai-browser-address { flex: 1; min-width: 0; height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 9px; border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; background: #090909; color: #f2f2f2; }
+        .ai-browser-address { flex: 1; min-width: 0; height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 9px; border: 1px solid rgba(255,255,255,0.09); border-radius: 999px; background: #0d0d0d; color: #f2f2f2; }
         .ai-browser-address:focus-within { border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.48); box-shadow: 0 0 0 1px rgba(var(--kwv-accent-rgb, 255, 0, 0),0.10); }
         .ai-browser-address svg { width: 13px; height: 13px; flex: 0 0 auto; color: var(--kwv-accent, #ff0000); }
         .ai-browser-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #f5f5f5; font-size: 9px; user-select: text; -webkit-user-select: text; }
@@ -4998,11 +5269,13 @@
         .ai-mode-toggle.active { background: var(--kwv-accent, #ff0000); color: #ffffff; border-color: var(--kwv-accent, #ff0000); box-shadow: 0 0 12px rgba(var(--kwv-accent-rgb, 255, 0, 0),0.26); }
         .ai-guest-strip { display: none !important; }
         .ai-guest-pill { flex: 0 0 auto; display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border: 1px solid rgba(var(--kwv-accent-rgb, 255, 0, 0),0.28); border-radius: 999px; color: #ffffff; background: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.12); font-size: 7px; font-weight: 900; letter-spacing: 0.7px; text-transform: uppercase; }
-        .ai-browser-bookmarks { position: relative; z-index: 18; flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 7px 8px; border-bottom: 1px solid rgba(var(--kwv-accent-rgb, 255, 0, 0),0.16); background: #050505; box-shadow: 0 8px 16px rgba(0,0,0,0.18); }
-        .ai-bookmark-btn { min-width: 0; height: 25px; padding: 0 7px; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; background: #0d0d0d; color: #a8a8a8; cursor: pointer; font-size: 7px; font-weight: 900; letter-spacing: 0.45px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ai-bookmark-btn:hover { color: #ffffff; border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.42); background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08); }
-        .ai-bookmark-btn.active { color: #ffffff; border-color: var(--kwv-accent, #ff0000); background: #0d0d0d; }
+        .ai-browser-shortcuts { position: relative; z-index: 18; flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 7px 8px; border-bottom: 1px solid rgba(var(--kwv-accent-rgb, 255, 0, 0),0.14); background: #050505; }
+        .ai-browser-shortcut-btn { min-width: 0; height: 25px; padding: 0 7px; border: 1px solid rgba(255,255,255,0.08); border-radius: 7px; background: #0d0d0d; color: #a8a8a8; cursor: pointer; font-size: 7px; font-weight: 900; letter-spacing: 0.35px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ai-browser-shortcut-btn:hover { color: #ffffff; border-color: rgba(var(--kwv-accent-rgb, 255, 0, 0),0.42); background: rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.08); }
+        .ai-browser-shortcut-btn.active { color: #ffffff; border-color: var(--kwv-accent, #ff0000); background: #0d0d0d; }
         .ai-search-stage { position: relative; z-index: 1; flex: 1; min-height: 0; overflow: hidden; background: #050505; }
+        .ai-search-stage.external-scroll-cover::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 12px; z-index: 5; pointer-events: none; background: #050505; }
+        .ai-search-stage.external-scroll-cover::after { content: ""; position: absolute; top: 8px; right: 3px; bottom: 8px; width: 4px; z-index: 6; pointer-events: none; border-radius: 999px; background: #101010; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03); }
         .bg-remover-panel { position: absolute; inset: 0; z-index: 4; min-width: 0; min-height: 0; display: none; flex-direction: column; gap: 8px; padding: 10px; background: #050505; overflow: hidden; }
         .bg-remover-panel.active { display: flex; }
         .bg-remover-head { height: 22px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
@@ -5029,8 +5302,8 @@
         .bg-remover-status { min-height: 20px; margin: 0; color: #777; font-size: 7px; font-weight: 800; line-height: 1.35; }
         .bg-remover-status.error { color: #ff7070; }
         @media (max-width: 360px) {
-            .ai-browser-bookmarks { gap: 4px; padding-left: 6px; padding-right: 6px; }
-            .ai-bookmark-btn { padding: 0 4px; font-size: 6px; }
+            .ai-browser-shortcuts { gap: 4px; padding-left: 6px; padding-right: 6px; }
+            .ai-browser-shortcut-btn { padding: 0 4px; font-size: 6px; }
             .bg-remover-panel { gap: 6px; padding: 8px; }
             .bg-remover-actions { grid-template-columns: 1fr; }
             .bg-remover-drop { min-height: 96px; }
@@ -5068,17 +5341,17 @@
         .ai-search-shortcut-mark { width: 30px; height: 30px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--kwv-accent, #ff0000); font-size: 19px; font-weight: 900; }
         .ai-search-shortcut.google .ai-search-shortcut-mark { font-family: Arial, Helvetica, sans-serif; font-size: 28px; background: linear-gradient(90deg, #4285f4 0 24%, #34a853 24% 46%, #fbbc05 46% 66%, #ea4335 66% 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .ai-search-shortcut.yt .ai-search-shortcut-mark { width: 32px; height: 23px; border-radius: 6px; background: var(--kwv-accent, #ff0000); color: #ffffff; font-size: 12px; line-height: 1; padding-left: 1px; }
-        .ai-browser-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #050505; display: none; }
+        .ai-browser-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #050505; display: none; color-scheme: dark; scrollbar-color: #151515 #050505; scrollbar-width: thin; }
         .ai-browser-frame.active { display: block; }
-        .ai-browser-frame.external-scroll-hide { width: calc(100% + 18px); }
+        .ai-browser-frame.external-scroll-hide { color-scheme: dark; scrollbar-color: #151515 #050505; scrollbar-width: thin; }
         .ai-browser-frame.zoomed { transform-origin: 0 0; }
         .ai-browser-fallback { position: absolute; left: 10px; right: 10px; bottom: 10px; display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 9px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(6,6,6,0.94); color: #9a9a9a; font-size: 8px; }
         .ai-browser-fallback.active { display: flex; }
         .ai-browser-fallback button { height: 24px; padding: 0 10px; border: 1px solid rgba(var(--kwv-accent-rgb, 255, 0, 0),0.30); border-radius: 999px; background: #0b0b0b; color: #ffffff; cursor: pointer; font-size: 7px; font-weight: 900; letter-spacing: 0.7px; text-transform: uppercase; }
-        .ai-frame-import-menu { position: fixed; z-index: 9999; min-width: 132px; padding: 5px; border: 1px solid #2a2a2a; border-radius: 8px; background: #101010; box-shadow: 0 18px 40px rgba(0,0,0,0.44); display: none; }
+        .ai-frame-import-menu { position: fixed; z-index: 9999; min-width: 150px; padding: 5px; border: 1px solid #2a2a2a; border-radius: 8px; background: #101010; box-shadow: 0 18px 40px rgba(0,0,0,0.44); display: none; }
         .ai-frame-import-menu.active { display: block; }
-        .ai-frame-import-menu button { width: 100%; height: 30px; border: 0; border-radius: 6px; background: var(--kwv-accent, #ff0000); color: #ffffff; text-align: center; padding: 0 10px; font-size: 8px; font-weight: 900; letter-spacing: 0.45px; text-transform: uppercase; cursor: pointer; }
-        .ai-frame-import-menu button:hover { filter: brightness(1.08); }
+        .ai-frame-import-menu button { width: 100%; height: 29px; border: 0; border-radius: 6px; background: transparent; color: #ffffff; text-align: left; padding: 0 10px; font-size: 8px; font-weight: 900; letter-spacing: 0.45px; text-transform: uppercase; cursor: pointer; }
+        .ai-frame-import-menu button:hover { background: var(--kwv-accent, #ff0000); color: #fff; }
         .ai-hub-settings-panel { position: absolute; inset: 47px 7px 7px; z-index: 5; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; background: linear-gradient(180deg, rgba(16,16,16,1) 0%, rgba(7,7,7,1) 100%); box-shadow: 0 22px 48px rgba(0,0,0,0.52); padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(10px) scale(0.985); transition: opacity 0.22s ease, transform 0.24s ease, visibility 0.22s step-end; }
         .ai-hub-settings-panel.active { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0) scale(1); transition: opacity 0.22s ease, transform 0.24s ease, visibility 0s; }
         .ai-hub-modal.search-mode .ai-hub-settings-panel.active {
@@ -6222,6 +6495,12 @@
             text-shadow: 0 0 10px rgba(var(--kwv-accent-rgb, 255, 0, 0), 0.22);
         }
 
+        body.kwv-preview-holding .main-wrapper {
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+
         .coco-custom-box:hover,
         .coco-solid-box:hover,
         .coco-gradient-box:hover,
@@ -6241,6 +6520,7 @@
     </style>
 </head>
 <body>
+    <script>document.body.classList.add("kwv-preview-holding");</script>
     <div class="main-wrapper fade-in">
         <div class="trimpack-dock" id="trimpackDock">
             <div class="trimpack-panel">
@@ -6260,7 +6540,7 @@
                     <path d="M6 4.5h9.8c1.8 0 3.1 1.3 3.1 3.1v6.8L14.3 19H6c-1.7 0-3-1.3-3-3V7.5c0-1.7 1.3-3 3-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     <path d="M14.3 19v-3.7c0-.6.5-1.1 1.1-1.1h3.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     <path d="M7 8.5h7.5M7 11.5h5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
+                                </svg>
             </button>
             <button class="branding-side-btn graph-launch-btn" id="btnGraphPanel" title="Open Graph Editor" aria-label="Open Graph Editor">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -6299,6 +6579,21 @@
                         <button class="kwv-social-link" type="button" data-social-url="https://discord.gg/Yx5VaqPtFq"><span class="kwv-social-mark">DC</span><span><span class="kwv-social-name">Discord</span></span></button>
                         <button class="kwv-social-link" type="button" data-social-url="https://mail.google.com/mail/?view=cm&fs=1&to=keshavv.aep@gmail.com"><span class="kwv-social-mark">EM</span><span><span class="kwv-social-name">Email</span></span></button>
                     </div>
+                    <div class="kwv-update-strip">
+                        <div class="kwv-update-mark" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M20 12a8 8 0 0 1-13.7 5.6M4 12A8 8 0 0 1 17.7 6.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M20 5v5h-5M4 19v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="kwv-update-info">
+                            <div class="kwv-update-title">Extension Update</div>
+                            <div class="kwv-update-version">Version <span id="kwvExtensionVersion">1.0.0</span></div>
+                            <div class="kwv-update-status" id="kwvUpdateStatus">Ready to check</div>
+                        </div>
+                        <button class="kwv-update-button" id="btnCheckUpdates" type="button" data-kwv-update-button="1">Check Update</button>
+                    </div>
+                    <button class="kwv-license-test-button" id="btnDeactivateLicenseTest" type="button" data-kwv-deactivate-license="1">Deactivate License</button>
                     <p class="kwv-socials-note">Click any link to open outside After Effects.</p>
                 </div>
             </div>
@@ -6328,8 +6623,8 @@
                 <p class="subtitle">300X WORKFLOW EDITION</p>
             </div>
             <button class="branding-side-btn ai-hub-launch-btn" id="btnAiHub" title="Open AI Hub" aria-label="Open AI Hub">
-                <svg viewBox="0 0 256 260" fill="none" aria-hidden="true">
-                    <path fill="currentColor" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z"/>
+                <svg class="kwv-white-google-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                    <path fill="currentColor" d="M43.61 20.08H42V20H24v8h11.3C33.65 32.66 29.22 36 24 36c-6.63 0-12-5.37-12-12s5.37-12 12-12c3.06 0 5.84 1.15 7.96 3.04l5.66-5.66C34.05 6.05 29.27 4 24 4 12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20c0-1.34-.14-2.65-.39-3.92Z"/>
                 </svg>
             </button>
         </header>
@@ -6512,23 +6807,23 @@
                     <div class="ai-hub-head">
                         <div class="ai-hub-brand">
                             <div class="ai-hub-logo" aria-hidden="true">
-                                <svg viewBox="0 0 256 260" fill="none">
-                                    <path fill="currentColor" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z"/>
-                                </svg>
+                                <svg class="kwv-white-google-mark" viewBox="0 0 48 48" fill="none">
+                                    <path fill="currentColor" d="M43.61 20.08H42V20H24v8h11.3C33.65 32.66 29.22 36 24 36c-6.63 0-12-5.37-12-12s5.37-12 12-12c3.06 0 5.84 1.15 7.96 3.04l5.66-5.66C34.05 6.05 29.27 4 24 4 12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20c0-1.34-.14-2.65-.39-3.92Z"/>
+                </svg>
                             </div>
                             <div>
-                                <h2 class="ai-hub-title" id="aiHubModalTitle">Keshav With Velo GPT</h2>
+                                <h2 class="ai-hub-title" id="aiHubModalTitle">Keshav With Velo Google</h2>
                             </div>
                         </div>
                         <div class="ai-hub-head-actions">
-                            <button class="ai-hub-icon-btn attach" id="btnAiHubAttach" type="button" aria-label="Open NVIDIA Build" title="Open NVIDIA Build">
+                            <button class="ai-hub-icon-btn attach" id="btnAiHubAttach" type="button" aria-label="Open Google Search" title="Open Google Search">
                                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M10 7H7.5C5.57 7 4 8.57 4 10.5V16.5C4 18.43 5.57 20 7.5 20H13.5C15.43 20 17 18.43 17 16.5V14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
                                     <path d="M13 4H20V11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M20 4L11 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
                                 </svg>
                             </button>
-                            <button class="ai-hub-icon-btn settings" id="btnAiHubToggleSettings" type="button" aria-label="Open AI Settings">
+                            <button class="ai-hub-icon-btn settings" id="btnAiHubToggleSettings" type="button" aria-label="Open Search Settings">
                                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M5 7.25H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                                     <path d="M5 12H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -6552,16 +6847,16 @@
                         </div>
                     </div>
                     <div class="ai-hub-mode-tabs" role="tablist" aria-label="AI Hub Mode">
-                        <button class="ai-hub-mode-tab active" id="btnAiHubChatTab" type="button" role="tab" aria-selected="true">Chat</button>
-                        <button class="ai-hub-mode-tab" id="btnAiHubSearchTab" type="button" role="tab" aria-selected="false">Search</button>
+                        <button class="ai-hub-mode-tab" id="btnAiHubChatTab" type="button" role="tab" aria-selected="false">Chat</button>
+                        <button class="ai-hub-mode-tab active" id="btnAiHubSearchTab" type="button" role="tab" aria-selected="true">Search</button>
                     </div>
                     <div class="ai-hub-chat-shell">
-                        <div class="ai-hub-chat-frame ai-hub-view active" id="aiHubChatView">
+                        <div class="ai-hub-chat-frame ai-hub-view" id="aiHubChatView">
                             <div class="ai-hub-messages" id="aiHubMessages"></div>
                             <div class="ai-hub-compose">
                                 <textarea id="aiHubPromptInput" class="ai-hub-textarea" placeholder="Type your idea... for example: write a viral reel hook, improve subtitle copy, or draft a premium client reply."></textarea>
                                 <div class="ai-hub-compose-row">
-                                    <p class="ai-hub-status" id="aiHubStatus">NVIDIA GPT is ready. Save your API key to chat directly.</p>
+                                    <p class="ai-hub-status" id="aiHubStatus">Google search ready.</p>
                                     <div class="ai-hub-compose-actions">
                                         <button class="btn-primary" id="btnAiHubClear" type="button">Clear</button>
                                         <button class="btn-primary accent" id="btnAiHubSend" type="button">Send</button>
@@ -6569,7 +6864,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="ai-search-shell ai-hub-view" id="aiHubSearchView">
+                        <div class="ai-search-shell ai-hub-view active" id="aiHubSearchView">
                             <div class="ai-browser-tabs">
                                 <button class="ai-browser-tab active" id="btnAiSearchNewTab" type="button" title="New Tab">
                                     <span class="ai-browser-tab-title" id="aiBrowserTabTitle">New Tab</span>
@@ -6581,6 +6876,10 @@
                                 <button class="ai-browser-nav" id="btnAiSearchBack" type="button" aria-label="Back">&#8592;</button>
                                 <button class="ai-browser-nav" id="btnAiSearchForward" type="button" aria-label="Forward">&#8594;</button>
                                 <button class="ai-browser-nav" id="btnAiSearchReload" type="button" aria-label="Reload">&#8635;</button>
+                                <div class="ai-browser-fit" aria-label="Fit mode">
+                                    <button class="ai-browser-fit-btn active" id="btnAiSearchFitWidth" type="button" aria-label="Fit to width">W</button>
+                                    <button class="ai-browser-fit-btn" id="btnAiSearchFitHeight" type="button" aria-label="Fit to height">H</button>
+                                </div>
                                 <div class="ai-browser-zoom-control" aria-label="Page zoom">
                                     <button class="ai-browser-zoom-btn" id="btnAiSearchZoomOut" type="button" aria-label="Zoom out">-</button>
                                     <span class="ai-browser-zoom-value" id="aiSearchZoomValue">100%</span>
@@ -6588,20 +6887,18 @@
                                 </div>
                                 <form class="ai-browser-address" id="aiSearchForm">
                                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                                    <input class="ai-browser-input" id="aiSearchInput" type="text" placeholder="Search Google or type a URL">
-                                    <button class="ai-mode-toggle" id="btnAiSearchMode" type="button">AI Mode</button>
+                                    <input class="ai-browser-input" id="aiSearchInput" type="text" placeholder="Search">
                                 </form>
-                                <button class="ai-browser-nav" id="btnAiSearchExternal" type="button" aria-label="Open Externally">&#8599;</button>
                             </div>
                             <div class="ai-guest-strip">
                                 <span class="ai-guest-pill">GUEST MODE</span>
                                 <span>No app-side cookies, history, passwords, or account data are saved.</span>
                             </div>
-                            <div class="ai-browser-bookmarks">
-                                <button class="ai-bookmark-btn" type="button" data-ai-search-engine="google">Google</button>
-                                <button class="ai-bookmark-btn" type="button" data-ai-search-engine="youtube">YouTube</button>
-                                <button class="ai-bookmark-btn" type="button" data-ai-search-engine="images">Images</button>
-                                <button class="ai-bookmark-btn" type="button" data-ai-search-engine="bgremover">BG Remover</button>
+                            <div class="ai-browser-shortcuts">
+                                <button class="ai-browser-shortcut-btn" type="button" data-ai-search-engine="google">Google</button>
+                                <button class="ai-browser-shortcut-btn" type="button" data-ai-search-engine="youtube">YouTube</button>
+                                <button class="ai-browser-shortcut-btn" type="button" data-ai-search-engine="images">Images</button>
+                                <button class="ai-browser-shortcut-btn" type="button" data-ai-search-engine="bgremover">BG Remover</button>
                             </div>
                             <div class="ai-search-stage">
                                 <div class="ai-search-home" id="aiSearchHome">
@@ -6652,8 +6949,8 @@
                     <div class="ai-hub-settings-panel" id="aiHubSettingsPanel" aria-hidden="true">
                         <div class="ai-hub-settings-head">
                             <div>
-                                <h3 class="ai-hub-settings-title">NVIDIA Setup</h3>
-                                <p class="ai-hub-settings-copy">NVIDIA Build uses the fixed `openai/gpt-oss-120b` model. Save your API key to continue.</p>
+                                <h3 class="ai-hub-settings-title">Google Search</h3>
+                                <p class="ai-hub-settings-copy">Search tools are ready.</p>
                             </div>
                             <button class="ai-hub-icon-btn" id="btnAiHubSettingsBack" type="button" aria-label="Back to Chat">
                                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -6664,17 +6961,17 @@
                         <div class="ai-hub-provider-grid" id="aiHubProviderGrid"></div>
                         <div class="ai-hub-meta">
                             <div class="ai-hub-field">
-                                <label class="ai-hub-field-label" for="aiHubModelInput">Model</label>
-                                <input type="text" id="aiHubModelInput" class="ai-hub-input" placeholder="openai/gpt-oss-120b">
+                                <label class="ai-hub-field-label" for="aiHubModelInput">Mode</label>
+                                <input type="text" id="aiHubModelInput" class="ai-hub-input" placeholder="Google Search">
                             </div>
                             <div class="ai-hub-field full">
-                                <label class="ai-hub-field-label" for="aiHubApiKeyInput">API Key</label>
-                                <input type="password" id="aiHubApiKeyInput" class="ai-hub-input" placeholder="Paste NVIDIA API key">
+                                <label class="ai-hub-field-label" for="aiHubApiKeyInput">Search</label>
+                                <input type="password" id="aiHubApiKeyInput" class="ai-hub-input" placeholder="No key required">
                             </div>
                         </div>
-                        <p class="ai-hub-note" id="aiHubProviderNote">Fixed endpoint: `https://integrate.api.nvidia.com/v1/chat/completions` with Bearer auth and model `openai/gpt-oss-120b`.</p>
+                        <p class="ai-hub-note" id="aiHubProviderNote">Google search tools are available without chat setup.</p>
                         <div class="ai-hub-footer">
-                            <div class="ai-hub-provider-pill">Active: <strong id="aiHubSettingsActiveProvider">NVIDIA</strong></div>
+                            <div class="ai-hub-provider-pill">Active: <strong id="aiHubSettingsActiveProvider">Google</strong></div>
                             <div class="ai-hub-actions">
                                 <button class="btn-primary" id="btnAiHubCancel" type="button">Cancel</button>
                                 <button class="btn-primary accent" id="btnAiHubSave" type="button">Save</button>
@@ -6977,10 +7274,18 @@
                                     <button class="apple-preset-tab-btn" type="button" role="tab" data-preset-category="EFFECTS" aria-selected="false">Effects</button>
                                     <button class="apple-preset-tab-btn" type="button" role="tab" data-preset-category="SHAKE" aria-selected="false">Shakes</button>
                                     <button class="apple-preset-tab-btn" type="button" role="tab" data-preset-category="CC" aria-selected="false">CC</button>
+                                    <button class="apple-preset-tab-btn" type="button" role="tab" data-preset-category="CUSTOM" aria-selected="false">Custom</button>
                                 </div>
                                 <div class="apple-preset-toolbar">
                                     <div class="preset-search-shell" id="presetSearchShell">
                                         <input type="text" id="presetSearchInput" class="input-dark preset-search-input" placeholder="Search presets">
+                                    </div>
+                                    <div class="custom-preset-dropzone" id="customPresetDropzone" role="button" tabindex="0">
+                                        <input class="custom-preset-file" id="customPresetFileInput" type="file" accept=".ffx">
+                                        <div class="custom-preset-drop-copy">
+                                            <span class="custom-preset-drop-title">Drop .ffx here</span>
+                                            <span class="custom-preset-drop-hint">or click to add custom preset</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="apple-preset-body">
@@ -7384,13 +7689,15 @@
     <script src="js/coco-palettes.js?v=20260714-coco-palettes"></script>
     <script src="js/coco-gradients.js?v=20260714-coco"></script>
     <script src="js/brand-colors.js?v=20260714-stable-brands"></script>
-    <script src="js/license/license-config.js?v=20260722-activation-restore"></script>
-    <script src="js/license/DeviceFingerprint.js?v=20260722-activation-restore"></script>
-    <script src="js/license/LocalSecureStorage.js?v=20260722-activation-restore"></script>
-    <script src="js/license/APIClient.js?v=20260722-activation-restore"></script>
-    <script src="js/license/LicenseManager.js?v=20260722-activation-restore"></script>
-    <script src="js/license/ActivationUI.js?v=20260722-activation-restore"></script>
-    <script src="js/main.js?v=20260715-socials-overlap-fix"></script>
+    <script src="js/license/license-config.js?v=20260721-license-temp-off"></script>
+    <script src="js/license/DeviceFingerprint.js?v=20260719-license-entry"></script>
+    <script src="js/license/LocalSecureStorage.js?v=20260725-license-persist"></script>
+    <script src="js/license/APIClient.js?v=20260719-license-entry"></script>
+    <script src="js/license/LicenseManager.js?v=20260719-license-entry"></script>
+    <script src="js/license/ActivationUI.js?v=20260719-license-entry"></script>
+    <script src="js/extension-preview-loader.js?v=20260725-preview-failsafe"></script>
+    <script src="js/auto-updater.js?v=20260726-license-test-button"></script>
+    <script src="js/main.js?v=20260725-google-clean"></script>
 
     <!-- ======== COLLAPSIBLE TREE VIEW SCRIPT ======== -->
     <script>
@@ -7540,7 +7847,7 @@
             return icons[kind] || '';
         }
 
-        // CEP-safe local file URLs — same encodeURI pattern as js/main.js overlayFileToUrl
+        // CEP-safe local file URLs â€” same encodeURI pattern as js/main.js overlayFileToUrl
         function overlayAssetToUrl(path) {
             var normalized = String(path || '').replace(/\\/g, '/');
             return encodeURI('file:///' + normalized.replace(/^\/+/, ''));
@@ -7570,7 +7877,7 @@
             return ovThumbHolder;
         }
 
-        // Canvas frame capture — video must be in DOM for CEP Chromium decode
+        // Canvas frame capture â€” video must be in DOM for CEP Chromium decode
         function generateOvMp4Thumbnail(filePath, done) {
             done = typeof done === 'function' ? done : function() {};
             try {
@@ -8236,6 +8543,11 @@
                 var cardGrid = document.createElement('div');
                 if (isGifSection(folderPath)) {
                     cardGrid.className = 'ov-card-grid is-gif-grid';
+                } else if (files.every(function(fileName) {
+                    var type = getMediaType(fileName);
+                    return type === 'image' || type === 'animated';
+                })) {
+                    cardGrid.className = 'ov-card-grid is-png-grid';
                 } else {
                     cardGrid.className = 'ov-card-grid';
                 }

@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    window.__KWV_WEBSITE_PREVIEW__ = /^https?:/i.test(window.location.protocol);
+    window.__KWV_WEBSITE_PREVIEW__ = true;
     if (window.__kwvPreviewShimReady) return;
     window.__kwvPreviewShimReady = true;
 
