@@ -477,8 +477,8 @@ let planDetails = {
     "India Launch": {
         title: "India Launch checkout",
         plan: "India Launch",
-        price: "Rs 99",
-        amount: 9900,
+        price: "Rs 129",
+        amount: 12900,
         currency: "INR",
         button: "Checkout"
     },

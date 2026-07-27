@@ -133,7 +133,7 @@ if (!activeVersion) {
 }
 
 const plans = [
-  ["India Launch", "India Launch", 9900, "INR", "standard", "Keshav With Velo India Launch"],
+  ["India Launch", "India Launch", 12900, "INR", "standard", "Keshav With Velo India Launch"],
   ["International", "International", 100, "USD", "standard", "Keshav With Velo International"]
 ];
 
