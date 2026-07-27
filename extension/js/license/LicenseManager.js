@@ -5,7 +5,7 @@
         enabled: true,
         extensionVersion: "1.0.0",
         verificationIntervalMs: 6 * 60 * 60 * 1000,
-        offlineGraceMs: 72 * 60 * 60 * 1000,
+        offlineGraceMs: 0,
         api: {}
     };
 
@@ -195,6 +195,7 @@
     };
 
     LicenseManager.prototype.canUseOfflineGrace = function () {
+        if (!this.options.offlineGraceMs) return false;
         var offlineUntil = this.state.offlineUntil ? Date.parse(this.state.offlineUntil) : 0;
         var lastVerification = this.state.lastVerificationAt ? Date.parse(this.state.lastVerificationAt) : 0;
         var graceUntil = lastVerification ? lastVerification + this.options.offlineGraceMs : 0;

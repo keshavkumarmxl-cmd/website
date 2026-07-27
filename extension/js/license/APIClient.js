@@ -115,7 +115,7 @@
                 subscriptionStatus: "active",
                 activationDate: new Date().toISOString(),
                 lastVerificationAt: new Date().toISOString(),
-                offlineUntil: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+                offlineUntil: "",
                 message: response && response.message
             };
         });
@@ -132,7 +132,7 @@
                 subscriptionStatus: "active",
                 expiresAt: response && response.expiryDate,
                 lastVerificationAt: new Date().toISOString(),
-                offlineUntil: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+                offlineUntil: ""
             };
         });
     };
