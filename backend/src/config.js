@@ -20,7 +20,7 @@ export const config = {
     key: String(process.env.MASTER_LICENSE_KEY || "").trim().toUpperCase()
   },
   productId: process.env.EXTENSION_PRODUCT_ID || "keshav-with-velo",
-  extensionZipPath: process.env.EXTENSION_ZIP_PATH || "./storage/extensions/keshav-with-velo.zip",
+  extensionZipPath: process.env.EXTENSION_ZIP_PATH || "https://drive.google.com/file/d/1K5rCClmg6j5LRqVHrXgPpvLtYfN_sf0o/view?usp=sharing",
   licenseExpiryDays: Number(process.env.LICENSE_EXPIRY_DAYS || 365),
   maxFailedActivationsPerHour: Number(process.env.MAX_FAILED_ACTIVATIONS_PER_HOUR || 8),
   smtp: {

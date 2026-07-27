@@ -124,12 +124,14 @@ if (!admin) {
   );
 }
 
-const activeVersion = db.prepare("SELECT id FROM extension_versions WHERE is_active = 1").get();
+const activeVersion = db.prepare("SELECT id, download_path FROM extension_versions WHERE is_active = 1").get();
 if (!activeVersion) {
   db.prepare(`
     INSERT OR IGNORE INTO extension_versions (version, download_path, notes, is_active)
     VALUES (?, ?, ?, 1)
   `).run("1.0.0", config.extensionZipPath, "Initial extension ZIP");
+} else if (activeVersion.download_path === "./storage/extensions/keshav-with-velo.zip" && /^https?:\/\//.test(config.extensionZipPath)) {
+  db.prepare("UPDATE extension_versions SET download_path = ? WHERE id = ?").run(config.extensionZipPath, activeVersion.id);
 }
 
 const plans = [

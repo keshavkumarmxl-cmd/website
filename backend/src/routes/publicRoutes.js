@@ -57,9 +57,21 @@ function isExternalDownloadUrl(value) {
   }
 }
 
-function sendActiveDownload(res) {
+function getActiveDownloadPath() {
   const activeVersion = db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get();
-  const downloadPath = activeVersion?.download_path || config.extensionZipPath;
+  return activeVersion?.download_path || config.extensionZipPath;
+}
+
+function purchaseDownloadUrl({ email, licenseKey }) {
+  const downloadPath = getActiveDownloadPath();
+  if (isExternalDownloadUrl(downloadPath)) return downloadPath;
+
+  const downloadToken = createDownloadToken({ email, licenseKey });
+  return `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
+}
+
+function sendActiveDownload(res) {
+  const downloadPath = getActiveDownloadPath();
 
   if (isExternalDownloadUrl(downloadPath)) {
     return res.redirect(302, downloadPath);
@@ -265,8 +277,7 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
       }
     });
 
-    const downloadToken = createDownloadToken({ email: user.email, licenseKey: key });
-    const downloadUrl = `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
+    const downloadUrl = purchaseDownloadUrl({ email: user.email, licenseKey: key });
     let emailDelivery = { sent: false };
     try {
       emailDelivery = await sendPurchaseEmail({ name: user.name, email: user.email, licenseKey: key, downloadUrl });

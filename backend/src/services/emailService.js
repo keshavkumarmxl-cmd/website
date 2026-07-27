@@ -30,7 +30,7 @@ ${email}
 Activation key:
 ${licenseKey}
 
-Download link (valid for ${config.downloadLinkExpiryHours} hours):
+Download link:
 ${downloadUrl}
 
 Activation:
@@ -51,7 +51,7 @@ Terms:
     <div style="font-family:Arial,sans-serif;line-height:1.55;color:#111">
       <h2>Keshav With Velo License</h2>
       <p>Hi ${name}, thank you for buying Keshav With Velo.</p>
-      <p><strong>Download:</strong> <a href="${downloadUrl}">Download Keshav With Velo</a> (valid for ${config.downloadLinkExpiryHours} hours).</p>
+      <p><strong>Download:</strong> <a href="${downloadUrl}">Download Keshav With Velo</a></p>
       <p><strong>Activation email:</strong><br>${email}</p>
       <p><strong>Activation key:</strong></p>
       <p style="font-size:22px;font-weight:700;letter-spacing:2px">${licenseKey}</p>
