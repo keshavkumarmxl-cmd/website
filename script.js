@@ -1,4 +1,4 @@
-const API_BASE_URL = window.LICENSING_API_BASE_URL || "https://keshavwithvelo-license-api.onrender.com";
+const API_BASE_URL = window.LICENSING_API_BASE_URL || "https://api.keshavwithvelo.in";
 const cursor = document.getElementById("cursorEcho");
 let lastEcho = 0;
 let lastFrameEcho = 0;
