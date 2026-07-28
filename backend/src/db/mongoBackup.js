@@ -37,7 +37,10 @@ async function getDb() {
       db.collection("licenses").createIndex({ email: 1 }),
       db.collection("purchases").createIndex({ paymentProvider: 1, paymentId: 1 }, { unique: true }),
       db.collection("devices").createIndex({ licenseHash: 1, deviceHash: 1 }, { unique: true }),
-      db.collection("activationAttempts").createIndex({ createdAt: -1 })
+      db.collection("activationAttempts").createIndex({ createdAt: -1 }),
+      db.collection("siteSettings").createIndex({ key: 1 }, { unique: true }),
+      db.collection("productPlans").createIndex({ key: 1 }, { unique: true }),
+      db.collection("coupons").createIndex({ code: 1 }, { unique: true })
     ]);
     indexesReady = true;
   }
@@ -204,5 +207,78 @@ export async function logMongoActivationAttempt(payload) {
       ...payload,
       createdAt: new Date()
     });
+  });
+}
+
+export async function mirrorSiteSetting(key, value) {
+  return safeRun("mirrorSiteSetting", async (db) => {
+    await db.collection("siteSettings").updateOne(
+      { key },
+      {
+        $set: {
+          key,
+          value: value || "",
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function getMongoSiteSetting(key) {
+  return safeRun("getMongoSiteSetting", async (db) => {
+    return db.collection("siteSettings").findOne({ key });
+  });
+}
+
+export async function mirrorProductPlan(plan) {
+  return safeRun("mirrorProductPlan", async (db) => {
+    await db.collection("productPlans").updateOne(
+      { key: plan.key },
+      {
+        $set: {
+          ...plan,
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function getMongoProductPlans() {
+  return safeRun("getMongoProductPlans", async (db) => {
+    return db.collection("productPlans").find({}).sort({ rowOrder: 1, key: 1 }).toArray();
+  });
+}
+
+export async function mirrorCoupon(coupon) {
+  return safeRun("mirrorCoupon", async (db) => {
+    await db.collection("coupons").updateOne(
+      { code: coupon.code },
+      {
+        $set: {
+          ...coupon,
+          updatedAt: new Date()
+        },
+        $setOnInsert: {
+          createdAt: coupon.createdAt ? new Date(coupon.createdAt) : new Date()
+        }
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function getMongoCoupons() {
+  return safeRun("getMongoCoupons", async (db) => {
+    return db.collection("coupons").find({}).sort({ createdAt: -1 }).toArray();
+  });
+}
+
+export async function deleteMongoCoupon(code) {
+  return safeRun("deleteMongoCoupon", async (db) => {
+    await db.collection("coupons").deleteOne({ code });
   });
 }

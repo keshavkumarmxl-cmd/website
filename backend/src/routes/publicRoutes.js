@@ -5,6 +5,7 @@ import { db } from "../db/connection.js";
 import {
   activateMongoLicense,
   findMongoLicenseByHash,
+  getMongoSiteSetting,
   logMongoActivationAttempt,
   mirrorPurchase,
   mongoPurchaseExists,
@@ -151,21 +152,24 @@ publicRoutes.get("/health", (req, res) => {
   res.json({ status: "ok", service: "licensing", time: new Date().toISOString() });
 });
 
-publicRoutes.get("/site-settings/tutorial", (req, res) => {
+publicRoutes.get("/site-settings/tutorial", async (req, res) => {
   const row = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("tutorial_youtube_url");
+  const mongoSetting = await getMongoSiteSetting("tutorial_youtube_url");
   res.json({
-    youtubeUrl: row?.value || "",
-    updatedAt: row?.updated_at || null
+    youtubeUrl: row?.value || mongoSetting?.value || "",
+    updatedAt: row?.updated_at || mongoSetting?.updatedAt || null
   });
 });
 
-publicRoutes.get("/site-settings/offer-banner", (req, res) => {
+publicRoutes.get("/site-settings/offer-banner", async (req, res) => {
   const text = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("offer_banner_text");
   const active = db.prepare("SELECT value FROM site_settings WHERE key = ?").get("offer_banner_active");
+  const mongoText = await getMongoSiteSetting("offer_banner_text");
+  const mongoActive = await getMongoSiteSetting("offer_banner_active");
   res.json({
-    text: text?.value || "",
-    isActive: active ? active.value === "1" : true,
-    updatedAt: text?.updated_at || null
+    text: text?.value || mongoText?.value || "",
+    isActive: active ? active.value === "1" : (mongoActive ? mongoActive.value === "1" : true),
+    updatedAt: text?.updated_at || mongoText?.updatedAt || null
   });
 });
 
