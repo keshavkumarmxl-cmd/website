@@ -12,6 +12,7 @@
         apiVersion: "2026-07-licensing",
         publicKeyPem: ""
     };
+    var FALLBACK_BASE_URL = "https://api.keshavwithvelo.in/api";
 
     function randomHex(bytes) {
         if (crypto) return crypto.randomBytes(bytes).toString("hex");
@@ -70,8 +71,8 @@
         this.config.baseUrl = normalizeBaseUrl(this.config.baseUrl);
     }
 
-    APIClient.prototype.request = function (method, path, body, auth) {
-        var url = this.config.baseUrl + path;
+    APIClient.prototype.requestOnce = function (baseUrl, method, path, body, auth) {
+        var url = normalizeBaseUrl(baseUrl) + path;
         if (/api\.your-domain\.com/i.test(url)) {
             return Promise.reject(new Error("License API is not configured. Set your real HTTPS backend URL in js/license/license-config.js."));
         }
@@ -101,6 +102,18 @@
             body: json || undefined,
             cache: "no-store"
         }).then(parseJsonResponse);
+    };
+
+    APIClient.prototype.request = function (method, path, body, auth) {
+        var self = this;
+        return this.requestOnce(this.config.baseUrl, method, path, body, auth).catch(function (error) {
+            var configured = normalizeBaseUrl(self.config.baseUrl);
+            if (configured === FALLBACK_BASE_URL) throw error;
+            if (error && (error.code === "INVALID_API_RESPONSE" || error.status === 404 || error.status === 502 || error.status === 503)) {
+                return self.requestOnce(FALLBACK_BASE_URL, method, path, body, auth);
+            }
+            throw error;
+        });
     };
 
     APIClient.prototype.activate = function (payload) {
