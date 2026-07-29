@@ -105,19 +105,11 @@ async function sendWithResend({ email, subject, text, html }) {
   return { sent: true, provider: "resend", id: data.id };
 }
 
-export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
-  const { subject, text, html } = buildPurchaseEmail({ name, email, licenseKey, downloadUrl });
-
-  const resendDelivery = await sendWithResend({ email, subject, text, html });
-  if (resendDelivery) return resendDelivery;
-
+async function sendWithSmtp({ email, subject, text, html }) {
   const transport = createTransport();
-  if (!transport) {
-    console.log("[email skipped] SMTP not configured", { to: email, subject, licenseKey, downloadUrl });
-    return { sent: false, skipped: true, error: "smtp_not_configured" };
-  }
+  if (!transport) return null;
 
-  await transport.sendMail({
+  const info = await transport.sendMail({
     from: config.smtp.from,
     to: email,
     subject,
@@ -125,5 +117,56 @@ export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }
     html
   });
 
-  return { sent: true };
+  return { sent: true, provider: "smtp", id: info.messageId };
+}
+
+export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
+  const { subject, text, html } = buildPurchaseEmail({ name, email, licenseKey, downloadUrl });
+  const failures = [];
+
+  try {
+    const resendDelivery = await sendWithResend({ email, subject, text, html });
+    if (resendDelivery) return resendDelivery;
+  } catch (error) {
+    failures.push({
+      provider: "resend",
+      status: error.status || null,
+      message: error.message || "Resend delivery failed"
+    });
+    console.error("[resend email failed; trying smtp fallback]", {
+      to: email,
+      status: error.status || null,
+      message: error.message || "Resend delivery failed"
+    });
+  }
+
+  try {
+    const smtpDelivery = await sendWithSmtp({ email, subject, text, html });
+    if (smtpDelivery) {
+      return failures.length
+        ? { ...smtpDelivery, fallbackUsed: true, failedProviders: failures }
+        : smtpDelivery;
+    }
+  } catch (error) {
+    failures.push({
+      provider: "smtp",
+      status: error.responseCode || null,
+      message: error.message || "SMTP delivery failed"
+    });
+    console.error("[smtp email failed]", {
+      to: email,
+      status: error.responseCode || null,
+      message: error.message || "SMTP delivery failed"
+    });
+  }
+
+  console.error("[purchase email not delivered]", {
+    to: email,
+    failedProviders: failures.map((failure) => failure.provider)
+  });
+  return {
+    sent: false,
+    error: failures.length ? "all_email_providers_failed" : "email_not_configured",
+    failedProviders: failures
+  };
 }
