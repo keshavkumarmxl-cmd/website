@@ -173,6 +173,18 @@ publicRoutes.get("/site-settings/offer-banner", async (req, res) => {
   });
 });
 
+publicRoutes.get("/site-settings/maintenance", async (req, res) => {
+  const active = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("maintenance_active");
+  const message = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("maintenance_message");
+  const mongoActive = await getMongoSiteSetting("maintenance_active");
+  const mongoMessage = await getMongoSiteSetting("maintenance_message");
+  res.json({
+    isActive: active ? active.value === "1" : (mongoActive ? mongoActive.value === "1" : false),
+    message: message?.value || mongoMessage?.value || "",
+    updatedAt: active?.updated_at || message?.updated_at || mongoActive?.updatedAt || mongoMessage?.updatedAt || null
+  });
+});
+
 publicRoutes.get("/pricing", (req, res) => {
   res.json({ plans: getCheckoutPlans().filter((plan) => plan.isActive) });
 });

@@ -67,6 +67,19 @@
       </section>
 
       <section>
+        <h2>Website Maintenance</h2>
+        <div class="row">
+          <select id="maintenanceActive">
+            <option value="false">Off - Website Normal</option>
+            <option value="true">On - Maintenance Mode</option>
+          </select>
+          <input id="maintenanceMessage" placeholder="Optional maintenance message">
+          <button id="loadMaintenanceBtn">Load Current</button>
+          <button id="saveMaintenanceBtn">Save Maintenance</button>
+        </div>
+      </section>
+
+      <section>
         <h2>Manual License</h2>
         <div class="grid">
           <label>Name<input id="manualName" placeholder="Customer name"></label>

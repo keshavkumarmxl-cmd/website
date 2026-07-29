@@ -112,6 +112,31 @@ document.getElementById("clearTutorialBtn").addEventListener("click", () => {
   document.getElementById("tutorialUrl").value = "";
 });
 
+document.getElementById("loadMaintenanceBtn").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/admin/settings/maintenance");
+    document.getElementById("maintenanceActive").value = data.isActive ? "true" : "false";
+    document.getElementById("maintenanceMessage").value = data.message || "";
+    show(data);
+  } catch (error) {
+    show(error);
+  }
+});
+
+document.getElementById("saveMaintenanceBtn").addEventListener("click", async () => {
+  try {
+    show(await api("/api/admin/settings/maintenance", {
+      method: "POST",
+      body: JSON.stringify({
+        isActive: document.getElementById("maintenanceActive").value === "true",
+        message: document.getElementById("maintenanceMessage").value.trim()
+      })
+    }));
+  } catch (error) {
+    show(error);
+  }
+});
+
 document.getElementById("versionBtn").addEventListener("click", async () => {
   try {
     show(await api("/api/admin/versions", {

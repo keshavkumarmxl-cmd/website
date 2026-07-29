@@ -11,6 +11,54 @@ const pointerCurrent = {
     y: pointerTarget.y
 };
 
+function setMaintenanceGate(isActive, message) {
+    const existing = document.getElementById("kwvMaintenanceGate");
+    if (!isActive) {
+        if (existing) existing.remove();
+        document.body.classList.remove("kwv-maintenance-active");
+        return;
+    }
+
+    const gate = existing || document.createElement("div");
+    gate.id = "kwvMaintenanceGate";
+    gate.setAttribute("role", "dialog");
+    gate.setAttribute("aria-modal", "true");
+    gate.setAttribute("aria-labelledby", "kwvMaintenanceTitle");
+    const safeMessage = String(message || "We're improving Keshav With Velo. Checkout and downloads are temporarily unavailable while we complete essential updates.")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    gate.innerHTML = `
+        <div class="kwv-maintenance-card">
+            <div class="kwv-maintenance-mark">KV</div>
+            <p class="kwv-maintenance-eyebrow">Scheduled maintenance</p>
+            <h1 id="kwvMaintenanceTitle">We'll be back shortly.</h1>
+            <p>${safeMessage}</p>
+            <a href="mailto:keshavv.aep@gmail.com">Contact support</a>
+        </div>
+    `;
+
+    if (!existing) document.body.appendChild(gate);
+    document.body.classList.add("kwv-maintenance-active");
+}
+
+async function initMaintenanceGate() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/site-settings/maintenance`, {
+            headers: { Accept: "application/json" },
+            cache: "no-store"
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setMaintenanceGate(data.isActive, data.message);
+    } catch (error) {
+        setMaintenanceGate(false);
+    }
+}
+
+initMaintenanceGate();
+
 function updateScrollMotion() {
     const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     const progress = Math.min(1, Math.max(0, window.scrollY / max));

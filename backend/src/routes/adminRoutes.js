@@ -13,7 +13,7 @@ import {
 } from "../db/mongoBackup.js";
 import { validate } from "../middleware/validate.js";
 import { createAdminToken, requireAdmin } from "../middleware/auth.js";
-import { adminLoginSchema, couponSchema, manualLicenseSchema, offerBannerSchema, planSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
+import { adminLoginSchema, couponSchema, maintenanceSchema, manualLicenseSchema, offerBannerSchema, planSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
 import { expiryDate, generateLicenseKey, hashLicenseKey, licenseHint } from "../utils/license.js";
 
 export const adminRoutes = express.Router();
@@ -188,6 +188,49 @@ adminRoutes.post("/settings/offer-banner", validate(offerBannerSchema), async (r
     mirrorSiteSetting("offer_banner_active", req.body.isActive ? "1" : "0")
   ]);
   res.json({ status: "success", text: req.body.text || "", isActive: req.body.isActive });
+});
+
+adminRoutes.get("/settings/maintenance", async (req, res) => {
+  const active = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("maintenance_active");
+  const message = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("maintenance_message");
+  const mongoActive = await getMongoSiteSetting("maintenance_active");
+  const mongoMessage = await getMongoSiteSetting("maintenance_message");
+  if (!active && mongoActive) saveSiteSettingLocal("maintenance_active", mongoActive.value || "0");
+  if (!message && mongoMessage) saveSiteSettingLocal("maintenance_message", mongoMessage.value || "");
+
+  res.json({
+    isActive: active ? active.value === "1" : (mongoActive ? mongoActive.value === "1" : false),
+    message: message?.value || mongoMessage?.value || "",
+    updatedAt: active?.updated_at || message?.updated_at || mongoActive?.updatedAt || mongoMessage?.updatedAt || null
+  });
+});
+
+adminRoutes.post("/settings/maintenance", validate(maintenanceSchema), async (req, res) => {
+  const maintenanceMessage = req.body.message || "";
+  const tx = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES ('maintenance_active', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(req.body.isActive ? "1" : "0");
+
+    db.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES ('maintenance_message', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(maintenanceMessage);
+  });
+
+  tx();
+  await Promise.all([
+    mirrorSiteSetting("maintenance_active", req.body.isActive ? "1" : "0"),
+    mirrorSiteSetting("maintenance_message", maintenanceMessage)
+  ]);
+  res.json({ status: "success", isActive: req.body.isActive, message: maintenanceMessage });
 });
 
 adminRoutes.get("/pricing/plans", async (req, res) => {

@@ -77,6 +77,11 @@ export const offerBannerSchema = z.object({
   isActive: z.boolean().default(true)
 });
 
+export const maintenanceSchema = z.object({
+  isActive: z.boolean().default(false),
+  message: z.string().trim().max(220).optional()
+});
+
 export const planSchema = z.object({
   title: z.string().trim().min(2).max(80),
   amount: z.number().int().min(100).max(99999999),
