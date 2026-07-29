@@ -153,13 +153,11 @@
             return Promise.reject(new Error(this.state.message));
         }
 
-        var device = this.getDevice();
-        if (device.deviceId !== this.state.deviceId) {
-            this.storage.clear();
-            this.state = { active: false, message: "This license is already activated on another device." };
-            this.emit();
-            return Promise.reject(new Error(this.state.message));
+        if (global.KWVDeviceFingerprint && global.KWVDeviceFingerprint.enableStableFingerprint) {
+            global.KWVDeviceFingerprint.enableStableFingerprint();
         }
+        var device = this.getDevice();
+        var relinkAfterMismatch = device.deviceId !== this.state.deviceId;
 
         var payload = {
             email: this.state.email,
@@ -171,9 +169,18 @@
             lastVerificationAt: this.state.lastVerificationAt
         };
 
-        return this.api.verify(payload, this.state).then(function (response) {
+        var verifyOrRelink = relinkAfterMismatch
+            ? this.api.activate({
+                email: self.state.email,
+                licenseKey: self.state.licenseKey,
+                deviceId: device.deviceId
+            })
+            : this.api.verify(payload, this.state);
+
+        return verifyOrRelink.then(function (response) {
             if (!response || !response.active) throw new Error(response && response.message || "License verification failed.");
             self.state.active = true;
+            self.state.deviceId = device.deviceId;
             self.state.sessionToken = response.sessionToken || self.state.sessionToken;
             self.state.requestSigningSecret = response.requestSigningSecret || self.state.requestSigningSecret;
             self.state.offlineToken = response.offlineToken || self.state.offlineToken;

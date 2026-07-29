@@ -37,10 +37,15 @@
     }
 
     function getDeviceKey() {
-        var fp = global.KWVDeviceFingerprint && global.KWVDeviceFingerprint.getDeviceFingerprint
-            ? global.KWVDeviceFingerprint.getDeviceFingerprint()
-            : { deviceId: "fallback-device" };
-        var material = "kwv-local-license-key:" + fp.deviceId;
+        // Do not derive the local encryption key from the live hardware
+        // fingerprint. CEP/AE can report slightly different machine signals
+        // after restart, OS update, network change, or on macOS sandboxed
+        // hosts. If the key changes, the saved license state becomes
+        // unreadable and users are asked to activate again.
+        //
+        // Device binding is still enforced by the backend; this key only keeps
+        // the local activation cache readable on the same installation.
+        var material = "kwv-local-license-state:v2:keshav-with-velo";
         return crypto
             ? crypto.createHash("sha256").update(material, "utf8").digest()
             : material;

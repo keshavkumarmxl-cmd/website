@@ -179,9 +179,11 @@
     }
 
     function getDeviceFingerprint() {
-        // Existing valid installations retain v1 so their stored encrypted state
-        // and server binding keep working. Every new activation opts into v2.
-        var stable = useStableFingerprint();
+        // Always use the stable v2 device id. Older v1 fingerprints used
+        // volatile machine/network signals and could change after AE restart,
+        // which caused "already activated on another device" for the same user.
+        enableStableFingerprint();
+        var stable = true;
         var signals = collectSignals(!stable);
         var stableMaterial = signals.join("::kwv::");
         var deviceId = stable ? readPersistedDeviceId() : "";
