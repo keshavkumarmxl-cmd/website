@@ -97,6 +97,35 @@ function failedAttemptCount(req, email) {
   `).get(email, clientIp(req)).count;
 }
 
+function clearFailedAttempts(req, email) {
+  db.prepare(`
+    DELETE FROM activation_attempts
+    WHERE email = ?
+      AND ip_address = ?
+      AND result = 'failed'
+  `).run(email, clientIp(req));
+}
+
+function repairPermanentLicenseIfNeeded(license) {
+  if (!license || license.status === "blocked") return license;
+  if (Number(config.licenseExpiryDays) > 0) return license;
+  if (!license.expiry_date && license.status !== "expired") return license;
+
+  const nextStatus = license.device_id ? "active" : "inactive";
+  db.prepare(`
+    UPDATE licenses
+    SET status = ?,
+        expiry_date = NULL
+    WHERE id = ?
+  `).run(nextStatus, license.id);
+
+  return {
+    ...license,
+    status: nextStatus,
+    expiry_date: null
+  };
+}
+
 function isMasterLicense({ email, licenseKey }) {
   return Boolean(
     config.masterLicense.email &&
@@ -317,7 +346,8 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
 });
 
 async function handleActivate(req, res) {
-  const { email, licenseKey, deviceFingerprint } = req.body;
+  const { licenseKey, deviceFingerprint } = req.body;
+  const email = String(req.body.email || "").trim().toLowerCase();
   const normalizedKey = normalizeLicenseKey(licenseKey);
   const licenseHash = hashLicenseKey(normalizedKey);
   const deviceHash = hashFingerprint(deviceFingerprint);
@@ -327,21 +357,17 @@ async function handleActivate(req, res) {
     return res.json({ status: "success", message: "Master license activated" });
   }
 
-  if (failedAttemptCount(req, email) >= config.maxFailedActivationsPerHour) {
-    logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Too many failed attempts" });
-    return res.status(429).json({ status: "failed", reason: "Too many failed activation attempts. Try again later." });
-  }
-
-  const license = db.prepare(`
+  let license = db.prepare(`
     SELECT licenses.*, users.email
     FROM licenses
     JOIN users ON users.id = licenses.user_id
     WHERE licenses.license_hash = ?
   `).get(licenseHash);
 
-  if (!license || license.email !== email) {
+  if (!license || String(license.email || "").trim().toLowerCase() !== email) {
     const mongoActivation = await activateMongoLicense({ licenseHash, email, deviceHash });
     if (mongoActivation?.status === "success") {
+      clearFailedAttempts(req, email);
       logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Activated from Mongo backup" });
       return res.json({ status: "success", message: "License activated" });
     }
@@ -357,6 +383,12 @@ async function handleActivate(req, res) {
       logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Mongo backup license already activated on another device" });
       return res.status(409).json({ status: "failed", reason: "License already activated on another device" });
     }
+
+    if (failedAttemptCount(req, email) >= config.maxFailedActivationsPerHour) {
+      logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Too many failed attempts" });
+      return res.status(429).json({ status: "failed", reason: "Too many failed activation attempts. Try again later." });
+    }
+
     logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "Invalid email or license" });
     return res.status(404).json({ status: "failed", reason: "Invalid email or license key" });
   }
@@ -365,6 +397,8 @@ async function handleActivate(req, res) {
     logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "License blocked" });
     return res.status(403).json({ status: "blocked", reason: "License is blocked" });
   }
+
+  license = repairPermanentLicenseIfNeeded(license);
 
   if (isExpired(license.expiry_date)) {
     db.prepare("UPDATE licenses SET status = 'expired' WHERE id = ?").run(license.id);
@@ -397,6 +431,7 @@ async function handleActivate(req, res) {
         });
 
         tx();
+        clearFailedAttempts(req, email);
         logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Auto-rebound device after local state loss" });
         return res.json({ status: "success", message: "License re-linked to this device" });
       }
@@ -410,6 +445,7 @@ async function handleActivate(req, res) {
 
     db.prepare("UPDATE devices SET last_activity = CURRENT_TIMESTAMP WHERE id = ?").run(device.id);
     db.prepare("UPDATE licenses SET last_verification = CURRENT_TIMESTAMP WHERE id = ?").run(license.id);
+    clearFailedAttempts(req, email);
     logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Already active on this device" });
     return res.json({ status: "success", message: "License already active on this device" });
   }
@@ -432,6 +468,7 @@ async function handleActivate(req, res) {
 
   tx();
   await activateMongoLicense({ licenseHash, email, deviceHash });
+  clearFailedAttempts(req, email);
   logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Activated" });
   return res.json({ status: "success", message: "License activated" });
 }
@@ -451,7 +488,7 @@ async function handleVerifyLicense(req, res) {
   const licenseHash = hashLicenseKey(req.body.licenseKey);
   const deviceHash = hashFingerprint(req.body.deviceFingerprint);
 
-  const license = db.prepare("SELECT * FROM licenses WHERE license_hash = ?").get(licenseHash);
+  let license = db.prepare("SELECT * FROM licenses WHERE license_hash = ?").get(licenseHash);
   if (!license) {
     const mongoResult = await verifyMongoLicense({ licenseHash, deviceHash });
     if (!mongoResult) return res.status(404).json({ status: "invalid" });
@@ -461,6 +498,7 @@ async function handleVerifyLicense(req, res) {
     return res.status(403).json(mongoResult);
   }
   if (license.status === "blocked") return res.status(403).json({ status: "blocked" });
+  license = repairPermanentLicenseIfNeeded(license);
   if (isExpired(license.expiry_date) || license.status === "expired") {
     db.prepare("UPDATE licenses SET status = 'expired' WHERE id = ?").run(license.id);
     return res.status(403).json({ status: "expired" });
