@@ -17,7 +17,15 @@ export function generateLicenseKey() {
 }
 
 export function normalizeLicenseKey(key) {
-  return String(key || "").trim().toUpperCase();
+  const compact = String(key || "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF\u034F\u061C\u180E]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  if (compact.length === 16) {
+    return compact.match(/.{1,4}/g).join("-");
+  }
+  return compact;
 }
 
 export function licenseHint(key) {

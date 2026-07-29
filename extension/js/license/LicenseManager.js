@@ -17,6 +17,15 @@
         return global.KWVDeviceFingerprint.sha256("kwv-license-key:" + String(licenseKey || "").trim());
     }
 
+    function normalizeLicenseKey(licenseKey) {
+        var compact = String(licenseKey || "")
+            .normalize("NFKC")
+            .replace(/[\u200B-\u200D\uFEFF\u034F\u061C\u180E]/g, "")
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "");
+        return compact.length === 16 ? compact.match(/.{1,4}/g).join("-") : compact;
+    }
+
     function publicState(state) {
         return {
             active: !!(state && state.active),
@@ -85,7 +94,7 @@
             return Promise.resolve(publicState(this.state));
         }
         email = String(email || "").trim().toLowerCase();
-        licenseKey = String(licenseKey || "").trim();
+        licenseKey = normalizeLicenseKey(licenseKey);
         if (!email || !licenseKey) return Promise.reject(new Error("Enter your registered email and license key."));
 
         // A fresh activation must use the stable v2 fingerprint before the

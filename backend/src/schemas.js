@@ -13,9 +13,17 @@ function isYoutubeUrl(value) {
   }
 }
 
+const emailSchema = z.string()
+  .transform((value) => String(value || "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF\u034F\u061C\u180E]/g, "").trim().toLowerCase())
+  .pipe(z.string().email());
+
+const licenseKeySchema = z.string()
+  .transform((value) => String(value || "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF\u034F\u061C\u180E]/g, "").trim())
+  .pipe(z.string().min(16).max(80));
+
 export const purchaseSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
-  email: z.string().trim().email().toLowerCase().optional(),
+  email: emailSchema.optional(),
   productId: z.string().trim().min(2),
   paymentProvider: z.enum(["manual", "stripe", "razorpay"]),
   paymentId: z.string().trim().min(2),
@@ -29,34 +37,34 @@ export const razorpayOrderSchema = z.object({
   productId: z.string().trim().min(2),
   plan: z.enum(["India Launch", "International"]).default("India Launch"),
   name: z.string().trim().min(2).max(80),
-  email: z.string().trim().email().toLowerCase(),
+  email: emailSchema,
   couponCode: z.string().trim().max(40).optional()
 });
 
 export const activateSchema = z.object({
-  email: z.string().trim().email().toLowerCase(),
-  licenseKey: z.string().trim().min(19).max(32),
+  email: emailSchema,
+  licenseKey: licenseKeySchema,
   deviceFingerprint: z.string().trim().min(8).max(512)
 });
 
 export const verifyLicenseSchema = z.object({
-  licenseKey: z.string().trim().min(19).max(32),
+  licenseKey: licenseKeySchema,
   deviceFingerprint: z.string().trim().min(8).max(512)
 });
 
 export const downloadSchema = z.object({
-  email: z.string().trim().email().toLowerCase(),
-  licenseKey: z.string().trim().min(19).max(32)
+  email: emailSchema,
+  licenseKey: licenseKeySchema
 });
 
 export const adminLoginSchema = z.object({
-  email: z.string().trim().email().toLowerCase(),
+  email: emailSchema,
   password: z.string().min(8)
 });
 
 export const manualLicenseSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  email: z.string().trim().email().toLowerCase(),
+  email: emailSchema,
   licenseType: z.enum(["standard", "lifetime", "trial"]).default("standard"),
   expiryDays: z.number().int().min(0).max(3650).optional()
 });
