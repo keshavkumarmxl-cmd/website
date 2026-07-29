@@ -2,11 +2,20 @@
     "use strict";
 
     var crypto = null;
+    var fs = null;
+    var path = null;
+    var os = null;
     try {
-        if (typeof require === "function") crypto = require("crypto");
+        if (typeof require === "function") {
+            crypto = require("crypto");
+            fs = require("fs");
+            path = require("path");
+            os = require("os");
+        }
     } catch (err) {}
 
     var STORAGE_KEY = "keshavwithvelo.license.secure.v1";
+    var stateFilePath = "";
     var LEGACY_KEYS = [
         "keshavwithvelo.licenseKey",
         "keshavwithvelo.activationKey",
@@ -35,6 +44,41 @@
         return crypto
             ? crypto.createHash("sha256").update(material, "utf8").digest()
             : material;
+    }
+
+    function getStateFilePath() {
+        if (stateFilePath || !fs || !path || !os) return stateFilePath;
+        try {
+            var base = process.platform === "win32"
+                ? (process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"))
+                : path.join(os.homedir(), ".config");
+            stateFilePath = path.join(base, "KESHAVWITHVELO", "license-state-v1.json");
+        } catch (err) {}
+        return stateFilePath;
+    }
+
+    function readRawEnvelope() {
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) return raw;
+        } catch (err) {}
+        try {
+            var filePath = getStateFilePath();
+            if (filePath && fs && fs.existsSync(filePath)) return fs.readFileSync(filePath, "utf8");
+        } catch (fileErr) {}
+        return "";
+    }
+
+    function writeRawEnvelope(raw) {
+        try { localStorage.setItem(STORAGE_KEY, raw); } catch (err) {}
+        try {
+            var filePath = getStateFilePath();
+            if (filePath && fs && path) {
+                var dir = path.dirname(filePath);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                fs.writeFileSync(filePath, raw, "utf8");
+            }
+        } catch (fileErr) {}
     }
 
     function encryptJson(payload) {
@@ -82,7 +126,7 @@
     function read() {
         try {
             removePlaintextLegacyKeys();
-            var raw = localStorage.getItem(STORAGE_KEY);
+            var raw = readRawEnvelope();
             return raw ? decryptJson(JSON.parse(raw)) : null;
         } catch (err) {
             return null;
@@ -93,12 +137,16 @@
         removePlaintextLegacyKeys();
         var safePayload = Object.assign({}, payload || {});
         delete safePayload.activationKey;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(encryptJson(safePayload)));
+        writeRawEnvelope(JSON.stringify(encryptJson(safePayload)));
     }
 
     function clear() {
         removePlaintextLegacyKeys();
         try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+        try {
+            var filePath = getStateFilePath();
+            if (filePath && fs && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch (fileErr) {}
     }
 
     global.KWVLocalSecureStorage = {

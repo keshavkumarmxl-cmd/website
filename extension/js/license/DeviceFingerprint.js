@@ -7,7 +7,9 @@
     var fs = null;
     var path = null;
     var FINGERPRINT_MODE_KEY = "keshavwithvelo.device.fingerprint.v2";
+    var DEVICE_ID_KEY = "keshavwithvelo.device.id.v2";
     var modeFilePath = "";
+    var deviceIdFilePath = "";
 
     try {
         if (typeof require === "function") {
@@ -118,6 +120,42 @@
         return modeFilePath;
     }
 
+    function getDeviceIdFilePath() {
+        if (deviceIdFilePath || !fs || !path || !os) return deviceIdFilePath;
+        try {
+            var base = process.platform === "win32"
+                ? (process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"))
+                : path.join(os.homedir(), ".config");
+            deviceIdFilePath = path.join(base, "KESHAVWITHVELO", "device-id-v2");
+        } catch (err) {}
+        return deviceIdFilePath;
+    }
+
+    function readPersistedDeviceId() {
+        try {
+            var localValue = localStorage.getItem(DEVICE_ID_KEY);
+            if (localValue) return localValue;
+        } catch (err) {}
+        try {
+            var filePath = getDeviceIdFilePath();
+            if (filePath && fs && fs.existsSync(filePath)) return String(fs.readFileSync(filePath, "utf8") || "").trim();
+        } catch (fileErr) {}
+        return "";
+    }
+
+    function writePersistedDeviceId(deviceId) {
+        if (!deviceId) return;
+        try { localStorage.setItem(DEVICE_ID_KEY, deviceId); } catch (err) {}
+        try {
+            var filePath = getDeviceIdFilePath();
+            if (filePath && fs && path) {
+                var dir = path.dirname(filePath);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                fs.writeFileSync(filePath, deviceId, "utf8");
+            }
+        } catch (fileErr) {}
+    }
+
     function useStableFingerprint() {
         try {
             if (localStorage.getItem(FINGERPRINT_MODE_KEY) === "stable") return true;
@@ -146,8 +184,13 @@
         var stable = useStableFingerprint();
         var signals = collectSignals(!stable);
         var stableMaterial = signals.join("::kwv::");
+        var deviceId = stable ? readPersistedDeviceId() : "";
+        if (!deviceId) {
+            deviceId = sha256("keshavwithvelo:device:" + (stable ? "v2" : "v1") + ":" + stableMaterial);
+            if (stable) writePersistedDeviceId(deviceId);
+        }
         return {
-            deviceId: sha256("keshavwithvelo:device:" + (stable ? "v2" : "v1") + ":" + stableMaterial),
+            deviceId: deviceId,
             fingerprintVersion: stable ? "kwv-device-v2" : "kwv-device-v1",
             signalsHash: sha256(stableMaterial),
             platform: os ? os.platform() : "cep",
