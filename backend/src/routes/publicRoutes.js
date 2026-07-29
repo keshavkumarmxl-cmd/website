@@ -409,7 +409,7 @@ async function handleActivate(req, res) {
   if (license.device_id) {
     const device = db.prepare("SELECT * FROM devices WHERE id = ?").get(license.device_id);
     if (device?.hardware_fingerprint_hash !== deviceHash) {
-      if ((license.device_rebind_count || 0) < 1) {
+      if ((license.device_rebind_count || 0) < config.maxAutoDeviceRelinks) {
         const tx = db.transaction(() => {
           const existingDevice = db.prepare(`
             SELECT id FROM devices WHERE license_id = ? AND hardware_fingerprint_hash = ?

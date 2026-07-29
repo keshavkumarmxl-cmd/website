@@ -123,6 +123,24 @@ try {
   if (!String(error.message || "").includes("duplicate column")) throw error;
 }
 
+if (Number(config.licenseExpiryDays) <= 0) {
+  db.prepare(`
+    UPDATE licenses
+    SET expiry_date = NULL,
+        status = CASE
+          WHEN status = 'expired' AND device_id IS NULL THEN 'inactive'
+          WHEN status = 'expired' AND device_id IS NOT NULL THEN 'active'
+          ELSE status
+        END
+    WHERE status != 'blocked'
+  `).run();
+}
+
+db.prepare(`
+  DELETE FROM activation_attempts
+  WHERE created_at < datetime('now', '-2 hours')
+`).run();
+
 const admin = db.prepare("SELECT id FROM admins WHERE email = ?").get(config.adminEmail);
 if (!admin) {
   db.prepare("INSERT INTO admins (email, password_hash) VALUES (?, ?)").run(

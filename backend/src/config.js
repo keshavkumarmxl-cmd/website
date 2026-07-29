@@ -26,6 +26,7 @@ export const config = {
   extensionZipPath: process.env.EXTENSION_DOWNLOAD_URL || process.env.EXTENSION_ZIP_PATH || "https://drive.google.com/file/d/1K5rCClmg6j5LRqVHrXgPpvLtYfN_sf0o/view?usp=sharing",
   licenseExpiryDays: Number(process.env.LICENSE_EXPIRY_DAYS || 365),
   maxFailedActivationsPerHour: Number(process.env.MAX_FAILED_ACTIVATIONS_PER_HOUR || 8),
+  maxAutoDeviceRelinks: Number(process.env.MAX_AUTO_DEVICE_RELINKS || 3),
   smtp: {
     host: process.env.SMTP_HOST || "",
     port: Number(process.env.SMTP_PORT || 587),

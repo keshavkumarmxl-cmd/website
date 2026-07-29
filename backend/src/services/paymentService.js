@@ -85,9 +85,27 @@ export function calculateCheckout({ plan, couponCode }) {
     const currencyMismatch = coupon?.currency && coupon.currency !== details.currency;
 
     if (!coupon || !coupon.is_active || expired || limitReached || currencyMismatch) {
-      const error = new Error("Coupon is invalid or expired");
-      error.statusCode = 400;
-      throw error;
+      console.warn("[checkout coupon ignored]", {
+        code,
+        reason: !coupon
+          ? "not_found"
+          : !coupon.is_active
+            ? "inactive"
+            : expired
+              ? "expired"
+              : limitReached
+                ? "limit_reached"
+                : "currency_mismatch"
+      });
+      return {
+        ...details,
+        originalAmount: details.amount,
+        amount: details.amount,
+        price: formatPrice(details.amount, details.currency),
+        originalPrice: formatPrice(details.amount, details.currency),
+        discount: null,
+        couponWarning: "Coupon ignored because it is invalid or expired."
+      };
     }
 
     const discountAmount = coupon.discount_type === "percent"
