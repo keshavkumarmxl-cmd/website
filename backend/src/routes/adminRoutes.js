@@ -330,7 +330,7 @@ adminRoutes.post("/licenses/:id/reset-device", (req, res) => {
     db.prepare("DELETE FROM devices WHERE license_id = ?").run(req.params.id);
     db.prepare(`
       UPDATE licenses
-      SET status = 'inactive', device_id = NULL, activation_date = NULL, last_verification = NULL
+      SET status = 'inactive', device_id = NULL, device_rebind_count = 0, activation_date = NULL, last_verification = NULL
       WHERE id = ?
     `).run(req.params.id);
   });

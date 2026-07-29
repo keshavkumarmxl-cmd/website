@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   status TEXT NOT NULL DEFAULT 'inactive',
   activation_date TEXT,
   device_id INTEGER,
+  device_rebind_count INTEGER NOT NULL DEFAULT 0,
   last_verification TEXT,
   expiry_date TEXT,
   license_type TEXT NOT NULL DEFAULT 'standard',
@@ -115,6 +116,12 @@ CREATE INDEX IF NOT EXISTS idx_licenses_user_id ON licenses(user_id);
 CREATE INDEX IF NOT EXISTS idx_devices_license_id ON devices(license_id);
 CREATE INDEX IF NOT EXISTS idx_activation_attempts_created ON activation_attempts(created_at);
 `);
+
+try {
+  db.prepare("ALTER TABLE licenses ADD COLUMN device_rebind_count INTEGER NOT NULL DEFAULT 0").run();
+} catch (error) {
+  if (!String(error.message || "").includes("duplicate column")) throw error;
+}
 
 const admin = db.prepare("SELECT id FROM admins WHERE email = ?").get(config.adminEmail);
 if (!admin) {

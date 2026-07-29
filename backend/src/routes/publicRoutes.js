@@ -363,6 +363,32 @@ async function handleActivate(req, res) {
   if (license.device_id) {
     const device = db.prepare("SELECT * FROM devices WHERE id = ?").get(license.device_id);
     if (device?.hardware_fingerprint_hash !== deviceHash) {
+      if ((license.device_rebind_count || 0) < 1) {
+        const tx = db.transaction(() => {
+          const existingDevice = db.prepare(`
+            SELECT id FROM devices WHERE license_id = ? AND hardware_fingerprint_hash = ?
+          `).get(license.id, deviceHash);
+          const deviceId = existingDevice?.id || db.prepare(`
+            INSERT INTO devices (license_id, hardware_fingerprint_hash)
+            VALUES (?, ?)
+          `).run(license.id, deviceHash).lastInsertRowid;
+
+          db.prepare(`
+            UPDATE licenses
+            SET status = 'active',
+                device_id = ?,
+                device_rebind_count = COALESCE(device_rebind_count, 0) + 1,
+                last_verification = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).run(deviceId, license.id);
+          db.prepare("UPDATE devices SET last_activity = CURRENT_TIMESTAMP WHERE id = ?").run(deviceId);
+        });
+
+        tx();
+        logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "success", reason: "Auto-rebound device after local state loss" });
+        return res.json({ status: "success", message: "License re-linked to this device" });
+      }
+
       logAttempt(req, { email, licenseKey: normalizedKey, deviceHash, result: "failed", reason: "License already activated on another device" });
       return res.status(409).json({
         status: "failed",
