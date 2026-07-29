@@ -1,10 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="kwv-maintenance-checking">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keshav With Velo - Real Extension Preview</title>
-    <link rel="stylesheet" href="styles.css?v=20260730-maintenance-toggle">
+    <script>
+        window.__KWV_MAINTENANCE_INITIAL__ = { checked: false, isActive: false, message: "" };
+        (function () {
+            var done = false;
+            function finish(data) {
+                if (done) return;
+                done = true;
+                window.__KWV_MAINTENANCE_INITIAL__ = Object.assign({ checked: true, isActive: false, message: "" }, data || {});
+                if (!(data && data.isActive)) document.documentElement.classList.remove("kwv-maintenance-checking");
+            }
+            fetch("https://api.keshavwithvelo.in/api/site-settings/maintenance", {
+                headers: { Accept: "application/json" },
+                cache: "no-store"
+            }).then(function (response) {
+                return response.ok ? response.json() : null;
+            }).then(finish).catch(function () {
+                finish({ isActive: false });
+            });
+            setTimeout(function () {
+                finish({ isActive: false });
+            }, 1800);
+        })();
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20260730-maintenance-fast">
 </head>
 <body class="custom-cursor-page">
     <div class="motion-bg" aria-hidden="true">
@@ -461,6 +484,6 @@
     </style>
     -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script src="script.js?v=20260730-maintenance-toggle"></script>
+    <script src="script.js?v=20260730-maintenance-fast"></script>
 </body>
 </html>

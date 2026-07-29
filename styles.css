@@ -23,6 +23,10 @@
     --gold: #ffcf5a;
 }
 
+html.kwv-maintenance-checking body {
+    visibility: hidden;
+}
+
 body.kwv-maintenance-active {
     overflow: hidden;
 }

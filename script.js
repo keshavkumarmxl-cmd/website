@@ -41,9 +41,16 @@ function setMaintenanceGate(isActive, message) {
 
     if (!existing) document.body.appendChild(gate);
     document.body.classList.add("kwv-maintenance-active");
+    document.documentElement.classList.remove("kwv-maintenance-checking");
 }
 
 async function initMaintenanceGate() {
+    if (window.__KWV_MAINTENANCE_INITIAL__ && window.__KWV_MAINTENANCE_INITIAL__.checked) {
+        setMaintenanceGate(window.__KWV_MAINTENANCE_INITIAL__.isActive, window.__KWV_MAINTENANCE_INITIAL__.message);
+        document.documentElement.classList.remove("kwv-maintenance-checking");
+        return;
+    }
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/site-settings/maintenance`, {
             headers: { Accept: "application/json" },
@@ -55,6 +62,7 @@ async function initMaintenanceGate() {
     } catch (error) {
         setMaintenanceGate(false);
     }
+    document.documentElement.classList.remove("kwv-maintenance-checking");
 }
 
 initMaintenanceGate();
