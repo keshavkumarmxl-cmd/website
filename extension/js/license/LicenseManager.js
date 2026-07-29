@@ -88,6 +88,11 @@
         licenseKey = String(licenseKey || "").trim();
         if (!email || !licenseKey) return Promise.reject(new Error("Enter your registered email and license key."));
 
+        // A fresh activation must use the stable v2 fingerprint before the
+        // encrypted local state is written. This survives AE restarts.
+        if (global.KWVDeviceFingerprint && global.KWVDeviceFingerprint.enableStableFingerprint) {
+            global.KWVDeviceFingerprint.enableStableFingerprint();
+        }
         var device = this.getDevice();
         var payload = {
             email: email,

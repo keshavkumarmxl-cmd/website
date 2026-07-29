@@ -4,12 +4,18 @@
     var crypto = null;
     var childProcess = null;
     var os = null;
+    var fs = null;
+    var path = null;
+    var FINGERPRINT_MODE_KEY = "keshavwithvelo.device.fingerprint.v2";
+    var modeFilePath = "";
 
     try {
         if (typeof require === "function") {
             crypto = require("crypto");
             childProcess = require("child_process");
             os = require("os");
+            fs = require("fs");
+            path = require("path");
         }
     } catch (err) {}
 
@@ -70,7 +76,7 @@
         ];
     }
 
-    function fallbackSignals() {
+    function fallbackSignals(includeVolatileSignals) {
         var nav = global.navigator || {};
         var screenObj = global.screen || {};
         var parts = [
@@ -82,30 +88,67 @@
         ];
         if (os) {
             parts.push(os.hostname(), os.platform(), os.arch(), os.release());
-            try {
+            if (includeVolatileSignals) try {
                 parts.push(JSON.stringify(os.networkInterfaces()));
             } catch (err) {}
         }
         return parts;
     }
 
-    function collectSignals() {
+    function collectSignals(includeVolatileSignals) {
         var platform = os ? os.platform() : String((global.navigator && global.navigator.platform) || "").toLowerCase();
         var signals = [];
         if (/^win/.test(platform)) signals = windowsSignals();
         else if (/darwin|mac/.test(platform)) signals = macSignals();
         else signals = linuxSignals();
 
-        signals = signals.concat(fallbackSignals()).map(compact).filter(Boolean);
-        return signals.length ? signals : fallbackSignals().map(compact).filter(Boolean);
+        signals = signals.concat(fallbackSignals(includeVolatileSignals)).map(compact).filter(Boolean);
+        // A device must not change simply because OS/network enumeration order does.
+        return signals.length ? signals.sort() : fallbackSignals(includeVolatileSignals).map(compact).filter(Boolean).sort();
+    }
+
+    function getModeFilePath() {
+        if (modeFilePath || !fs || !path || !os) return modeFilePath;
+        try {
+            var base = process.platform === "win32"
+                ? (process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"))
+                : path.join(os.homedir(), ".config");
+            modeFilePath = path.join(base, "KESHAVWITHVELO", "fingerprint-mode-v2");
+        } catch (err) {}
+        return modeFilePath;
+    }
+
+    function useStableFingerprint() {
+        try {
+            if (localStorage.getItem(FINGERPRINT_MODE_KEY) === "stable") return true;
+        } catch (err) {}
+        try {
+            var filePath = getModeFilePath();
+            return !!(filePath && fs && fs.existsSync(filePath));
+        } catch (fileErr) { return false; }
+    }
+
+    function enableStableFingerprint() {
+        try { localStorage.setItem(FINGERPRINT_MODE_KEY, "stable"); } catch (err) {}
+        try {
+            var filePath = getModeFilePath();
+            if (filePath && fs && path) {
+                var dir = path.dirname(filePath);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                fs.writeFileSync(filePath, "stable", "utf8");
+            }
+        } catch (fileErr) {}
     }
 
     function getDeviceFingerprint() {
-        var signals = collectSignals();
+        // Existing valid installations retain v1 so their stored encrypted state
+        // and server binding keep working. Every new activation opts into v2.
+        var stable = useStableFingerprint();
+        var signals = collectSignals(!stable);
         var stableMaterial = signals.join("::kwv::");
         return {
-            deviceId: sha256("keshavwithvelo:device:v1:" + stableMaterial),
-            fingerprintVersion: "kwv-device-v1",
+            deviceId: sha256("keshavwithvelo:device:" + (stable ? "v2" : "v1") + ":" + stableMaterial),
+            fingerprintVersion: stable ? "kwv-device-v2" : "kwv-device-v1",
             signalsHash: sha256(stableMaterial),
             platform: os ? os.platform() : "cep",
             host: "after-effects"
@@ -114,6 +157,7 @@
 
     global.KWVDeviceFingerprint = {
         getDeviceFingerprint: getDeviceFingerprint,
+        enableStableFingerprint: enableStableFingerprint,
         sha256: sha256
     };
 })(window);

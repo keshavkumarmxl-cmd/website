@@ -6,7 +6,10 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 4000),
   publicBaseUrl: process.env.PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:4000",
-  frontendOrigin: process.env.FRONTEND_ORIGIN || "https://website-0fny.onrender.com",
+  frontendOrigins: String(process.env.FRONTEND_ORIGIN || "https://website-0fny.onrender.com")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   databasePath: process.env.DATABASE_PATH || "./data/licensing.sqlite",
   jwtSecret: process.env.JWT_SECRET || "dev-only-change-me",
   licenseHashSecret: process.env.LICENSE_HASH_SECRET || "dev-only-license-secret",
@@ -20,7 +23,7 @@ export const config = {
     key: String(process.env.MASTER_LICENSE_KEY || "").trim().toUpperCase()
   },
   productId: process.env.EXTENSION_PRODUCT_ID || "keshav-with-velo",
-  extensionZipPath: process.env.EXTENSION_ZIP_PATH || "https://drive.google.com/file/d/1K5rCClmg6j5LRqVHrXgPpvLtYfN_sf0o/view?usp=sharing",
+  extensionZipPath: process.env.EXTENSION_DOWNLOAD_URL || process.env.EXTENSION_ZIP_PATH || "https://drive.google.com/file/d/1K5rCClmg6j5LRqVHrXgPpvLtYfN_sf0o/view?usp=sharing",
   licenseExpiryDays: Number(process.env.LICENSE_EXPIRY_DAYS || 365),
   maxFailedActivationsPerHour: Number(process.env.MAX_FAILED_ACTIVATIONS_PER_HOUR || 8),
   smtp: {

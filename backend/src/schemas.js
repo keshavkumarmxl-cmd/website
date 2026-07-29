@@ -58,7 +58,7 @@ export const manualLicenseSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.string().trim().email().toLowerCase(),
   licenseType: z.enum(["standard", "lifetime", "trial"]).default("standard"),
-  expiryDays: z.number().int().min(1).max(3650).optional()
+  expiryDays: z.number().int().min(0).max(3650).optional()
 });
 
 export const versionSchema = z.object({

@@ -7,7 +7,7 @@
         verificationIntervalMs: 6 * 60 * 60 * 1000,
         offlineGraceMs: 72 * 60 * 60 * 1000,
         api: {
-            baseUrl: "https://keshavwithvelo-license-api.onrender.com/api",
+            baseUrl: "https://api.keshavwithvelo.in/api",
             appId: "com.apple.liquidglass.panel",
             apiVersion: "2026-07-licensing",
             publicKeyPem: ""

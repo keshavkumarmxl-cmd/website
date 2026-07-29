@@ -40,8 +40,10 @@ export function hashFingerprint(fingerprint) {
 }
 
 export function expiryDate(days = config.licenseExpiryDays) {
+  if (!Number.isFinite(Number(days)) || Number(days) <= 0) return null;
+
   const date = new Date();
-  date.setUTCDate(date.getUTCDate() + days);
+  date.setUTCDate(date.getUTCDate() + Number(days));
   return date.toISOString();
 }
 

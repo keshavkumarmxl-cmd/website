@@ -19,7 +19,8 @@ app.use(helmet({
 }));
 
 const allowedOrigins = new Set([
-  config.frontendOrigin,
+  ...config.frontendOrigins,
+  "https://api.keshavwithvelo.in",
   "https://keshavwithvelo.in",
   "https://www.keshavwithvelo.in",
   "https://website-0fny.onrender.com",

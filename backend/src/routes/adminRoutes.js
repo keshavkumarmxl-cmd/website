@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import express from "express";
+import { config } from "../config.js";
 import { db } from "../db/connection.js";
 import {
   deleteMongoCoupon,
@@ -359,7 +360,7 @@ adminRoutes.post("/manual-license", validate(manualLicenseSchema), (req, res) =>
       db.prepare(`
         INSERT INTO licenses (license_hash, license_hint, user_id, status, expiry_date, license_type)
         VALUES (?, ?, ?, 'inactive', ?, ?)
-      `).run(hashLicenseKey(key), licenseHint(key), userId, expiryDate(expiryDays || 365), licenseType);
+      `).run(hashLicenseKey(key), licenseHint(key), userId, expiryDate(expiryDays ?? config.licenseExpiryDays), licenseType);
       return res.status(201).json({ status: "success", email, licenseKey: key });
     } catch (error) {
       if (!String(error.message).includes("UNIQUE")) throw error;

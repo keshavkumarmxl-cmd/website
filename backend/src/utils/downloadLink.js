@@ -6,7 +6,9 @@ function signature(payload) {
 }
 
 export function createDownloadToken({ email, licenseKey }) {
-  const expiresAt = Date.now() + (config.downloadLinkExpiryHours * 60 * 60 * 1000);
+  const expiresAt = config.downloadLinkExpiryHours > 0
+    ? Date.now() + (config.downloadLinkExpiryHours * 60 * 60 * 1000)
+    : null;
   const payload = Buffer.from(JSON.stringify({ email, licenseKey, expiresAt })).toString("base64url");
   return `${payload}.${signature(payload)}`;
 }
@@ -22,7 +24,8 @@ export function readDownloadToken(token) {
 
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (!data.email || !data.licenseKey || !Number.isFinite(data.expiresAt) || data.expiresAt < Date.now()) return null;
+    if (!data.email || !data.licenseKey) return null;
+    if (data.expiresAt !== null && (!Number.isFinite(data.expiresAt) || data.expiresAt < Date.now())) return null;
     return data;
   } catch {
     return null;
