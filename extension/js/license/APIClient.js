@@ -2,8 +2,18 @@
     "use strict";
 
     var crypto = null;
+    var nodeUrl = null;
+    var nodeHttp = null;
+    var nodeHttps = null;
+    var NodeBuffer = null;
     try {
-        if (typeof require === "function") crypto = require("crypto");
+        if (typeof require === "function") {
+            crypto = require("crypto");
+            nodeUrl = require("url");
+            nodeHttp = require("http");
+            nodeHttps = require("https");
+            NodeBuffer = require("buffer").Buffer;
+        }
     } catch (err) {}
 
     var DEFAULT_CONFIG = {
@@ -38,32 +48,153 @@
         return String(url || DEFAULT_CONFIG.baseUrl).replace(/\/+$/, "");
     }
 
+    function isNetworkFetchError(error) {
+        var message = String((error && error.message) || error || "").toLowerCase();
+        return (
+            !error ||
+            error.name === "TypeError" ||
+            message.indexOf("failed to fetch") >= 0 ||
+            message.indexOf("network") >= 0 ||
+            message.indexOf("load failed") >= 0 ||
+            message.indexOf("eacces") >= 0 ||
+            message.indexOf("econn") >= 0 ||
+            message.indexOf("access") >= 0 ||
+            message.indexOf("cors") >= 0
+        );
+    }
+
+    function parsePayloadFromText(status, contentType, text) {
+        var payload = {};
+        try {
+            payload = text ? JSON.parse(text) : {};
+        } catch (parseErr) {
+            var invalid = new Error(
+                contentType && contentType.indexOf("text/html") >= 0
+                    ? "License API returned an HTML page. Check the API URL in js/license/license-config.js."
+                    : "License API returned invalid JSON."
+            );
+            invalid.status = status;
+            invalid.code = "INVALID_API_RESPONSE";
+            invalid.responsePreview = String(text || "").slice(0, 160);
+            throw invalid;
+        }
+        if (status < 200 || status >= 300) {
+            var err = new Error(payload.message || payload.reason || ("HTTP " + status));
+            err.status = status;
+            err.code = payload.code || (status === 409 ? "DEVICE_ALREADY_BOUND" : "HTTP_ERROR");
+            err.payload = payload;
+            throw err;
+        }
+        return payload;
+    }
+
     function parseJsonResponse(response) {
         return response.text().then(function (text) {
-            var payload = {};
-            try {
-                payload = text ? JSON.parse(text) : {};
-            } catch (parseErr) {
-                var contentType = response.headers && response.headers.get ? response.headers.get("content-type") : "";
-                var err = new Error(
-                    contentType && contentType.indexOf("text/html") >= 0
-                        ? "License API returned an HTML page. Check the API URL in js/license/license-config.js."
-                        : "License API returned invalid JSON."
-                );
-                err.status = response.status;
-                err.code = "INVALID_API_RESPONSE";
-                err.responsePreview = String(text || "").slice(0, 160);
-                throw err;
-            }
-            if (!response.ok) {
-                var err = new Error(payload.message || payload.reason || ("HTTP " + response.status));
-                err.status = response.status;
-                err.code = payload.code || (response.status === 409 ? "DEVICE_ALREADY_BOUND" : "HTTP_ERROR");
-                err.payload = payload;
-                throw err;
-            }
-            return payload;
+            var contentType = response.headers && response.headers.get ? response.headers.get("content-type") : "";
+            return parsePayloadFromText(response.status, contentType, text);
         });
+    }
+
+    function nodeRequest(url, method, headers, json) {
+        return new Promise(function (resolve, reject) {
+            if (!nodeUrl || !nodeHttps || !NodeBuffer) return reject(new Error("Node HTTPS fallback is unavailable."));
+            var parsed = nodeUrl.parse(url);
+            var transport = parsed.protocol === "http:" ? nodeHttp : nodeHttps;
+            var options = {
+                protocol: parsed.protocol,
+                hostname: parsed.hostname,
+                port: parsed.port,
+                path: parsed.path,
+                method: method,
+                headers: Object.assign({}, headers, {
+                    "Content-Length": NodeBuffer.byteLength(json || "", "utf8"),
+                    "User-Agent": "KeshavWithVelo-CEP-License/1.0"
+                }),
+                timeout: 20000
+            };
+            var req = transport.request(options, function (res) {
+                var chunks = [];
+                res.on("data", function (chunk) { chunks.push(chunk); });
+                res.on("end", function () {
+                    var text = NodeBuffer.concat(chunks).toString("utf8");
+                    try {
+                        resolve(parsePayloadFromText(res.statusCode || 0, String(res.headers["content-type"] || ""), text));
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+            });
+            req.on("timeout", function () {
+                req.destroy(new Error("License API request timed out."));
+            });
+            req.on("error", reject);
+            if (json) req.write(json);
+            req.end();
+        });
+    }
+
+    function xhrRequest(url, method, headers, json) {
+        return new Promise(function (resolve, reject) {
+            if (typeof XMLHttpRequest !== "function") {
+                return reject(new Error("XMLHttpRequest fallback is unavailable."));
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open(method, url, true);
+            xhr.timeout = 20000;
+            Object.keys(headers || {}).forEach(function (key) {
+                try {
+                    xhr.setRequestHeader(key, headers[key]);
+                } catch (err) {}
+            });
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                try {
+                    resolve(parsePayloadFromText(xhr.status || 0, xhr.getResponseHeader("content-type") || "", xhr.responseText || ""));
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            xhr.onerror = function () {
+                reject(new Error("License API network request failed."));
+            };
+            xhr.ontimeout = function () {
+                reject(new Error("License API request timed out."));
+            };
+            try {
+                xhr.send(json || null);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    function requestWithFallbacks(url, method, headers, json) {
+        function tryXhrThenNode(error) {
+            if (!isNetworkFetchError(error)) throw error;
+            return xhrRequest(url, method, headers, json).catch(function (xhrError) {
+                if (!isNetworkFetchError(xhrError)) throw xhrError;
+                return nodeRequest(url, method, headers, json);
+            });
+        }
+
+        if (typeof fetch !== "function") {
+            return xhrRequest(url, method, headers, json).catch(function (xhrError) {
+                if (!isNetworkFetchError(xhrError)) throw xhrError;
+                return nodeRequest(url, method, headers, json);
+            });
+        }
+
+        try {
+            return fetch(url, {
+                method: method,
+                headers: headers,
+                body: json || undefined,
+                cache: "no-store"
+            }).then(parseJsonResponse).catch(tryXhrThenNode);
+        } catch (syncFetchError) {
+            return tryXhrThenNode(syncFetchError);
+        }
     }
 
     function APIClient(config) {
@@ -96,12 +227,7 @@
         if (auth && auth.sessionToken) headers.Authorization = "Bearer " + auth.sessionToken;
         if (signingSecret) headers["X-KWV-Signature"] = "sha256=" + hmac(signingSecret, canonical);
 
-        return fetch(url, {
-            method: method,
-            headers: headers,
-            body: json || undefined,
-            cache: "no-store"
-        }).then(parseJsonResponse);
+        return requestWithFallbacks(url, method, headers, json);
     };
 
     APIClient.prototype.request = function (method, path, body, auth) {
