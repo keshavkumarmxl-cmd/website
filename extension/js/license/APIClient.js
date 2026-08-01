@@ -64,6 +64,13 @@
     }
 
     function parsePayloadFromText(status, contentType, text) {
+        if (!status) {
+            var network = new Error("License API network request returned HTTP 0.");
+            network.status = 0;
+            network.code = "NETWORK_ERROR";
+            throw network;
+        }
+
         var payload = {};
         try {
             payload = text ? JSON.parse(text) : {};
