@@ -7,6 +7,9 @@
     var nodeHttps = null;
     var NodeBuffer = null;
     var childProcess = null;
+    var nodeFs = null;
+    var nodeOs = null;
+    var nodePath = null;
     try {
         if (typeof require === "function") {
             crypto = require("crypto");
@@ -15,6 +18,9 @@
             nodeHttps = require("https");
             NodeBuffer = require("buffer").Buffer;
             childProcess = require("child_process");
+            nodeFs = require("fs");
+            nodeOs = require("os");
+            nodePath = require("path");
         }
     } catch (err) {}
 
@@ -180,7 +186,7 @@
 
     function powershellRequest(url, method, headers, json) {
         return new Promise(function (resolve, reject) {
-            if (!childProcess || !childProcess.execFile || !NodeBuffer) {
+            if (!childProcess || !childProcess.execFile || !NodeBuffer || !nodeFs || !nodeOs || !nodePath) {
                 return reject(new Error("PowerShell network fallback is unavailable."));
             }
             if (!/win/i.test((typeof process !== "undefined" && process.platform) || "")) {
@@ -195,8 +201,9 @@
             });
             var encodedPayload = NodeBuffer.from(payload, "utf8").toString("base64");
             var script = [
+                "param([string]$PayloadBase64)",
                 "$ErrorActionPreference='Stop'",
-                "$payload=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($args[0])) | ConvertFrom-Json",
+                "$payload=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PayloadBase64)) | ConvertFrom-Json",
                 "$headers=@{}",
                 "$payload.headers.PSObject.Properties | ForEach-Object { $headers[$_.Name]=[string]$_.Value }",
                 "$params=@{ Uri=$payload.url; Method=$payload.method; Headers=$headers; TimeoutSec=25; UseBasicParsing=$true }",
@@ -207,20 +214,29 @@
                 "$body=[string]$response.Content",
                 "[Console]::OutputEncoding=[Text.Encoding]::UTF8",
                 "Write-Output (($status.ToString()) + '||KWV||' + $ctype + '||KWV||' + $body)"
-            ].join("; ");
+            ].join("\r\n");
+            var scriptPath = nodePath.join(nodeOs.tmpdir(), "kwv-license-request-" + Date.now() + "-" + randomHex(4) + ".ps1");
+            try {
+                nodeFs.writeFileSync(scriptPath, script, "utf8");
+            } catch (writeErr) {
+                return reject(writeErr);
+            }
 
             childProcess.execFile("powershell.exe", [
                 "-NoProfile",
                 "-ExecutionPolicy",
                 "Bypass",
-                "-Command",
-                script,
+                "-File",
+                scriptPath,
                 encodedPayload
             ], {
                 windowsHide: true,
                 timeout: 35000,
                 maxBuffer: 1024 * 1024
             }, function (err, stdout, stderr) {
+                try {
+                    if (nodeFs.existsSync(scriptPath)) nodeFs.unlinkSync(scriptPath);
+                } catch (cleanupErr) {}
                 if (err) {
                     var shellError = new Error(String(stderr || err.message || "PowerShell network request failed.").trim());
                     shellError.code = "POWERSHELL_NETWORK_ERROR";
