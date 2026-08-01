@@ -2,7 +2,8 @@
     "use strict";
 
     var CONFIG = {
-        endpoint: "https://keshavwithvelo.in/api/check-update",
+        endpoint: "https://api.keshavwithvelo.in/api/check-update",
+        fallbackEndpoint: "https://keshavwithvelo.in/api/check-update",
         currentVersion: "1.0.0",
         autoCheckDelayMs: 8000,
         autoInstall: true
@@ -20,6 +21,7 @@
                 path: require("path"),
                 os: require("os"),
                 https: require("https"),
+                http: require("http"),
                 AdmZip: require("adm-zip")
             };
         } catch (err) {
@@ -75,29 +77,120 @@
         return String(state.licenseKey || "").trim();
     }
 
-    function requestUpdateInfo(currentVersion, licenseKey) {
-        return fetch(CONFIG.endpoint, {
+    function isNetworkFetchError(err) {
+        var message = String((err && (err.message || err.name)) || err || "").toLowerCase();
+        return message.indexOf("fetch") >= 0 ||
+            message.indexOf("network") >= 0 ||
+            message.indexOf("failed to fetch") >= 0 ||
+            message.indexOf("load failed") >= 0 ||
+            message.indexOf("could not connect") >= 0;
+    }
+
+    function parseUpdateResponse(response, text) {
+        var data = {};
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (err) {
+            throw new Error("Update API returned invalid JSON.");
+        }
+        if (!response.ok) {
+            throw new Error(data.message || data.error || "Update check failed with HTTP " + response.status + ".");
+        }
+        return data;
+    }
+
+    function requestUpdateInfoWithFetch(endpoint, payload) {
+        return fetch(endpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                currentVersion: currentVersion,
-                licenseKey: licenseKey
-            })
+            body: JSON.stringify(payload)
         }).then(function (response) {
             return response.text().then(function (text) {
-                var data = {};
-                try {
-                    data = text ? JSON.parse(text) : {};
-                } catch (err) {
-                    throw new Error("Update API returned invalid JSON.");
-                }
-                if (!response.ok) {
-                    throw new Error(data.message || data.error || "Update check failed with HTTP " + response.status + ".");
-                }
-                return data;
+                return parseUpdateResponse(response, text);
             });
+        });
+    }
+
+    function requestUpdateInfoWithNode(endpoint, payload) {
+        if (!node || (!node.https && !node.http)) return Promise.reject(new Error("CEP Node.js network fallback is not available."));
+
+        return new Promise(function (resolve, reject) {
+            var target;
+            try {
+                target = new URL(endpoint);
+            } catch (err) {
+                reject(new Error("Invalid update API URL."));
+                return;
+            }
+
+            var body = JSON.stringify(payload);
+            var transport = target.protocol === "http:" ? node.http : node.https;
+            var request = transport.request({
+                protocol: target.protocol,
+                hostname: target.hostname,
+                port: target.port || (target.protocol === "http:" ? 80 : 443),
+                path: target.pathname + target.search,
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Content-Length": Buffer.byteLength(body),
+                    "Origin": "null"
+                }
+            }, function (response) {
+                var chunks = [];
+                response.on("data", function (chunk) { chunks.push(chunk); });
+                response.on("end", function () {
+                    try {
+                        var text = Buffer.concat(chunks).toString("utf8");
+                        resolve(parseUpdateResponse({
+                            ok: response.statusCode >= 200 && response.statusCode < 300,
+                            status: response.statusCode
+                        }, text));
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+            });
+
+            request.on("error", reject);
+            request.setTimeout(30000, function () {
+                request.destroy(new Error("Update check timed out."));
+            });
+            request.write(body);
+            request.end();
+        });
+    }
+
+    function requestUpdateInfo(currentVersion, licenseKey) {
+        var payload = {
+            currentVersion: currentVersion,
+            licenseKey: licenseKey
+        };
+
+        function requestEndpoint(endpoint) {
+            if (typeof fetch !== "function") {
+                return requestUpdateInfoWithNode(endpoint, payload);
+            }
+
+            try {
+                return requestUpdateInfoWithFetch(endpoint, payload).catch(function (err) {
+                    if (isNetworkFetchError(err)) return requestUpdateInfoWithNode(endpoint, payload);
+                    throw err;
+                });
+            } catch (err) {
+                if (isNetworkFetchError(err)) return requestUpdateInfoWithNode(endpoint, payload);
+                return Promise.reject(err);
+            }
+        }
+
+        return requestEndpoint(CONFIG.endpoint).catch(function (err) {
+            if (CONFIG.fallbackEndpoint && CONFIG.fallbackEndpoint !== CONFIG.endpoint) {
+                console.warn("[KWV AutoUpdater] Primary update endpoint failed, trying fallback:", err);
+                return requestEndpoint(CONFIG.fallbackEndpoint);
+            }
+            throw err;
         });
     }
 
