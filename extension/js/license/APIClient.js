@@ -6,6 +6,7 @@
     var nodeHttp = null;
     var nodeHttps = null;
     var NodeBuffer = null;
+    var childProcess = null;
     try {
         if (typeof require === "function") {
             crypto = require("crypto");
@@ -13,6 +14,7 @@
             nodeHttp = require("http");
             nodeHttps = require("https");
             NodeBuffer = require("buffer").Buffer;
+            childProcess = require("child_process");
         }
     } catch (err) {}
 
@@ -176,19 +178,86 @@
         });
     }
 
+    function powershellRequest(url, method, headers, json) {
+        return new Promise(function (resolve, reject) {
+            if (!childProcess || !childProcess.execFile || !NodeBuffer) {
+                return reject(new Error("PowerShell network fallback is unavailable."));
+            }
+            if (!/win/i.test((typeof process !== "undefined" && process.platform) || "")) {
+                return reject(new Error("PowerShell network fallback is only available on Windows."));
+            }
+
+            var payload = JSON.stringify({
+                url: url,
+                method: method,
+                headers: headers || {},
+                body: json || ""
+            });
+            var encodedPayload = NodeBuffer.from(payload, "utf8").toString("base64");
+            var script = [
+                "$ErrorActionPreference='Stop'",
+                "$payload=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($args[0])) | ConvertFrom-Json",
+                "$headers=@{}",
+                "$payload.headers.PSObject.Properties | ForEach-Object { $headers[$_.Name]=[string]$_.Value }",
+                "$params=@{ Uri=$payload.url; Method=$payload.method; Headers=$headers; TimeoutSec=25; UseBasicParsing=$true }",
+                "if ($payload.body -and $payload.body.Length -gt 0) { $params.Body=$payload.body; $params.ContentType='application/json' }",
+                "$response=Invoke-WebRequest @params",
+                "$status=[int]$response.StatusCode",
+                "$ctype=[string]$response.Headers['Content-Type']",
+                "$body=[string]$response.Content",
+                "[Console]::OutputEncoding=[Text.Encoding]::UTF8",
+                "Write-Output (($status.ToString()) + '||KWV||' + $ctype + '||KWV||' + $body)"
+            ].join("; ");
+
+            childProcess.execFile("powershell.exe", [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                script,
+                encodedPayload
+            ], {
+                windowsHide: true,
+                timeout: 35000,
+                maxBuffer: 1024 * 1024
+            }, function (err, stdout, stderr) {
+                if (err) {
+                    var shellError = new Error(String(stderr || err.message || "PowerShell network request failed.").trim());
+                    shellError.code = "POWERSHELL_NETWORK_ERROR";
+                    return reject(shellError);
+                }
+                var output = String(stdout || "");
+                var parts = output.split("||KWV||");
+                if (parts.length < 3) {
+                    return reject(new Error("PowerShell network fallback returned invalid output."));
+                }
+                try {
+                    resolve(parsePayloadFromText(Number(parts[0]) || 0, parts[1] || "", parts.slice(2).join("||KWV||")));
+                } catch (parseErr) {
+                    reject(parseErr);
+                }
+            });
+        });
+    }
+
     function requestWithFallbacks(url, method, headers, json) {
+        function tryPowerShell(error) {
+            if (!isNetworkFetchError(error)) throw error;
+            return powershellRequest(url, method, headers, json);
+        }
+
         function tryXhrThenNode(error) {
             if (!isNetworkFetchError(error)) throw error;
             return xhrRequest(url, method, headers, json).catch(function (xhrError) {
                 if (!isNetworkFetchError(xhrError)) throw xhrError;
-                return nodeRequest(url, method, headers, json);
+                return nodeRequest(url, method, headers, json).catch(tryPowerShell);
             });
         }
 
         if (typeof fetch !== "function") {
             return xhrRequest(url, method, headers, json).catch(function (xhrError) {
                 if (!isNetworkFetchError(xhrError)) throw xhrError;
-                return nodeRequest(url, method, headers, json);
+                return nodeRequest(url, method, headers, json).catch(tryPowerShell);
             });
         }
 
