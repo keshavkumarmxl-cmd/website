@@ -24,7 +24,7 @@ function setMaintenanceGate(isActive, message) {
     gate.setAttribute("role", "dialog");
     gate.setAttribute("aria-modal", "true");
     gate.setAttribute("aria-labelledby", "kwvMaintenanceTitle");
-    const safeMessage = String(message || "We're improving Keshav With Velo. Checkout and downloads are temporarily unavailable while we complete essential updates.")
+    const safeMessage = String(message || "Website under maintenance. We are currently facing issues with our payment gateway and backend. After this is solved, we will update the website.")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -35,7 +35,10 @@ function setMaintenanceGate(isActive, message) {
             <p class="kwv-maintenance-eyebrow">Scheduled maintenance</p>
             <h1 id="kwvMaintenanceTitle">We'll be back shortly.</h1>
             <p>${safeMessage}</p>
-            <a href="mailto:keshavv.aep@gmail.com">Contact support</a>
+            <div class="kwv-maintenance-actions">
+                <a href="https://discord.gg/Yx5VaqPtFq" target="_blank" rel="noopener">Join Discord</a>
+                <a href="mailto:keshavv.aep@gmail.com">Contact support</a>
+            </div>
         </div>
     `;
 

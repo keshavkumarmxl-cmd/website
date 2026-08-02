@@ -84,9 +84,17 @@ body.kwv-maintenance-active {
     line-height: 1.6;
 }
 
+.kwv-maintenance-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
+}
+
 .kwv-maintenance-card a {
     display: inline-block;
-    margin-top: 24px;
+    margin-top: 0;
     padding: 12px 17px;
     border: 1px solid #ff3434;
     border-radius: 8px;
