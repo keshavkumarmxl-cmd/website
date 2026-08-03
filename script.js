@@ -48,12 +48,6 @@ function setMaintenanceGate(isActive, message) {
 }
 
 async function initMaintenanceGate() {
-    setMaintenanceGate(
-        true,
-        "Website under maintenance. We are currently facing issues with our payment gateway and backend. After this is solved, we will update the website."
-    );
-    return;
-
     if (window.__KWV_MAINTENANCE_INITIAL__ && window.__KWV_MAINTENANCE_INITIAL__.checked) {
         setMaintenanceGate(window.__KWV_MAINTENANCE_INITIAL__.isActive, window.__KWV_MAINTENANCE_INITIAL__.message);
         document.documentElement.classList.remove("kwv-maintenance-checking");
