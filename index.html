@@ -26,8 +26,7 @@
                 finish({ isActive: false });
             }, 1800);
         })();
-    </script>
-    <link rel="stylesheet" href="styles.css?v=20260803-maintenance-discord">
+    </script>    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="custom-cursor-page">
     <div class="motion-bg" aria-hidden="true">
@@ -53,247 +52,139 @@
             <span>Keshav With Velo</span>
         </a>
         <nav>
-            <a href="#preview">Extension</a>
             <a href="#workflow">Features</a>
             <a href="#tutorial">Tutorial</a>
             <a href="#pricing">Pricing</a>
-            <a href="#support">Support</a>
+            <a href="contact.html">Contact Us</a>
         </nav>
-        <button class="buy-btn" data-open-payment="India Launch">Buy Extension</button>
+        <div class="support-actions header-support-actions" aria-label="Support links">
+            <a class="support-icon support-mail" href="https://mail.google.com/mail/?view=cm&fs=1&to=keshavwithvelo@gmail.com" target="_blank" rel="noopener" aria-label="Email support" title="Email support">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m4 7 8 6 8-6"/></svg>
+            </a>
+            <a class="support-icon support-discord" href="https://discord.gg/Yx5VaqPtFq" target="_blank" rel="noopener" aria-label="Join Discord" title="Join Discord">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 8.1c2.5-.8 5.1-.8 7.6 0"/><path d="M8.4 16.4c2.4.8 4.8.8 7.2 0"/><path d="M7.6 5.6C5.7 6.3 4.6 8.9 4.2 16c1.4 1.5 3.3 2.6 5.3 3l.9-1.6"/><path d="M16.4 5.6c1.9.7 3 3.3 3.4 10.4-1.4 1.5-3.3 2.6-5.3 3l-.9-1.6"/><path d="M9.2 12.4h.1"/><path d="M14.7 12.4h.1"/></svg>
+            </a>
+            <a class="support-icon support-telegram" href="https://t.me/keshavwithvelochat" target="_blank" rel="noopener" aria-label="Telegram chat zone" title="Telegram chat zone">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4.6 3.8 11.2c-1 .4-1 1.8.1 2.1l4.3 1.3 1.6 5c.3 1 1.7 1.1 2.2.2l2.2-3.3 4.5 3.3c.8.6 1.9.1 2-.9L23 5.9c.2-.9-.9-1.6-2-1.3Z"/><path d="m8.2 14.6 9.5-6.1-7.7 8.2"/></svg>
+            </a>
+            <a class="support-icon support-instagram" href="https://www.instagram.com/keshav._editz/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="4.2" width="15.6" height="15.6" rx="4.4"/><circle cx="12" cy="12" r="3.4"/><circle cx="16.6" cy="7.4" r="1"/></svg>
+            </a>
+            <a class="support-icon support-youtube" href="https://www.youtube.com/@Keshavwithvelo" target="_blank" rel="noopener" aria-label="YouTube channel" title="YouTube channel">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 8.1s-.2-1.6-.8-2.3c-.8-.8-1.7-.8-2.1-.9C16.2 4.7 12 4.7 12 4.7h0s-4.2 0-7.1.2c-.4.1-1.3.1-2.1.9C2.2 6.5 2 8.1 2 8.1s-.2 1.9-.2 3.9v1.8c0 1.9.2 3.9.2 3.9s.2 1.6.8 2.3c.8.8 1.9.8 2.4.9 1.7.2 6.8.2 6.8.2s4.2 0 7.1-.2c.4-.1 1.3-.1 2.1-.9.6-.7.8-2.3.8-2.3s.2-1.9.2-3.9V12c0-1.9-.2-3.9-.2-3.9Z"/><path d="m10 15.6 5.4-3.1L10 9.4v6.2Z"/></svg>
+            </a>
+        </div>
+        <button class="login-btn" id="loginOpen" type="button">
+            <span class="login-btn-dot" aria-hidden="true"></span>
+            <span id="loginButtonText">Login</span>
+        </button>
+        <button class="buy-btn" data-open-payment="India Launch">Buy Now ₹99 / $2</button>
         <div class="offer-ticker" id="offerTicker" aria-live="polite" aria-hidden="true">
             <div class="offer-ticker-track" id="offerTickerTrack"></div>
         </div>
     </header>
 
     <main id="top">
-        <section class="hero">
-            <div class="hero-copy">
-                <p class="eyebrow">After Effects creator cockpit</p>
-                <h1>Keshav With Velo</h1>
-                <p>Keshav With Velo 300x Workflow Edition turns repetitive After Effects work into fast panel actions. Captions, overlays, SFX, text tools, browser research, project saving, BG remove, audio cleanup and preset packs sit in one focused command center. <span class="hero-highlight">No more hunting through menus when the edit is moving fast.</span></p>
-                <div class="hero-actions">
-                    <button class="primary-btn" data-scroll="#preview">Check Extension</button>
-                    <button class="ghost-btn" data-scroll="#workflow">See Full Pack</button>
-                </div>
-                <div class="speed-strip">
-                    <span>300x workflow feel</span>
-                    <span>Less menu hunting</span>
-                    <span>More editing speed</span>
-                </div>
-            </div>
-            <aside class="hero-stage" aria-label="Keshav With Velo animated product summary">
-                <div class="stage-orbit" aria-hidden="true">
-                    <span></span><span></span><span></span><span></span>
-                </div>
-                <div class="hero-console">
-                    <div class="console-topline">
-                        <span class="live-dot"></span>
-                        <span>Internal preview build</span>
-                    </div>
-                    <div class="console-brand">
-                        <img src="assets/profile.png" alt="Keshav Editz">
-                        <div>
-                            <strong>Keshav With Velo</strong>
-                            <p>Workflow Edition</p>
-                        </div>
-                    </div>
-                    <div class="console-grid">
-                        <div><span data-count-to="80">0</span><p>Preset actions</p></div>
-                        <div><span data-count-to="100">0</span><p>Overlays</p></div>
-                        <div><span data-count-to="100">0</span><p>SFX assets</p></div>
-                        <div><span>1 panel</span><p>Creator hub</p></div>
-                    </div>
-                    <div class="console-command">
-                        <span>Ready for demo</span>
-                        <strong>AE speed tools, captions, AEP import, Text Exploder</strong>
-                    </div>
-                </div>
-                <div class="stage-chip-row" aria-label="Featured tools">
-                    <span>Auto Caption</span>
-                    <span>Text Exploder</span>
-                    <span>AEP Import</span>
-                </div>
-            </aside>
-        </section>
-
-        <section class="proof-strip" aria-label="Workflow proof points">
-            <article>
-                <span>01</span>
-                <strong>Edit faster</strong>
-                <p>Common AE actions are grouped as one-click buttons.</p>
-            </article>
-            <article>
-                <span>02</span>
-                <strong>Create inside panel</strong>
-                <p>Captions, text, solids, colors, browser and tools stay together.</p>
-            </article>
-            <article>
-                <span>03</span>
-                <strong>Reuse everything</strong>
-                <p>Comps, presets, packs and project setups are ready to repeat.</p>
-            </article>
-        </section>
-
-        <section class="extension-section" id="preview">
-            <div class="section-head">
-                <div>
-                    <p class="eyebrow">Live product</p>
-                    <h2>Extension Panel</h2>
-                </div>
-                <div class="frame-actions">
-                    <button id="fitBtn">Fit</button>
-                    <button id="wideBtn">Wide</button>
-                    <button id="tallBtn">Tall</button>
-                </div>
-            </div>
-
-            <div class="extension-preview-stage">
-                <aside class="ae-support-card" aria-label="Supported After Effects versions">
-                    <p class="eyebrow">Compatibility</p>
-                    <h3>After Effects Versions Supported</h3>
-                    <div class="ae-version-list" aria-label="After Effects 2023, 2024, 2025, and 2026 supported">
-                        <span>2023</span>
-                        <span>2024</span>
-                        <span>2025</span>
-                        <span>2026</span>
-                    </div>
-                    <p>Works with Adobe After Effects 2023, 2024, 2025, and 2026.</p>
-                </aside>
-
-                <div class="extension-frame-shell" id="frameShell">
-                    <iframe
-                        class="real-extension-frame"
-                        id="extensionFrame"
-                        src="extension/index.html"
-                        title="Keshav With Velo real extension preview">
-                    </iframe>
-                </div>
-
-                <div class="extension-stage-spacer" aria-hidden="true"></div>
-            </div>
-        </section>
-
-        <section class="workflow-lane" aria-label="Keshav With Velo workflow stages">
-            <div class="section-head">
-                <div>
-                    <p class="eyebrow">Built around real edit pressure</p>
-                    <h2>From rough cut to final punch</h2>
-                </div>
-                <p class="section-copy">The website preview is open so reviewers can test the panel flow without activation. The paid extension keeps the full protected build for actual users.</p>
-            </div>
-            <div class="lane-grid">
-                <article>
-                    <span>Import</span>
-                    <h3>Bring assets in cleanly</h3>
-                    <p>Higher-version AEP support, project saver, MP4 to MP3 and creator browser reduce setup friction.</p>
-                </article>
-                <article>
-                    <span>Build</span>
-                    <h3>Make edits quickly</h3>
-                    <p>Alignment, anchors, layer creation, text exploder, gradients, solids and reusable comp actions stay nearby.</p>
-                </article>
-                <article>
-                    <span>Polish</span>
-                    <h3>Add creator finish</h3>
-                    <p>Captions, overlays, SFX, CC looks, shakes, BG removal, noise removal and vocal removal complete the edit.</p>
-                </article>
-            </div>
-        </section>
-
-        <section class="command-wall" aria-label="Moving command wall">
-            <div class="command-copy">
-                <p class="eyebrow">Looks like a tool, feels like speed</p>
-                <h2>One panel that keeps the editor in flow</h2>
-                <p>Internal demo me sabse important cheez clarity hoti hai. Is page ka motion product ke benefit ko show karta hai: fewer clicks, faster decisions, and a panel that feels alive while still showing the real extension.</p>
-            </div>
-            <div class="command-stack" aria-hidden="true">
-                <div class="command-card"><span>01</span><strong>Caption</strong><p>Hinglish + multilingual modes</p></div>
-                <div class="command-card"><span>02</span><strong>Explode</strong><p>Fast text breakup workflows</p></div>
-                <div class="command-card"><span>03</span><strong>Import</strong><p>Higher-version AEP support</p></div>
-                <div class="command-card"><span>04</span><strong>Polish</strong><p>Overlays, SFX, CC, shakes</p></div>
-            </div>
-        </section>
-
         <section class="panel-showcase" id="workflow">
             <div class="orbit-head">
-                <p class="eyebrow">Everything included</p>
-                <h2>Full creator workflow pack</h2>
-                <p>Some tools may not appear in the website preview, but after purchase the extension ZIP includes all listed features, presets, overlays, SFX, and workflow packs.</p>
+                <p class="eyebrow">New 400x update</p>
+                <h2>Keshav With Velo 400x workflow pack</h2>
+                <p>The website preview now shows the updated 400x extension UI with a sharper creator panel, higher-quality workflow controls, captions, presets, overlays, SFX, browser tools, and faster edit utilities.</p>
             </div>
 
             <div class="feature-orbit" aria-label="Included extension features orbit">
+                <div class="version-live-badge" aria-label="400x new update available">
+                    <span>400x New Update Available</span>
+                    <span class="version-live-dot" aria-hidden="true"></span>
+                </div>
                 <div class="orbit-rings" aria-hidden="true"></div>
 
                 <div class="orbit-center" aria-label="Extension preview in center">
-                    <p class="eyebrow">Extension preview</p>
+                    <p class="eyebrow">400x extension preview</p>
                     <div class="floating-panel-shell">
                         <iframe
                             class="real-extension-frame"
-                            src="extension/index.html"
+                            src="extension/index.html?v=20260929-no-yt-logo-v3"
                             title="Keshav With Velo moving extension preview">
                         </iframe>
                     </div>
                 </div>
 
                 <article class="orbit-card" style="--i:0">
-                    <span>Chrome + YouTube</span>
-                    <p>Browser tools for search, references and faster creator research.</p>
+                    <span>400x Hyper Quality</span>
+                    <p>Updated V400x interface with sharper controls, cleaner layout, and a higher-quality creator workflow feel.</p>
                 </article>
                 <article class="orbit-card" style="--i:1">
-                    <span>Auto Caption</span>
-                    <p>Special Hinglish support plus 10+ more language modes.</p>
+                    <span>Quality Enhancer</span>
+                    <p>Enhance footage quality for sharper creator previews and cleaner final edits.</p>
                 </article>
                 <article class="orbit-card" style="--i:2">
+                    <span>Carousel Pro Animations</span>
+                    <p>Create smooth carousel-style motion setups for reels, promos and edit packs.</p>
+                </article>
+                <article class="orbit-card" style="--i:3">
+                    <span>New Graphs</span>
+                    <p>Fresh graph controls for cleaner motion timing and better animation flow.</p>
+                </article>
+                <article class="orbit-card" style="--i:4">
+                    <span>Video Downloader</span>
+                    <p>Download reference videos directly inside the workflow for faster editing.</p>
+                </article>
+                <article class="orbit-card" style="--i:5">
+                    <span>Caption Engine</span>
+                    <p>Caption workflow stays inside the updated panel with creator-friendly language and style controls.</p>
+                </article>
+                <article class="orbit-card" style="--i:6">
                     <span>Noise Remover</span>
                     <p>Clean rough audio files before editing and exporting.</p>
                 </article>
-                <article class="orbit-card" style="--i:3">
+                <article class="orbit-card" style="--i:7">
                     <span>Vocal Remover</span>
                     <p>Separate vocals for cleaner reels, music edits and remixes.</p>
                 </article>
-                <article class="orbit-card" style="--i:4">
+                <article class="orbit-card" style="--i:8">
                     <span>Auto Clip Cut</span>
                     <p>Silence parts auto cut feature for faster talking-head edits.</p>
                 </article>
-                <article class="orbit-card" style="--i:5">
+                <article class="orbit-card" style="--i:9">
                     <span>MP4 to MP3</span>
                     <p>Convert creator files into MP3 directly from the workflow.</p>
                 </article>
-                <article class="orbit-card" style="--i:6">
+                <article class="orbit-card" style="--i:10">
                     <span>Preset Packs</span>
                     <p>20 text, 20 effects, 20 shakes and 20 CC presets included.</p>
                 </article>
-                <article class="orbit-card" style="--i:7">
+                <article class="orbit-card" style="--i:11">
                     <span>Influencer CC</span>
                     <p>Flow edits, car edits, CC looks and shake style presets.</p>
                 </article>
-                <article class="orbit-card" style="--i:8">
+                <article class="orbit-card" style="--i:12">
                     <span>100+ Overlays</span>
                     <p>Ready overlay pack for reels, edits, memes and motion graphics.</p>
                 </article>
-                <article class="orbit-card" style="--i:9">
+                <article class="orbit-card" style="--i:13">
                     <span>100+ SFX</span>
                     <p>Sound effects included for punchy cuts and transitions.</p>
                 </article>
-                <article class="orbit-card" style="--i:10">
+                <article class="orbit-card" style="--i:14">
                     <span>Comp Saver</span>
                     <p>Save and reuse repeated composition workflows.</p>
                 </article>
-                <article class="orbit-card" style="--i:11">
+                <article class="orbit-card" style="--i:15">
                     <span>AE Project Saver</span>
                     <p>Keep useful project setups ready for future edits.</p>
                 </article>
-                <article class="orbit-card" style="--i:12">
+                <article class="orbit-card" style="--i:16">
                     <span>Effects Toggle</span>
                     <p>Disable and enable effects quickly when previewing heavy comps.</p>
                 </article>
-                <article class="orbit-card" style="--i:13">
+                <article class="orbit-card" style="--i:17">
                     <span>Notepad + BG Remove</span>
                     <p>Notes and background removal tools inside the creator panel.</p>
                 </article>
-                <article class="orbit-card" style="--i:14">
+                <article class="orbit-card" style="--i:18">
                     <span>Text Exploder + AEP Import</span>
-                    <p>Text exploder plus higher-version AEP support, so no more project file conversion hassle.</p>
+                    <p>Text exploder plus higher-version AEP support, useful for faster project conversion and cleaner edit setup.</p>
                 </article>
             </div>
         </section>
@@ -324,8 +215,8 @@
                 </div>
                 <div class="tutorial-copy">
                     <span>01</span>
-                    <h3>Install, activate, edit</h3>
-                    <p>Add a short walkthrough covering ZIP setup, license activation, opening the panel, and using the main creator tools.</p>
+                    <h3>How to install</h3>
+                    <p>Download the ZIP, extract it, copy the extension folder to Adobe CEP extensions, restart After Effects, then open Keshav With Velo from Window &gt; Extensions.</p>
                     <a class="tutorial-watch" id="tutorialWatchLink" href="#" target="_blank" rel="noopener" aria-disabled="true">Watch full tutorial click here</a>
                 </div>
             </div>
@@ -341,15 +232,15 @@
             <div class="price-grid">
                 <article>
                     <p class="plan">India Launch</p>
-                    <h3 data-plan-price="India Launch">Rs 99</h3>
+                    <h3 data-plan-price="India Launch">₹99</h3>
                     <p>Full Keshav With Velo extension access for Indian editors. One license activates on one PC only.</p>
-                    <button class="pricing-buy" data-open-payment="India Launch"><span data-plan-button="India Launch">Buy for Rs 99</span><i aria-hidden="true"></i></button>
+                    <button class="pricing-buy" data-open-payment="India Launch"><span data-plan-button="India Launch">Buy for ₹99</span><i aria-hidden="true"></i></button>
                 </article>
                 <article>
                     <p class="plan">International</p>
-                    <h3 data-plan-price="International">$1</h3>
+                    <h3 data-plan-price="International">$2</h3>
                     <p>Simple global pricing for editors outside India. One license activates on one PC only.</p>
-                    <button class="pricing-buy" data-open-payment="International"><span data-plan-button="International">Buy for $1</span><i aria-hidden="true"></i></button>
+                    <button class="pricing-buy" data-open-payment="International"><span data-plan-button="International">Buy for $2</span><i aria-hidden="true"></i></button>
                 </article>
             </div>
             <div class="terms-panel" id="terms">
@@ -373,23 +264,6 @@
                 <h2>Need help after purchase?</h2>
                 <p>For license, download, installation, or extension support, contact us directly by email.</p>
             </div>
-            <div class="support-actions">
-                <a class="support-icon support-mail" href="https://mail.google.com/mail/?view=cm&fs=1&to=keshavv.aep@gmail.com" target="_blank" rel="noopener" aria-label="Email support" title="Email support">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m4 7 8 6 8-6"/></svg>
-                </a>
-                <a class="support-icon support-discord" href="https://discord.gg/Yx5VaqPtFq" target="_blank" rel="noopener" aria-label="Join Discord" title="Join Discord">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 8.1c2.5-.8 5.1-.8 7.6 0"/><path d="M8.4 16.4c2.4.8 4.8.8 7.2 0"/><path d="M7.6 5.6C5.7 6.3 4.6 8.9 4.2 16c1.4 1.5 3.3 2.6 5.3 3l.9-1.6"/><path d="M16.4 5.6c1.9.7 3 3.3 3.4 10.4-1.4 1.5-3.3 2.6-5.3 3l-.9-1.6"/><path d="M9.2 12.4h.1"/><path d="M14.7 12.4h.1"/></svg>
-                </a>
-                <a class="support-icon support-telegram" href="https://t.me/keshavwithvelochat" target="_blank" rel="noopener" aria-label="Telegram chat zone" title="Telegram chat zone">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4.6 3.8 11.2c-1 .4-1 1.8.1 2.1l4.3 1.3 1.6 5c.3 1 1.7 1.1 2.2.2l2.2-3.3 4.5 3.3c.8.6 1.9.1 2-.9L23 5.9c.2-.9-.9-1.6-2-1.3Z"/><path d="m8.2 14.6 9.5-6.1-7.7 8.2"/></svg>
-                </a>
-                <a class="support-icon support-material" href="https://www.instagram.com/keshav._editz/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="4.2" width="15.6" height="15.6" rx="4.4"/><circle cx="12" cy="12" r="3.4"/><circle cx="16.6" cy="7.4" r="1"/></svg>
-                </a>
-                <a class="support-icon support-youtube" href="https://www.youtube.com/@Keshavwithvelo" target="_blank" rel="noopener" aria-label="YouTube channel" title="YouTube channel">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 8.1s-.2-1.6-.8-2.3c-.8-.8-1.7-.8-2.1-.9C16.2 4.7 12 4.7 12 4.7h0s-4.2 0-7.1.2c-.4.1-1.3.1-2.1.9C2.2 6.5 2 8.1 2 8.1s-.2 1.9-.2 3.9v1.8c0 1.9.2 3.9.2 3.9s.2 1.6.8 2.3c.8.8 1.9.8 2.4.9 1.7.2 6.8.2 6.8.2s4.2 0 7.1-.2c.4-.1 1.3-.1 2.1-.9.6-.7.8-2.3.8-2.3s.2-1.9.2-3.9V12c0-1.9-.2-3.9-.2-3.9Z"/><path d="m10 15.6 5.4-3.1L10 9.4v6.2Z"/></svg>
-                </a>
-            </div>
         </section>
 
     </main>
@@ -399,20 +273,42 @@
             <span>Keshav With Velo</span>
             <small>Digital After Effects extension by Keshav Editz</small>
         </div>
-        <div class="footer-links" aria-label="Business policy links">
-            <a href="terms.html">Terms</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refund.html">Cancellation & Refunds</a>
-            <a href="shipping.html">Shipping Policy</a>
-            <a href="contact.html">Contact Us</a>
+        <div class="footer-actions">
+            <div class="footer-links" aria-label="Business policy links">
+                <a href="terms.html">Terms</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Cancellation & Refunds</a>
+                <a href="shipping.html">Shipping Policy</a>
+                <a href="contact.html">Contact Us</a>
+            </div>
+            <button data-scroll="#top">Back to top</button>
         </div>
-        <button data-scroll="#top">Back to top</button>
     </footer>
 
     <div class="modal" id="paymentModal" aria-hidden="true">
         <div class="modal-card">
             <button class="modal-close" id="modalClose" aria-label="Close"><span>x</span></button>
-            <div class="checkout-shell">
+            <section class="checkout-choice" id="checkoutChoice" aria-label="Choose checkout region">
+                <p class="eyebrow">Choose payment method</p>
+                <h2>Where are you buying from?</h2>
+                <p>Select India checkout for INR payment or International checkout for USD payment.</p>
+                <div class="checkout-plan-switch checkout-choice-grid" aria-label="Choose payment method">
+                    <button class="checkout-plan-option active" type="button" data-select-plan="India Launch">
+                        <span>India</span>
+                        <strong>₹99</strong>
+                        <em>Pay in INR</em>
+                        <b>Click here to continue</b>
+                    </button>
+                    <button class="checkout-plan-option" type="button" data-select-plan="International">
+                        <span>International</span>
+                        <strong>$2</strong>
+                        <em>Pay in USD</em>
+                        <b>Click here to continue</b>
+                    </button>
+                </div>
+            </section>
+
+            <div class="checkout-shell" id="checkoutDetails" hidden>
                 <aside class="checkout-summary">
                     <p class="eyebrow">Secure checkout</p>
                     <h2 id="modalTitle">India Launch checkout</h2>
@@ -420,12 +316,12 @@
                         <img src="assets/profile.png" alt="Keshav With Velo">
                         <div>
                             <strong>Keshav With Velo</strong>
-                            <span>300x Workflow Edition</span>
+                            <span>400x Workflow Edition</span>
                         </div>
                     </div>
                     <div class="checkout-price">
                         <span id="checkoutPlanLabel">India Launch</span>
-                        <strong id="checkoutPriceLabel">Rs 99</strong>
+                        <strong id="checkoutPriceLabel">₹99</strong>
                         <small class="checkout-discount hidden" id="checkoutDiscountLine"></small>
                         <p>Instant license delivery after payment confirmation.</p>
                     </div>
@@ -457,7 +353,10 @@
                     </label>
                     <label class="checkout-terms">
                         <input id="checkoutTerms" name="terms" type="checkbox" required>
-                        <span>I agree that this is a digital product with no refund after successful payment, and the license activates on one PC only.</span>
+                        <span>
+                            <strong>I accept the digital product terms.</strong>
+                            <small>No refund after successful payment. One license activates on one PC only.</small>
+                        </span>
                     </label>
                     <button class="primary-btn checkout-submit" type="submit">
                         <span id="checkoutButtonText">Checkout</span>
@@ -469,24 +368,87 @@
         </div>
     </div>
 
-    <!--
-    <div id="kwvMaintenanceGate" role="dialog" aria-modal="true" aria-labelledby="kwvMaintenanceTitle">
-        <div class="kwv-maintenance-card">
-            <div class="kwv-maintenance-mark">KV</div>
-            <p class="kwv-maintenance-eyebrow">Scheduled maintenance</p>
-            <h1 id="kwvMaintenanceTitle">We’ll be back shortly.</h1>
-            <p>Website under maintenance. We are currently facing issues with our payment gateway and backend. After this is solved, we will update the website.</p>
-            <div class="kwv-maintenance-actions">
-                <a href="https://discord.gg/Yx5VaqPtFq" target="_blank" rel="noopener">Join Discord</a>
-                <a href="mailto:keshavv.aep@gmail.com">Contact support</a>
+    <div class="modal login-modal" id="loginModal" aria-hidden="true">
+        <div class="modal-card login-modal-card">
+            <button class="modal-close" id="loginClose" aria-label="Close login"><span>x</span></button>
+            <div class="login-shell">
+                <aside class="login-hero">
+                    <p class="eyebrow">Customer access</p>
+                    <h2>Login to your 400x account</h2>
+                    <p>Only purchased users can enter. Use the activation email from checkout and the last 4 characters of your license key.</p>
+                    <div class="login-product">
+                        <img src="assets/profile.png" alt="Keshav With Velo">
+                        <div>
+                            <strong>Keshav With Velo</strong>
+                            <span>400x Workflow Edition</span>
+                        </div>
+                    </div>
+                    <div class="login-trust-row" aria-label="Login requirements">
+                        <span>Purchased email</span>
+                        <span>Last 4 key check</span>
+                        <span>Secure access</span>
+                    </div>
+                </aside>
+
+                <section class="login-panel">
+                    <form class="login-form" id="customerLoginForm">
+                        <label class="checkout-field">
+                            <span>Activation email</span>
+                            <input id="loginEmail" name="email" type="email" autocomplete="email" maxlength="254" placeholder="your@email.com" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>License key last 4</span>
+                            <span class="license-last4-input-wrap">
+                                <span class="license-last4-prefix" aria-hidden="true">XXXX - XXXX - XXXX -</span>
+                                <input id="loginKeyLast4" name="keyLast4" type="text" inputmode="text" autocomplete="one-time-code" minlength="4" maxlength="4" placeholder="AB12" required>
+                            </span>
+                        </label>
+                        <button class="primary-btn checkout-submit login-submit" type="submit">
+                            <span id="loginSubmitText">Verify login</span>
+                            <span class="checkout-arrow" aria-hidden="true"></span>
+                        </button>
+                        <p class="checkout-note" id="loginStatus">Enter the same email used during purchase.</p>
+                    </form>
+
+                    <div class="login-dashboard" id="loginDashboard" hidden>
+                        <p class="eyebrow">Access unlocked</p>
+                        <h3>View Profile</h3>
+                        <p id="loginWelcome">Your purchase is verified.</p>
+                        <div class="login-account-grid">
+                            <span>
+                                <small>Email</small>
+                                <strong id="loginAccountEmail">-</strong>
+                            </span>
+                            <span>
+                                <small>License</small>
+                                <strong id="loginAccountHint">****</strong>
+                            </span>
+                            <span>
+                                <small>Status</small>
+                                <strong id="loginAccountStatus">Verified</strong>
+                            </span>
+                        </div>
+                        <div class="profile-update-card">
+                            <span>Latest extension update</span>
+                            <strong>400x workflow ZIP</strong>
+                            <p>Download the latest verified 400x extension build for your account.</p>
+                            <button class="primary-btn checkout-submit" type="button" id="customerDownloadUpdate">
+                                <span id="customerDownloadText">Download new version</span>
+                                <span class="checkout-arrow" aria-hidden="true"></span>
+                            </button>
+                            <p class="checkout-note" id="customerDownloadStatus">Available only after purchase verification.</p>
+                        </div>
+                        <div class="login-dashboard-actions">
+                            <a class="primary-btn login-support-link" href="contact.html">Get support</a>
+                            <button class="ghost-login-btn" type="button" id="customerLogout">Logout</button>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
-    <style>
-        #kwvMaintenanceGate{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 12%,rgba(255,0,0,.18),transparent 36%),#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;text-align:center}.kwv-maintenance-card{width:min(440px,100%);padding:42px 30px;border:1px solid rgba(255,255,255,.13);border-radius:16px;background:linear-gradient(180deg,#151515,#080808);box-shadow:0 30px 80px rgba(0,0,0,.58)}.kwv-maintenance-mark{width:48px;height:48px;margin:0 auto 18px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#ff2929,#700000);font-weight:900}.kwv-maintenance-eyebrow{margin:0 0 10px;color:#ff7272;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}.kwv-maintenance-card h1{margin:0 0 12px;font-size:28px}.kwv-maintenance-card p:not(.kwv-maintenance-eyebrow){margin:0;color:#aaa;line-height:1.6}.kwv-maintenance-card a{display:inline-block;margin-top:24px;padding:12px 17px;border:1px solid #ff3434;border-radius:8px;background:#1a0707;color:#fff;font-weight:800;text-decoration:none}
-    </style>
-    -->
+
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script src="script.js?v=20260803-maintenance-discord"></script>
+    <script src="script.js"></script>
 </body>
 </html>

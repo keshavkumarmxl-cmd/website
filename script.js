@@ -1,4 +1,7 @@
 const API_BASE_URL = window.LICENSING_API_BASE_URL || "https://api.keshavwithvelo.in";
+const REDUCE_LIVE_MOTION = true;
+const ENABLE_CURSOR_MOTION = true;
+const ENABLE_SLOW_ORBIT = true;
 const cursor = document.getElementById("cursorEcho");
 let lastEcho = 0;
 let lastFrameEcho = 0;
@@ -10,7 +13,6 @@ const pointerCurrent = {
     x: pointerTarget.x,
     y: pointerTarget.y
 };
-
 function setMaintenanceGate(isActive, message) {
     const existing = document.getElementById("kwvMaintenanceGate");
     if (!isActive) {
@@ -37,7 +39,7 @@ function setMaintenanceGate(isActive, message) {
             <p>${safeMessage}</p>
             <div class="kwv-maintenance-actions">
                 <a href="https://discord.gg/Yx5VaqPtFq" target="_blank" rel="noopener">Join Discord</a>
-                <a href="mailto:keshavv.aep@gmail.com">Contact support</a>
+                <a href="mailto:keshavwithvelo@gmail.com">Contact support</a>
             </div>
         </div>
     `;
@@ -83,6 +85,11 @@ window.addEventListener("scroll", updateScrollMotion, { passive: true });
 window.addEventListener("resize", updateScrollMotion);
 
 function updateShowcaseMotion(clientX, clientY) {
+    if (REDUCE_LIVE_MOTION) {
+        document.body.style.setProperty("--showcase-shift", "0");
+        return;
+    }
+
     const showcase = document.querySelector(".panel-showcase");
     if (!showcase) return;
 
@@ -103,8 +110,10 @@ function updateShowcaseMotion(clientX, clientY) {
 }
 
 function addEchoDot(clientX, clientY, targetDocument = document) {
+    if (!ENABLE_CURSOR_MOTION) return;
+
     const now = performance.now();
-    if (now - lastEcho > 24) {
+    if (now - lastEcho > 52) {
         lastEcho = now;
         const dot = targetDocument.createElement("span");
         dot.className = "echo-dot";
@@ -116,6 +125,8 @@ function addEchoDot(clientX, clientY, targetDocument = document) {
 }
 
 function addFrameEchoDot(frameDocument, clientX, clientY) {
+    if (REDUCE_LIVE_MOTION) return;
+
     const now = performance.now();
     if (now - lastFrameEcho <= 24) return;
 
@@ -190,6 +201,47 @@ function addFrameEchoDot(frameDocument, clientX, clientY) {
 }
 
 function ensureFrameCursor(frameDocument) {
+    if (!frameDocument.getElementById("frameCursorStyle")) {
+        const style = frameDocument.createElement("style");
+        style.id = "frameCursorStyle";
+        style.textContent = `
+            #frameCursorEcho {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 18px;
+                height: 18px;
+                border: 1px solid rgba(255,255,255,0.7);
+                border-radius: 50%;
+                background:
+                    radial-gradient(circle, rgba(255,255,255,0.95) 0 12%, rgba(255,21,21,0.98) 13% 24%, transparent 25%),
+                    radial-gradient(circle, rgba(255,21,21,0.18), transparent 68%);
+                box-shadow: 0 0 12px rgba(255,21,21,0.82), 0 0 24px rgba(255,21,21,0.34);
+                pointer-events: none;
+                transform: translate3d(-50%, -50%, 0);
+                opacity: 0;
+                z-index: 2147483647;
+                mix-blend-mode: screen;
+            }
+            #frameCursorEcho::before {
+                content: "";
+                position: absolute;
+                inset: -5px;
+                border: 1px solid rgba(255,21,21,0.26);
+                border-radius: 50%;
+            }
+            #frameCursorEcho::after {
+                content: "";
+                position: absolute;
+                inset: 6px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.86);
+                box-shadow: 0 0 10px rgba(255,21,21,0.9);
+            }
+        `;
+        frameDocument.head.appendChild(style);
+    }
+
     let frameCursor = frameDocument.getElementById("frameCursorEcho");
     if (!frameCursor) {
         frameCursor = frameDocument.createElement("div");
@@ -202,17 +254,20 @@ function ensureFrameCursor(frameDocument) {
 function handlePointerMove(clientX, clientY, isInteractive = false, shouldAddEcho = true) {
     pointerTarget.x = clientX;
     pointerTarget.y = clientY;
-    cursor.style.opacity = "1";
-    cursor.classList.toggle("active", isInteractive);
+    if (cursor && ENABLE_CURSOR_MOTION) {
+        cursor.style.opacity = "1";
+        cursor.classList.toggle("active", isInteractive);
+    }
     document.body.style.setProperty("--mouse-x", `${clientX}px`);
     document.body.style.setProperty("--mouse-y", `${clientY}px`);
-    document.body.style.setProperty("--mouse-drift-x", `${((window.innerWidth / 2 - clientX) / 36).toFixed(2)}px`);
-    document.body.style.setProperty("--mouse-drift-y", `${((window.innerHeight / 2 - clientY) / 36).toFixed(2)}px`);
+    document.body.style.setProperty("--mouse-drift-x", REDUCE_LIVE_MOTION ? "0px" : `${((window.innerWidth / 2 - clientX) / 36).toFixed(2)}px`);
+    document.body.style.setProperty("--mouse-drift-y", REDUCE_LIVE_MOTION ? "0px" : `${((window.innerHeight / 2 - clientY) / 36).toFixed(2)}px`);
     updateShowcaseMotion(clientX, clientY);
     if (shouldAddEcho) addEchoDot(clientX, clientY);
 }
 
 function hideParentFrameCursor() {
+    if (!cursor) return;
     cursor.classList.add("in-frame");
     cursor.classList.remove("active");
     cursor.style.opacity = "0";
@@ -220,6 +275,8 @@ function hideParentFrameCursor() {
 }
 
 function animateCursor() {
+    if (!cursor || !ENABLE_CURSOR_MOTION) return;
+
     pointerCurrent.x += (pointerTarget.x - pointerCurrent.x) * 0.18;
     pointerCurrent.y += (pointerTarget.y - pointerCurrent.y) * 0.18;
     cursor.style.transform = `translate3d(${pointerCurrent.x}px, ${pointerCurrent.y}px, 0) translate(-50%, -50%)`;
@@ -391,10 +448,10 @@ function animateFeatureOrbit() {
                 card.style.transform = "";
             });
         } else {
-            const radiusX = Math.min(rect.width * 0.43, 540);
-            const radiusY = Math.min(rect.height * 0.43, 520);
-            const time = performance.now() / 1000;
-            const speed = 0.07;
+            const radiusX = Math.min(rect.width * 0.47, 620);
+            const radiusY = Math.min(rect.height * 0.45, 600);
+            const time = ENABLE_SLOW_ORBIT ? performance.now() / 1000 : 0;
+            const speed = 0.012;
 
             cards.forEach((card, index) => {
                 const angle = (index / cards.length) * Math.PI * 2 + time * speed;
@@ -409,13 +466,15 @@ function animateFeatureOrbit() {
         }
     }
 
-    requestAnimationFrame(animateFeatureOrbit);
+    if (ENABLE_SLOW_ORBIT && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        requestAnimationFrame(animateFeatureOrbit);
+    }
 }
 
 animateFeatureOrbit();
 
 document.addEventListener("pointermove", (event) => {
-    cursor.classList.remove("in-frame");
+    if (cursor) cursor.classList.remove("in-frame");
     const frameArea = event.target.closest(".extension-frame-shell, .floating-panel-shell, .real-extension-frame");
     handlePointerMove(
         event.clientX,
@@ -426,7 +485,7 @@ document.addEventListener("pointermove", (event) => {
 });
 
 document.addEventListener("pointerleave", () => {
-    cursor.style.opacity = "0";
+    if (cursor) cursor.style.opacity = "0";
     document.body.style.setProperty("--showcase-shift", "0");
 });
 
@@ -446,6 +505,7 @@ function wireFramePointerEcho(frame) {
             frameDocument.addEventListener("pointermove", (event) => {
                 const rect = frame.getBoundingClientRect();
                 handlePointerMove(rect.left + event.clientX, rect.top + event.clientY, true, false);
+                if (!cursor) return;
                 cursor.classList.add("in-frame");
                 const frameCursor = ensureFrameCursor(frameDocument);
                 frameCursor.style.opacity = "1";
@@ -486,6 +546,8 @@ document.querySelectorAll(".extension-frame-shell, .floating-panel-shell").forEa
 
 document.querySelectorAll("button, .primary-btn, .ghost-btn").forEach((control) => {
     control.addEventListener("pointerdown", (event) => {
+        if (REDUCE_LIVE_MOTION) return;
+
         const rect = control.getBoundingClientRect();
         const ripple = document.createElement("span");
         ripple.className = "button-ripple";
@@ -512,6 +574,7 @@ const frameButtons = {
 
 Object.entries(frameButtons).forEach(([id, mode]) => {
     const button = document.getElementById(id);
+    if (!button || !shell) return;
     button.addEventListener("click", () => {
         shell.classList.remove("wide", "tall");
         if (mode) shell.classList.add(mode);
@@ -520,23 +583,44 @@ Object.entries(frameButtons).forEach(([id, mode]) => {
     });
 });
 
-document.getElementById("fitBtn").classList.add("active");
+document.getElementById("fitBtn")?.classList.add("active");
 
 const modal = document.getElementById("paymentModal");
 const modalTitle = document.getElementById("modalTitle");
+const checkoutChoice = document.getElementById("checkoutChoice");
+const checkoutDetails = document.getElementById("checkoutDetails");
 const checkoutForm = document.getElementById("checkoutForm");
 const checkoutStatus = document.getElementById("checkoutStatus");
 const checkoutPlanLabel = document.getElementById("checkoutPlanLabel");
 const checkoutPriceLabel = document.getElementById("checkoutPriceLabel");
 const checkoutDiscountLine = document.getElementById("checkoutDiscountLine");
 const checkoutButtonText = document.getElementById("checkoutButtonText");
+const planOptionButtons = document.querySelectorAll("[data-select-plan]");
 let selectedPlan = "India Launch";
+
+const customerSessionKey = "kwvCustomerSession";
+const loginModal = document.getElementById("loginModal");
+const loginOpen = document.getElementById("loginOpen");
+const loginClose = document.getElementById("loginClose");
+const loginButtonText = document.getElementById("loginButtonText");
+const customerLoginForm = document.getElementById("customerLoginForm");
+const loginStatus = document.getElementById("loginStatus");
+const loginSubmitText = document.getElementById("loginSubmitText");
+const loginDashboard = document.getElementById("loginDashboard");
+const customerLogout = document.getElementById("customerLogout");
+const loginAccountEmail = document.getElementById("loginAccountEmail");
+const loginAccountHint = document.getElementById("loginAccountHint");
+const loginAccountStatus = document.getElementById("loginAccountStatus");
+const loginWelcome = document.getElementById("loginWelcome");
+const customerDownloadUpdate = document.getElementById("customerDownloadUpdate");
+const customerDownloadText = document.getElementById("customerDownloadText");
+const customerDownloadStatus = document.getElementById("customerDownloadStatus");
 
 let planDetails = {
     "India Launch": {
         title: "India Launch checkout",
         plan: "India Launch",
-        price: "Rs 99",
+        price: "₹99",
         amount: 9900,
         currency: "INR",
         button: "Checkout"
@@ -544,12 +628,19 @@ let planDetails = {
     International: {
         title: "International checkout",
         plan: "International",
-        price: "$1",
-        amount: 100,
+        price: "$2",
+        amount: 200,
         currency: "USD",
         button: "Checkout"
     }
 };
+
+function sitePriceLabel(plan) {
+    if (!plan) return "";
+    if (plan.key === "India Launch" || plan.plan === "India Launch" || plan.title === "India Launch") return "₹99";
+    if (plan.key === "International" || plan.plan === "International" || plan.title === "International") return "$2";
+    return plan.price;
+}
 
 function updateDisplayedPrices() {
     Object.entries(planDetails).forEach(([key, details]) => {
@@ -560,16 +651,47 @@ function updateDisplayedPrices() {
     });
 }
 
+function setSelectedPlan(planKey) {
+    selectedPlan = planKey;
+    const details = planDetails[selectedPlan] || planDetails["India Launch"];
+    modalTitle.textContent = details.title;
+    checkoutPlanLabel.textContent = details.plan;
+    checkoutPriceLabel.textContent = details.price;
+    setCheckoutDiscount("");
+    checkoutButtonText.textContent = details.button;
+    setCheckoutStatus("Choose India or International, then complete checkout.");
+    planOptionButtons.forEach((button) => {
+        const isActive = button.dataset.selectPlan === selectedPlan;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+}
+
+function showPlanChoice(preferredPlan = "India Launch") {
+    setSelectedPlan(preferredPlan);
+    checkoutChoice.hidden = false;
+    checkoutDetails.hidden = true;
+    checkoutForm.reset();
+}
+
+function showCheckoutDetails(planKey = "India Launch") {
+    setSelectedPlan(planKey);
+    checkoutChoice.hidden = true;
+    checkoutDetails.hidden = false;
+    requestAnimationFrame(() => document.getElementById("checkoutName")?.focus());
+}
+
 async function loadPricing() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/pricing`);
         if (!response.ok) return;
         const data = await response.json();
         (data.plans || []).forEach((plan) => {
+            const normalizedPrice = sitePriceLabel(plan);
             planDetails[plan.key] = {
                 title: `${plan.title} checkout`,
                 plan: plan.title,
-                price: plan.price,
+                price: normalizedPrice || plan.price,
                 amount: plan.amount,
                 currency: plan.currency,
                 button: "Checkout"
@@ -634,18 +756,181 @@ function setCheckoutSuccess(data) {
 
 document.querySelectorAll("[data-open-payment]").forEach((button) => {
     button.addEventListener("click", () => {
-        selectedPlan = button.dataset.openPayment;
-        const details = planDetails[selectedPlan] || planDetails["India Launch"];
-        modalTitle.textContent = details.title;
-        checkoutPlanLabel.textContent = details.plan;
-        checkoutPriceLabel.textContent = details.price;
-        setCheckoutDiscount("");
-        checkoutButtonText.textContent = details.button;
-        setCheckoutStatus("Secure license delivery after payment confirmation.");
+        const plan = button.dataset.openPayment || "India Launch";
+        if (button.classList.contains("pricing-buy")) {
+            showCheckoutDetails(plan);
+        } else {
+            showPlanChoice(plan);
+        }
         modal.classList.add("active");
         modal.setAttribute("aria-hidden", "false");
     });
 });
+
+planOptionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        showCheckoutDetails(button.dataset.selectPlan || "India Launch");
+    });
+});
+
+function readCustomerSession() {
+    try {
+        return JSON.parse(localStorage.getItem(customerSessionKey) || "null");
+    } catch (error) {
+        return null;
+    }
+}
+
+function saveCustomerSession(customer, keyLast4 = "") {
+    localStorage.setItem(customerSessionKey, JSON.stringify({
+        ...customer,
+        keyLast4: keyLast4 || customer.keyLast4 || customer.licenseHint || "",
+        verifiedAt: new Date().toISOString()
+    }));
+}
+
+function clearCustomerSession() {
+    localStorage.removeItem(customerSessionKey);
+}
+
+function setLoginStatus(message, mode = "") {
+    if (!loginStatus) return;
+    loginStatus.className = `checkout-note${mode ? ` ${mode}` : ""}`;
+    loginStatus.textContent = message;
+}
+
+function setCustomerDownloadStatus(message, mode = "") {
+    if (!customerDownloadStatus) return;
+    customerDownloadStatus.className = `checkout-note${mode ? ` ${mode}` : ""}`;
+    customerDownloadStatus.textContent = message;
+}
+
+function renderCustomerSession(customer) {
+    const isLoggedIn = Boolean(customer?.email);
+    if (loginOpen) loginOpen.classList.toggle("is-logged-in", isLoggedIn);
+    if (loginButtonText) loginButtonText.textContent = isLoggedIn ? "Profile" : "Login";
+
+    if (customerLoginForm) customerLoginForm.hidden = isLoggedIn;
+    if (loginDashboard) loginDashboard.hidden = !isLoggedIn;
+    if (!isLoggedIn) return;
+
+    if (loginAccountEmail) loginAccountEmail.textContent = customer.email;
+    if (loginAccountHint) loginAccountHint.textContent = `**** ${customer.licenseHint || "----"}`;
+    if (loginAccountStatus) loginAccountStatus.textContent = customer.licenseStatus || "Verified";
+    if (loginWelcome) loginWelcome.textContent = `${customer.product || "Your 400x access"} is verified for this purchase email.`;
+    setCustomerDownloadStatus("Download the latest verified extension ZIP for this account.");
+}
+
+function openLoginModal() {
+    renderCustomerSession(readCustomerSession());
+    loginModal?.classList.add("active");
+    loginModal?.setAttribute("aria-hidden", "false");
+    if (!readCustomerSession()) {
+        setLoginStatus("Enter the same email used during purchase.");
+        requestAnimationFrame(() => document.getElementById("loginEmail")?.focus());
+    }
+}
+
+function closeLoginModal() {
+    loginModal?.classList.remove("active");
+    loginModal?.setAttribute("aria-hidden", "true");
+}
+
+loginOpen?.addEventListener("click", openLoginModal);
+loginClose?.addEventListener("click", closeLoginModal);
+loginModal?.addEventListener("click", (event) => {
+    if (event.target === loginModal) closeLoginModal();
+});
+
+document.getElementById("loginKeyLast4")?.addEventListener("input", (event) => {
+    event.target.value = String(event.target.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+});
+
+customerLoginForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(customerLoginForm);
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const keyLast4 = String(formData.get("keyLast4") || "").trim().toUpperCase();
+    const submitButton = customerLoginForm.querySelector("button");
+
+    if (!email || keyLast4.length !== 4) {
+        setLoginStatus("Enter your activation email and exact last 4 license key characters.", "error");
+        return;
+    }
+
+    submitButton.disabled = true;
+    if (loginSubmitText) loginSubmitText.textContent = "Verifying...";
+    setLoginStatus("Checking your purchase license...", "loading");
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/customer-login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, keyLast4 })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.reason || data.error || "Login failed");
+
+        saveCustomerSession(data.customer, keyLast4);
+        renderCustomerSession(readCustomerSession());
+        customerLoginForm.reset();
+    } catch (error) {
+        setLoginStatus(error.message || "Could not verify login. Check your email and last 4 key characters.", "error");
+    } finally {
+        submitButton.disabled = false;
+        if (loginSubmitText) loginSubmitText.textContent = "Verify login";
+    }
+});
+
+customerLogout?.addEventListener("click", () => {
+    clearCustomerSession();
+    renderCustomerSession(null);
+    setLoginStatus("Logged out. Enter purchase details to login again.");
+    requestAnimationFrame(() => document.getElementById("loginEmail")?.focus());
+});
+
+customerDownloadUpdate?.addEventListener("click", () => {
+    const customer = readCustomerSession();
+    const email = customer?.email;
+    const keyLast4 = String(customer?.keyLast4 || customer?.licenseHint || "").trim().toUpperCase();
+
+    if (!email || keyLast4.length !== 4) {
+        setCustomerDownloadStatus("Login again so we can verify your purchase before download.", "error");
+        return;
+    }
+
+    setCustomerDownloadStatus("Checking latest update access...", "loading");
+    if (customerDownloadText) customerDownloadText.textContent = "Opening download...";
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = `${API_BASE_URL}/api/customer-download`;
+    form.target = "_blank";
+    form.style.display = "none";
+
+    const emailInput = document.createElement("input");
+    emailInput.type = "hidden";
+    emailInput.name = "email";
+    emailInput.value = email;
+
+    const keyInput = document.createElement("input");
+    keyInput.type = "hidden";
+    keyInput.name = "keyLast4";
+    keyInput.value = keyLast4;
+
+    form.append(emailInput, keyInput);
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+
+    window.setTimeout(() => {
+        setCustomerDownloadStatus("If your browser blocked the new tab, allow popups and click download new version again.");
+        if (customerDownloadText) customerDownloadText.textContent = "Download new version";
+    }, 900);
+});
+
+renderCustomerSession(readCustomerSession());
 
 function closeModal() {
     modal.classList.remove("active");
@@ -773,7 +1058,7 @@ function formatCheckoutPrice(amount, currency) {
         style: "currency",
         currency,
         maximumFractionDigits: amount % 100 === 0 ? 0 : 2
-    }).format(amount / 100).replace("₹", "Rs ");
+    }).format(amount / 100);
 }
 
 loadPricing();
