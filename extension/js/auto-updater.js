@@ -4,7 +4,7 @@
     var CONFIG = {
         endpoint: "https://api.keshavwithvelo.in/api/check-update",
         fallbackEndpoint: "https://keshavwithvelo.in/api/check-update",
-        currentVersion: "1.0.0",
+        currentVersion: "1.1.6",
         autoCheckDelayMs: 8000,
         autoInstall: true
     };

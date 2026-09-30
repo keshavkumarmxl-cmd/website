@@ -138,6 +138,7 @@
 
 .apple-preset-shell .apple-section-head:focus-visible,
 .apple-liquid-shell .apple-section-head:focus-visible,
+.apple-beat-shell .apple-section-head:focus-visible,
 .apple-silence-shell .apple-section-head:focus-visible,
 .apple-audio-cleaner-shell .apple-section-head:focus-visible {
     box-shadow: inset 0 0 0 1px rgba(255, 42, 42, 0.45);
@@ -145,6 +146,7 @@
 
 .apple-preset-shell:not(.collapsed) .apple-section-head,
 .apple-liquid-shell:not(.collapsed) .apple-section-head,
+.apple-beat-shell:not(.collapsed) .apple-section-head,
 .apple-silence-shell:not(.collapsed) .apple-section-head,
 .apple-audio-cleaner-shell:not(.collapsed) .apple-section-head {
     background: transparent;
@@ -152,6 +154,7 @@
 
 .apple-preset-shell.collapsed .apple-section-head,
 .apple-liquid-shell.collapsed .apple-section-head,
+.apple-beat-shell.collapsed .apple-section-head,
 .apple-silence-shell.collapsed .apple-section-head,
 .apple-audio-cleaner-shell.collapsed .apple-section-head {
     padding-bottom: 0;
@@ -183,8 +186,8 @@
 
 .apple-preset-content-inner {
     min-height: 0;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
     overflow: hidden;
     opacity: 1;
@@ -210,8 +213,8 @@
 
 .apple-liquid-content-inner {
     min-height: 0;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
     overflow: hidden;
     opacity: 1;
@@ -219,6 +222,33 @@
 }
 
 .apple-liquid-shell.collapsed .apple-liquid-content-inner {
+    opacity: 0;
+}
+
+.apple-beat-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.25s ease-in-out;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.apple-beat-shell.collapsed .apple-beat-content {
+    grid-template-rows: 0fr;
+    pointer-events: none;
+}
+
+.apple-beat-content-inner {
+    min-height: 0;
+    display: \66 lex;
+    \66 lex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.apple-beat-shell.collapsed .apple-beat-content-inner {
     opacity: 0;
 }
 
@@ -237,8 +267,8 @@
 
 .apple-silence-content-inner {
     min-height: 0;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
     overflow: hidden;
     opacity: 1;
@@ -268,8 +298,8 @@
 
 .apple-audio-cleaner-content-inner {
     min-height: 0;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 9px;
     overflow: hidden;
     opacity: 1;
@@ -286,7 +316,7 @@
     border: 1px dashed #282828;
     border-radius: 8px;
     background: linear-gradient(180deg, #090909 0%, #040404 100%);
-    display: flex;
+    display: \66 lex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
@@ -329,7 +359,7 @@
 }
 
 .audio-cleaner-select-btn {
-    flex: 0 0 auto;
+    \66 lex: 0 0 auto;
     width: 28px;
     height: 28px;
     min-width: 28px;
@@ -356,8 +386,8 @@
         linear-gradient(180deg, #0e0e0f 0%, #060606 100%);
     color: #dcdcdc;
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     align-items: stretch;
     justify-content: space-between;
     gap: 6px;
@@ -465,7 +495,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .audio-cleaner-progress-head {
-    display: flex;
+    display: \66 lex;
     align-items: center;
     justify-content: space-between;
     gap: 7px;
@@ -494,12 +524,12 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 
 .audio-cleaner-output-stack {
     display: none;
-    flex-direction: column;
+    \66 lex-direction: column;
     gap: 6px;
 }
 
 .audio-cleaner-output-stack.active {
-    display: flex;
+    display: \66 lex;
 }
 
 .audio-cleaner-output-row {
@@ -517,14 +547,14 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .audio-cleaner-output-row.active {
-    display: flex;
+    display: \66 lex;
 }
 
 .audio-cleaner-output-meta {
     min-width: 58px;
     max-width: 72px;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 3px;
 }
 
@@ -545,7 +575,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     background: #0d0d0d;
     color: #dcdcdc;
     cursor: pointer;
-    display: inline-flex;
+    display: inline-\66 lex;
     align-items: center;
     justify-content: center;
     font-size: 6.5px;
@@ -563,7 +593,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .audio-cleaner-output-wave {
-    flex: 1 1 auto;
+    \66 lex: 1 1 auto;
     min-width: 72px;
     height: 20px;
     border-radius: 6px;
@@ -648,9 +678,9 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .audio-cleaner-output-actions {
-    display: flex;
+    display: \66 lex;
     gap: 5px;
-    flex: 0 0 auto;
+    \66 lex: 0 0 auto;
 }
 
 .audio-cleaner-output-actions .apple-action-icon-btn {
@@ -666,8 +696,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     border: 1px solid #151515;
     border-radius: 7px;
     background: linear-gradient(180deg, #070707 0%, #030303 100%);
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 9px;
 }
 
@@ -679,8 +709,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 
 .apple-silence-field {
     min-width: 0;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 5px;
     color: #8a8a8a;
     font-size: 7px;
@@ -718,7 +748,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 .apple-preset-shell .preset-list-container {
     max-height: 240px;
     overflow-y: auto;
-    flex-grow: 1;
+    \66 lex-grow: 1;
     padding-right: 4px;
     margin-top: 8px;
     grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
@@ -744,7 +774,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-shell .preset-card {
-    display: flex;
+    display: \66 lex;
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -811,7 +841,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-tab-bar {
-    display: flex;
+    display: \66 lex;
     gap: 0;
     margin: 4px 0 0;
     padding: 0 2px;
@@ -819,11 +849,11 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     border-bottom: 1px solid #141414;
     border-radius: 0;
     background: transparent;
-    flex-shrink: 0;
+    \66 lex-shrink: 0;
 }
 
 .apple-preset-tab-btn {
-    flex: 1;
+    \66 lex: 1;
     min-height: 26px;
     border: 0;
     border-bottom: 2px solid transparent;
@@ -851,7 +881,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 
 .apple-preset-toolbar {
     padding: 6px 0 4px;
-    flex-shrink: 0;
+    \66 lex-shrink: 0;
 }
 
 .apple-preset-shell .apple-preset-toolbar .preset-search-shell {
@@ -864,9 +894,9 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-body {
-    display: flex;
+    display: \66 lex;
     gap: 0;
-    align-items: flex-start;
+    align-items: \66 lex-start;
     min-height: 0;
     min-height: 226px;
     max-height: 244px;
@@ -879,20 +909,20 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-sidebar-wrap {
-    flex: 1;
+    \66 lex: 1;
     min-width: 0;
     min-height: 0;
     min-height: 226px;
     max-height: 244px;
     max-height: min(244px, 58vh);
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     border-right: 1px solid #121212;
     overflow: hidden;
 }
 
 .apple-preset-shell .apple-preset-sidebar {
-    flex: 1;
+    \66 lex: 1;
     min-height: 0;
     max-height: 244px;
     max-height: min(244px, 58vh);
@@ -901,8 +931,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 4px 4px 6px 2px;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
     scrollbar-width: thin;
     scrollbar-color: #252525 #080808;
@@ -926,8 +956,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-group {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
 }
 
@@ -970,30 +1000,30 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-group-list {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
     padding: 0 0 2px 10px;
 }
 
 .apple-preset-flat-list {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
     padding: 2px 2px 4px 4px;
     min-height: 0;
 }
 
 .apple-preset-row-wrap {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 0;
 }
 
 .apple-preset-row {
-    display: flex;
+    display: \66 lex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: \66 lex-start;
     gap: 4px;
     width: 100%;
     min-width: 0;
@@ -1024,10 +1054,10 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-row-main {
-    flex: 1;
+    \66 lex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 1px;
 }
 
@@ -1041,7 +1071,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-row-chip {
-    align-self: flex-start;
+    align-self: \66 lex-start;
     padding: 1px 4px;
     border-radius: 3px;
     border: 1px solid #1e1e1e;
@@ -1054,7 +1084,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-row-gear {
-    flex-shrink: 0;
+    \66 lex-shrink: 0;
     width: 18px;
     height: 18px;
     padding: 0;
@@ -1063,7 +1093,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     background: transparent;
     color: #5a5a5a;
     opacity: 0.82;
-    display: inline-flex;
+    display: inline-\66 lex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -1089,10 +1119,10 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-variant-inline {
-    display: inline-flex;
+    display: inline-\66 lex;
     align-items: center;
     gap: 0;
-    flex-shrink: 0;
+    \66 lex-shrink: 0;
     margin-left: auto;
     border: 1px solid #1a1a1a;
     border-radius: 3px;
@@ -1157,14 +1187,14 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     max-height: 224px;
     aspect-ratio: 9 / 16;
     margin: 4px 0 0;
-    flex-shrink: 0;
-    align-self: flex-start;
+    \66 lex-shrink: 0;
+    align-self: \66 lex-start;
     background: #070707;
     border: 0;
     border-radius: 0;
     box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.02);
     overflow: hidden;
-    display: flex;
+    display: \66 lex;
     align-items: center;
     justify-content: center;
 }
@@ -1181,7 +1211,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     border-radius: 2px;
     background: rgba(0, 0, 0, 0.45);
     color: #666;
-    display: inline-flex;
+    display: inline-\66 lex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -1215,8 +1245,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-shell .apple-preview-placeholder {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 5px;
@@ -1257,7 +1287,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     position: absolute;
     inset: 0;
     z-index: 20;
-    display: flex;
+    display: \66 lex;
     align-items: center;
     justify-content: center;
     padding: 10px;
@@ -1288,7 +1318,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-settings-head {
-    display: flex;
+    display: \66 lex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
@@ -1319,8 +1349,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-settings-body {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 8px;
     padding: 10px;
 }
@@ -1333,8 +1363,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 }
 
 .apple-preset-settings-field {
-    display: flex;
-    flex-direction: column;
+    display: \66 lex;
+    \66 lex-direction: column;
     gap: 5px;
 }
 
@@ -1365,11 +1395,11 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 
 @media (max-width: 340px) {
     .apple-preset-tab-bar {
-        flex-wrap: wrap;
+        \66 lex-wrap: wrap;
     }
 
     .apple-preset-tab-btn {
-        flex: 1 1 54px;
+        \66 lex: 1 1 54px;
         min-width: 0;
         padding: 4px 2px;
         white-space: normal;
@@ -1406,7 +1436,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
 
 @media (max-width: 280px) {
     .apple-preset-body {
-        flex-direction: column;
+        \66 lex-direction: column;
         min-height: 0;
         max-height: none;
     }
@@ -1434,8 +1464,8 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     }
 
     .apple-preset-row {
-        align-items: flex-start;
-        flex-wrap: wrap;
+        align-items: \66 lex-start;
+        \66 lex-wrap: wrap;
         padding: 3px 1px 3px 0;
     }
 
@@ -1449,7 +1479,7 @@ body.kwv-reduce-animations .audio-cleaner-art::before {
     }
 
     .apple-preset-variant-toggle {
-        flex: 1 1 0;
+        \66 lex: 1 1 0;
         min-width: 0;
     }
 

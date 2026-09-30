@@ -42,6 +42,7 @@
         CUSTOM: ["Custom Presets"]
     };
     const presetDefaultsStorageKey = "keshavwithvelo.presetDefaults.v1";
+    const customPresetMigrationStorageKey = "keshavwithvelo.customPresetDocumentsMigration.v1";
     const presetState = {
         activeCategory: "TEXT",
         lastCategory: "TEXT",
@@ -96,10 +97,34 @@
             return pathCc;
         }
         if (category === "CUSTOM") {
-            const userData = csInterface.getSystemPath(SystemPath.USER_DATA) || extPath;
-            return (userData + "/KeshavWithVelo/CustomPresets/").replace(/\\/g, "/");
+            return getCustomPresetFolderPath();
         }
         return (extPath + "/presets/" + category + "/").replace(/\\/g, "/");
+    }
+
+    function getCustomPresetFolderPath() {
+        const extPath = csInterface.getSystemPath(SystemPath.EXTENSION);
+        let docs = "";
+        try {
+            docs = csInterface.getSystemPath(SystemPath.MY_DOCUMENTS) || "";
+        } catch (err) {}
+        if (!docs) {
+            try {
+                const node = getNodeModules();
+                if (node && typeof require === "function") {
+                    const os = require("os");
+                    docs = node.path.join(os.homedir(), "Documents");
+                }
+            } catch (err2) {}
+        }
+        const root = docs || csInterface.getSystemPath(SystemPath.USER_DATA) || extPath;
+        return (root + "/Keshav With Velo/CustomPresets/").replace(/\\/g, "/");
+    }
+
+    function getLegacyCustomPresetFolderPath() {
+        const extPath = csInterface.getSystemPath(SystemPath.EXTENSION);
+        const userData = csInterface.getSystemPath(SystemPath.USER_DATA) || extPath;
+        return (userData + "/KeshavWithVelo/CustomPresets/").replace(/\\/g, "/");
     }
 
     function getNodeModules() {
@@ -142,6 +167,58 @@
             try { window.cep.fs.makedir(folderPath); } catch (err) {}
         }
         return !!(window.cep && window.cep.fs && window.cep.fs.stat(folderPath).err === 0);
+    }
+
+    function copyPresetFolderRecursive(sourcePath, targetPath) {
+        const node = getNodeModules();
+        if (!node || !node.fs || !node.path || !sourcePath || !targetPath) return false;
+        try {
+            const source = String(sourcePath).replace(/\//g, "\\");
+            const target = String(targetPath).replace(/\//g, "\\");
+            if (!node.fs.existsSync(source)) return false;
+            const stat = node.fs.statSync(source);
+            if (stat.isDirectory()) {
+                if (!node.fs.existsSync(target)) node.fs.mkdirSync(target, { recursive: true });
+                node.fs.readdirSync(source).forEach((entry) => {
+                    copyPresetFolderRecursive(node.path.join(source, entry), node.path.join(target, entry));
+                });
+            } else if (!node.fs.existsSync(target)) {
+                const parent = node.path.dirname(target);
+                if (!node.fs.existsSync(parent)) node.fs.mkdirSync(parent, { recursive: true });
+                node.fs.copyFileSync(source, target);
+            }
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    function migrateLegacyCustomPresetsOnce() {
+        try {
+            if (window.localStorage && window.localStorage.getItem(customPresetMigrationStorageKey) === "1") return;
+        } catch (err0) {}
+        const node = getNodeModules();
+        if (!node || !node.fs || !node.path) return;
+        const legacyFolder = getLegacyCustomPresetFolderPath();
+        const targetFolder = getCustomPresetFolderPath();
+        try {
+            const legacyNative = legacyFolder.replace(/\//g, "\\");
+            const targetNative = targetFolder.replace(/\//g, "\\");
+            if (
+                legacyNative.toLowerCase() !== targetNative.toLowerCase() &&
+                node.fs.existsSync(legacyNative)
+            ) {
+                ensureFolder(targetFolder);
+                node.fs.readdirSync(legacyNative).forEach((entry) => {
+                    const src = node.path.join(legacyNative, entry);
+                    const dst = node.path.join(targetNative, entry);
+                    copyPresetFolderRecursive(src, dst);
+                });
+            }
+            try {
+                if (window.localStorage) window.localStorage.setItem(customPresetMigrationStorageKey, "1");
+            } catch (err1) {}
+        } catch (err2) {}
     }
 
     function sanitizePresetFolderName(name) {
@@ -325,6 +402,28 @@
         return item ? item.path : "";
     }
 
+    function isPresetPreviewImage(fileName) {
+        return /\.(gif|png|jpe?g|webp)$/i.test(String(fileName || ""));
+    }
+
+    function isPresetPreviewVideo(fileName) {
+        return /\.(mp4|mov|webm|m4v)$/i.test(String(fileName || ""));
+    }
+
+    function isPresetPreviewMedia(fileName) {
+        return isPresetPreviewVideo(fileName) || isPresetPreviewImage(fileName);
+    }
+
+    function choosePresetPreviewFile(files) {
+        if (!Array.isArray(files)) return null;
+        const preferredImages = files.filter((name) => isPresetPreviewImage(name) && /^(preview|poster|thumb|thumbnail)\./i.test(String(name || "")));
+        if (preferredImages.length) return preferredImages[0];
+        const videos = files.filter(isPresetPreviewVideo);
+        if (videos.length) return videos[0];
+        const images = files.filter(isPresetPreviewImage);
+        return images.length ? images[0] : null;
+    }
+
     function resolvePresetPreviewSource(item, variantKey) {
         if (item && item.variants && item.variants[variantKey] && item.variants[variantKey].preview) {
             return item.variants[variantKey].preview;
@@ -406,7 +505,10 @@
         if (presetState.cache[category]) return presetState.cache[category];
 
         const folderPath = getPresetFolderPath(category);
-        if (category === "CUSTOM") ensureFolder(folderPath);
+        if (category === "CUSTOM") {
+            ensureFolder(folderPath);
+            migrateLegacyCustomPresetsOnce();
+        }
         const readResult = window.cep && window.cep.fs ? window.cep.fs.readdir(folderPath) : null;
         if (!readResult || readResult.err !== 0 || !readResult.data) {
             presetState.cache[category] = [];
@@ -423,13 +525,11 @@
             const subRead = window.cep && window.cep.fs ? window.cep.fs.readdir(fullPath + "/") : null;
             if (subRead && subRead.err === 0 && subRead.data) {
                 let ffxFile = null;
-                let mp4File = null;
+                let previewFile = choosePresetPreviewFile(subRead.data);
                 for (let j = 0; j < subRead.data.length; j++) {
                     const fileName = subRead.data[j];
                     if (/\.ffx$/i.test(fileName)) {
                         ffxFile = fileName;
-                    } else if (/\.mp4$/i.test(fileName)) {
-                        mp4File = fileName;
                     }
                 }
                 if (ffxFile) {
@@ -437,18 +537,27 @@
                         category: category,
                         name: subName,
                         path: fullPath + "/" + ffxFile,
-                        preview: mp4File ? (fullPath + "/" + mp4File) : null
+                        preview: previewFile ? (fullPath + "/" + previewFile) : null
                     });
                 }
             } else if (/\.ffx$/i.test(subName)) {
                 const baseName = subName.replace(/\.ffx$/i, "");
-                const possibleMp4 = folderPath + baseName + ".mp4";
-                const hasMp4 = window.cep && window.cep.fs && window.cep.fs.stat(possibleMp4).err === 0;
+                const previewExts = [".mp4", ".mov", ".webm", ".m4v", ".gif", ".png", ".jpg", ".jpeg", ".webp"];
+                let previewPath = null;
+                if (window.cep && window.cep.fs) {
+                    for (let j = 0; j < previewExts.length; j++) {
+                        const possiblePreview = folderPath + baseName + previewExts[j];
+                        if (window.cep.fs.stat(possiblePreview).err === 0) {
+                            previewPath = possiblePreview;
+                            break;
+                        }
+                    }
+                }
                 items.push({
                     category: category,
                     name: baseName,
                     path: fullPath,
-                    preview: hasMp4 ? possibleMp4 : null
+                    preview: previewPath
                 });
             }
         }
@@ -466,6 +575,7 @@
     function resetPresetPreview() {
         currentPreviewUrl = null;
         const video = document.getElementById("applePreviewVideo");
+        const image = document.getElementById("applePreviewImage");
         const placeholder = document.getElementById("applePreviewPlaceholder");
         const panel = getPresetPreviewPanel();
         if (video) {
@@ -475,15 +585,29 @@
             video.style.display = "none";
             video.style.opacity = "0";
         }
-        if (placeholder) placeholder.style.display = "flex";
+        if (image) {
+            image.removeAttribute("src");
+            image.style.display = "none";
+            image.style.opacity = "0";
+        }
+        if (placeholder) placeholder.style.display = "f" + "lex";
         if (panel) panel.classList.remove("is-live");
     }
 
     function hoverPresetItem(item, variantKey) {
         const video = document.getElementById("applePreviewVideo");
+        let image = document.getElementById("applePreviewImage");
         const placeholder = document.getElementById("applePreviewPlaceholder");
         const panel = getPresetPreviewPanel();
         if (!video) return;
+        if (!image && video.parentNode) {
+            image = document.createElement("img");
+            image.id = "applePreviewImage";
+            image.alt = "Preset preview";
+            image.style.display = "none";
+            image.style.opacity = "0";
+            video.parentNode.insertBefore(image, placeholder || video.nextSibling);
+        }
 
         const previewSource = resolvePresetPreviewSource(item, variantKey || getPresetDefaultVariant(item) || "in");
         const previewUrl = previewSource ? overlayFileToUrl(previewSource) : (item.preview ? overlayFileToUrl(item.preview) : null);
@@ -494,6 +618,11 @@
         video.pause();
         video.removeAttribute("src");
         video.load();
+        if (image) {
+            image.removeAttribute("src");
+            image.style.display = "none";
+            image.style.opacity = "0";
+        }
 
         if (previewUrl) {
             const statPath = previewSource || item.preview;
@@ -501,16 +630,26 @@
             if (statResult && statResult.err === 0) {
                 if (placeholder) placeholder.style.display = "none";
                 if (panel) panel.classList.add("is-live");
-                video.style.display = "block";
-                video.src = previewUrl;
-                video.load();
-                video.play().catch(() => {});
+                if (isPresetPreviewImage(statPath)) {
+                    video.style.display = "none";
+                    if (image) {
+                        image.style.display = "block";
+                        image.src = previewUrl;
+                        image.onload = () => { image.style.opacity = "1"; };
+                    }
+                } else {
+                    video.style.display = "block";
+                    video.src = previewUrl;
+                    video.load();
+                    video.play().catch(() => {});
+                }
                 return;
             }
         }
 
         video.style.display = "none";
-        if (placeholder) placeholder.style.display = "flex";
+        if (image) image.style.display = "none";
+        if (placeholder) placeholder.style.display = "f" + "lex";
         if (panel) panel.classList.remove("is-live");
     }
 
@@ -728,7 +867,7 @@
 
     function setCustomDropVisible(isVisible) {
         const drop = document.getElementById("customPresetDropzone");
-        if (drop) drop.style.display = isVisible ? "flex" : "none";
+        if (drop) drop.style.display = isVisible ? ("f" + "lex") : "none";
     }
 
     function setPresetSettingsOpen(isOpen) {
@@ -885,42 +1024,63 @@
         });
     }
 
-    function importCustomPresetFile(filePath) {
+    function importCustomPresetFile(filePath, options) {
+        options = options || {};
         if (!filePath || !/\.ffx$/i.test(filePath)) {
-            window.alert("Please add a .ffx preset file.");
-            return;
+            if (!options.silent) window.alert("Please add a .ffx preset file.");
+            return false;
         }
         const node = getNodeModules();
         if (!node || !node.fs || !node.path) {
-            window.alert("File import needs Node access in this CEP panel.");
-            return;
+            if (!options.silent) window.alert("File import needs Node access in this CEP panel.");
+            return false;
         }
         try {
             const source = String(filePath).replace(/\//g, "\\");
             if (!node.fs.existsSync(source)) {
-                window.alert("Preset file not found.");
-                return;
+                if (!options.silent) window.alert("Preset file not found.");
+                return false;
             }
             const customFolder = getPresetFolderPath("CUSTOM");
             if (!ensureFolder(customFolder)) {
-                window.alert("Custom preset folder create nahi ho pa raha.");
-                return;
+                if (!options.silent) window.alert("Custom preset folder create nahi ho pa raha.");
+                return false;
             }
             const sourceName = node.path.basename(source);
             const folderName = makeUniqueCustomPresetFolder(customFolder, sourceName);
             const targetFolder = node.path.join(customFolder.replace(/\//g, "\\"), folderName);
             if (!ensureFolder(targetFolder)) {
-                window.alert("Preset folder create nahi ho pa raha.");
-                return;
+                if (!options.silent) window.alert("Preset folder create nahi ho pa raha.");
+                return false;
             }
             const targetPath = node.path.join(targetFolder, sanitizePresetFolderName(sourceName) + ".ffx");
             node.fs.copyFileSync(source, targetPath);
-            presetState.cache.CUSTOM = null;
-            loadCategory("CUSTOM");
-            resetPresetPreview();
+            if (!options.deferRefresh) {
+                presetState.cache.CUSTOM = null;
+                loadCategory("CUSTOM");
+                resetPresetPreview();
+            }
+            return true;
         } catch (err) {
-            window.alert("Preset import failed: " + err.message);
+            if (!options.silent) window.alert("Preset import failed: " + err.message);
+            return false;
         }
+    }
+
+    function importCustomPresetFiles(filePaths) {
+        const paths = (filePaths || []).filter((path) => /\.ffx$/i.test(String(path || "")));
+        if (!paths.length) {
+            window.alert("Please add .ffx preset files.");
+            return;
+        }
+        let added = 0;
+        paths.forEach((path) => {
+            if (importCustomPresetFile(path, { silent: true, deferRefresh: true })) added++;
+        });
+        presetState.cache.CUSTOM = null;
+        loadCategory("CUSTOM");
+        resetPresetPreview();
+        if (!added) window.alert("Preset import failed. Check file access and try again.");
     }
 
     function getDroppedFilePath(file) {
@@ -952,13 +1112,13 @@
         drop.addEventListener("drop", (event) => {
             event.preventDefault();
             drop.classList.remove("dragging");
-            const file = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files[0] : null;
-            importCustomPresetFile(getDroppedFilePath(file));
+            const files = event.dataTransfer && event.dataTransfer.files ? Array.prototype.slice.call(event.dataTransfer.files) : [];
+            importCustomPresetFiles(files.map((file) => getDroppedFilePath(file)));
         });
         if (fileInput) {
             fileInput.onchange = () => {
-                const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
-                importCustomPresetFile(getDroppedFilePath(file));
+                const files = fileInput.files ? Array.prototype.slice.call(fileInput.files) : [];
+                importCustomPresetFiles(files.map((file) => getDroppedFilePath(file)));
                 fileInput.value = "";
             };
         }

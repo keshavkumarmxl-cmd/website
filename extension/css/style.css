@@ -1,4 +1,4 @@
-﻿/* -- Custom Fonts -- */
+/* -- Custom Fonts -- */
 @font-face {
     font-family: 'Karina';
     src: url('../fonts/Karina.ttf') format('truetype');
@@ -55,8 +55,9 @@ html, body {
 
 /* Main Wrapper for Layout */
 .main-wrapper {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    align-content: start;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -80,7 +81,6 @@ html, body {
     margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px solid #101010;
-    flex-shrink: 0;
 }
 .branding h1 {
     font-size: 15px;
@@ -101,14 +101,15 @@ html, body {
 
 /* Tabs Header Section */
 .tabs-header {
-    display: flex;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     width: 100%;
     min-width: 0;
     background: #080808;
     border-radius: 4px;
     margin-bottom: 12px;
     padding: 3px;
-    flex-shrink: 0;
     border: 1px solid #151515;
     position: relative;
 }
@@ -129,7 +130,6 @@ html, body {
 
 /* Individual Tab Buttons */
 .tab-btn {
-    flex: 1;
     background: transparent;
     color: #777;
     border: none;
@@ -160,7 +160,8 @@ html, body {
 
 /* Tabs Content Area */
 .tabs-content {
-    flex: 1;
+    min-height: 0;
+    height: 100%;
     width: 100%;
     min-width: 0;
     overflow-y: auto;
@@ -172,8 +173,9 @@ html, body {
     animation: fadeIn 0.3s ease;
 }
 .tab-pane.active {
-    display: flex !important;
-    flex-direction: column;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
     width: 100%;
     min-width: 0;
 }
@@ -203,8 +205,9 @@ html, body {
     border: 1px solid #151515;
     border-radius: 6px;
     padding: 10px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -300,9 +303,8 @@ html, body {
     transition: background-color 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.2), color 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.2),
                 border-color 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.2), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1.2),
                 box-shadow 0.35s ease, filter 0.35s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    place-items: center;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -324,7 +326,6 @@ html, body {
     width: 14px;
     height: 14px;
     display: block;
-    flex-shrink: 0;
 }
 .card-title-icon {
     width: 11px;
@@ -459,8 +460,8 @@ html, body {
 }
 
 .kwv-caption-mode-cardset {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 7px;
     margin: 5px 0 10px;
     padding: 8px;
@@ -528,9 +529,9 @@ html, body {
 }
 
 .kwv-slider-head {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
     color: #a7a7a7;
     font-size: 8px;
@@ -544,9 +545,8 @@ html, body {
     border-radius: 999px;
     background: #f7f7f7;
     color: #111;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-grid;
+    place-items: center;
     font-size: 9px;
 }
 
@@ -557,7 +557,9 @@ html, body {
 }
 
 .kwv-slider-ticks {
-    display: flex;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: auto;
     justify-content: space-between;
     color: #666;
     font-size: 8px;
@@ -565,8 +567,11 @@ html, body {
 }
 
 .kwv-color-swatches {
-    display: flex;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
     align-items: center;
+    justify-content: start;
     gap: 8px;
     min-height: 28px;
 }
@@ -586,8 +591,8 @@ html, body {
 }
 
 .srt-result-dock {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     margin-top: 8px;
 }
@@ -620,9 +625,9 @@ html, body {
 
 .kwv-auto-transcript-head,
 .kwv-auto-transcript-footer {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
 }
 
