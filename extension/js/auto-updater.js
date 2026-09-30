@@ -409,7 +409,7 @@
         var deactivateButtons = Array.prototype.slice.call(document.querySelectorAll("[data-kwv-deactivate-license]"));
         var versionLabel = document.getElementById("kwvExtensionVersion");
         var statusLabel = document.getElementById("kwvUpdateStatus");
-        if (versionLabel) versionLabel.textContent = "300X";
+        if (versionLabel) versionLabel.textContent = "400X";
 
         function setStatus(message, mode) {
             if (!statusLabel) return;
