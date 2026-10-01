@@ -42,6 +42,19 @@ function setSelectedLicense(id) {
   if (id) licenseIdInput.value = id;
 }
 
+function activateTool(toolName, shouldStore = true) {
+  const selected = toolName || "license";
+  document.querySelectorAll("[data-tool-panel]").forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.toolPanel === selected);
+  });
+  document.querySelectorAll("[data-tool-target]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.toolTarget === selected);
+  });
+  if (shouldStore) localStorage.setItem("velo_admin_active_tool", selected);
+  const firstPanel = document.querySelector(`[data-tool-panel="${selected}"]`);
+  if (shouldStore && firstPanel) firstPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -253,6 +266,7 @@ document.getElementById("loginBtn").addEventListener("click", async (event) => {
       localStorage.setItem(tokenKey, data.token);
       localStorage.setItem("velo_admin_email", document.getElementById("email").value.trim());
       setAuthState();
+      activateTool(localStorage.getItem("velo_admin_active_tool") || "license", false);
       setMetric("Session", 1, "Logged in");
       show("Logged in.", "Session");
     } catch (error) {
@@ -436,11 +450,9 @@ document.getElementById("clearOutputBtn").addEventListener("click", () => {
   showNotice("Output cleared.");
 });
 
-document.querySelectorAll("[data-scroll-target]").forEach((button) => {
+document.querySelectorAll("[data-tool-target]").forEach((button) => {
   button.addEventListener("click", () => {
-    const target = document.getElementById(button.dataset.scrollTarget);
-    if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    activateTool(button.dataset.toolTarget);
   });
 });
 
@@ -466,4 +478,5 @@ output.addEventListener("click", (event) => {
 });
 
 setAuthState();
+activateTool(localStorage.getItem("velo_admin_active_tool") || "license", false);
 setMetric("Idle", 0, "Ready");

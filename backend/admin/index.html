@@ -244,6 +244,12 @@
       filter: none;
     }
 
+    .side-nav button.is-active {
+      border-color: rgba(255,42,42,.72);
+      background: rgba(229,22,22,.14);
+      color: #fff;
+    }
+
     .dashboard-main {
       display: grid;
       gap: 18px;
@@ -252,10 +258,14 @@
 
     .workspace {
       display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);
+      grid-template-columns: 1fr;
       gap: 18px;
       align-items: start;
     }
+
+    .workspace .stack { display: contents; }
+    .tool-panel { display: none; }
+    .tool-panel.is-active { display: block; }
 
     .result-panel {
       min-height: 360px;
@@ -436,18 +446,18 @@
         <section class="side-card">
           <h2>Tools</h2>
           <div class="side-nav">
-            <button type="button" data-scroll-target="licenseSearchPanel">License Search</button>
-            <button type="button" data-scroll-target="manualLicensePanel">Manual License</button>
-            <button type="button" data-scroll-target="maintenancePanel">Maintenance</button>
-            <button type="button" data-scroll-target="tutorialPanel">Tutorial Video</button>
-            <button type="button" data-scroll-target="versionsPanel">Versions</button>
-            <button type="button" data-scroll-target="zipUploadPanel">Upload ZIP</button>
+            <button type="button" data-tool-target="license">License Search</button>
+            <button type="button" data-tool-target="manual">Manual License</button>
+            <button type="button" data-tool-target="maintenance">Maintenance</button>
+            <button type="button" data-tool-target="tutorial">Tutorial Video</button>
+            <button type="button" data-tool-target="versions">Versions</button>
+            <button type="button" data-tool-target="upload">Upload ZIP</button>
           </div>
         </section>
       </aside>
 
       <div class="dashboard-main">
-        <section id="licenseSearchPanel">
+        <section id="metricsPanel">
           <div class="metric-grid">
             <div class="metric"><span>Result Type</span><strong id="metricType">Idle</strong></div>
             <div class="metric"><span>Rows</span><strong id="metricRows">0</strong></div>
@@ -458,7 +468,7 @@
 
         <div class="workspace">
           <div class="stack">
-        <section id="licenseActionsPanel">
+        <section id="licenseSearchPanel" class="tool-panel" data-tool-panel="license">
           <div class="section-head">
             <div>
               <h2>License Search</h2>
@@ -474,7 +484,7 @@
           </div>
         </section>
 
-        <section class="result-panel">
+        <section class="result-panel tool-panel" data-tool-panel="license">
           <div class="result-head">
             <div>
               <h2 id="resultTitle">Output</h2>
@@ -489,7 +499,7 @@
           </div>
 
           <div class="stack">
-        <section id="manualLicensePanel">
+        <section id="licenseActionsPanel" class="tool-panel" data-tool-panel="license">
           <div class="section-head">
             <div>
               <h2>License Actions</h2>
@@ -507,7 +517,7 @@
           </div>
         </section>
 
-        <section id="maintenancePanel">
+        <section id="manualLicensePanel" class="tool-panel" data-tool-panel="manual">
           <div class="section-head">
             <div>
               <h2>Manual License</h2>
@@ -523,7 +533,7 @@
           <p style="margin-top:12px"><button id="manualBtn">Generate License</button></p>
         </section>
 
-        <section id="tutorialPanel">
+        <section id="maintenancePanel" class="tool-panel" data-tool-panel="maintenance">
           <div class="section-head">
             <div>
               <h2>Website Maintenance</h2>
@@ -543,7 +553,7 @@
           </div>
         </section>
 
-        <section id="versionsPanel">
+        <section id="tutorialPanel" class="tool-panel" data-tool-panel="tutorial">
           <div class="section-head">
             <div>
               <h2>Tutorial Video</h2>
@@ -560,7 +570,7 @@
           </div>
         </section>
 
-        <section id="zipUploadPanel">
+        <section id="versionsPanel" class="tool-panel" data-tool-panel="versions">
           <div class="section-head">
             <div>
               <h2>Add Version</h2>
@@ -576,7 +586,7 @@
           <p style="margin-top:12px"><button id="versionBtn">Save Version</button></p>
         </section>
 
-        <section>
+        <section id="zipUploadPanel" class="tool-panel" data-tool-panel="upload">
           <div class="section-head">
             <div>
               <h2>Upload ZIP Update</h2>
@@ -597,6 +607,6 @@
     </div>
   </main>
 
-  <script src="admin.js?v=89b880d"></script>
+  <script src="admin.js?v=tool-tabs-1"></script>
 </body>
 </html>
