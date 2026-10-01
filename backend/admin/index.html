@@ -5,103 +5,475 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Keshav With Velo Admin</title>
   <style>
-    body { margin: 0; background: #050505; color: #f7f7f7; font-family: Inter, Arial, sans-serif; }
-    header { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,.12); background: #090909; }
-    main { padding: 24px; display: grid; gap: 18px; }
-    section { border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 18px; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)); }
-    input, button, select, textarea { min-height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: #111; color: #fff; padding: 0 12px; }
-    button { cursor: pointer; font-weight: 800; background: #d91414; border-color: #ff3030; }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
-    pre { white-space: pre-wrap; max-height: 360px; overflow: auto; background: #020202; padding: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); }
-    h1, h2 { margin: 0 0 12px; }
-    label { display: grid; gap: 6px; color: #b8bdc8; font-size: 13px; }
+    :root {
+      color-scheme: dark;
+      --bg: #050505;
+      --panel: #101010;
+      --panel-2: #161616;
+      --line: rgba(255,255,255,.12);
+      --line-strong: rgba(255,255,255,.2);
+      --text: #f7f7f7;
+      --muted: #9da3ae;
+      --soft: #d6d9df;
+      --red: #e51616;
+      --red-2: #ff2a2a;
+      --green: #31d074;
+      --amber: #f5b544;
+      --blue: #6aa8ff;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      background: #080808;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 22px; line-height: 1.1; }
+    h2 { font-size: 17px; line-height: 1.2; }
+    h3 { font-size: 14px; line-height: 1.2; }
+    small { color: var(--muted); }
+
+    main {
+      padding: 22px 24px 34px;
+      display: grid;
+      gap: 18px;
+    }
+
+    section {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+    }
+
+    input, button, select, textarea {
+      min-height: 40px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #0a0a0a;
+      color: #fff;
+      padding: 0 12px;
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    textarea {
+      min-height: 86px;
+      padding-block: 10px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(255,42,42,.28);
+      border-color: rgba(255,42,42,.72);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 800;
+      background: var(--red);
+      border-color: var(--red-2);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: translateY(1px); }
+    button.secondary { background: #181818; border-color: var(--line-strong); color: var(--soft); }
+    button.danger { background: #9f1111; border-color: #e22; }
+    button:disabled { opacity: .55; cursor: wait; }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--red), #690606);
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+      box-shadow: 0 0 22px rgba(229,22,22,.22);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .row > input { min-width: min(260px, 100%); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+    .stack { display: grid; gap: 12px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #0a0a0a;
+      padding: 12px;
+      min-height: 74px;
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .metric strong { font-size: 22px; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .result-panel {
+      min-height: 360px;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .result-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.025);
+    }
+
+    .result-body {
+      padding: 14px;
+      max-height: 560px;
+      overflow: auto;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th, td {
+      padding: 11px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      background: #080808;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover td { background: rgba(255,255,255,.03); }
+    code {
+      border: 1px solid rgba(255,255,255,.1);
+      background: #070707;
+      border-radius: 6px;
+      padding: 3px 6px;
+      color: #f6f6f6;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      margin: 0;
+      background: #020202;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--soft);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #111;
+      color: var(--soft);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge.active, .badge.valid, .badge.success { border-color: rgba(49,208,116,.45); color: #a5f2c3; background: rgba(49,208,116,.09); }
+    .badge.inactive { border-color: rgba(106,168,255,.45); color: #bfd9ff; background: rgba(106,168,255,.1); }
+    .badge.blocked, .badge.failed, .badge.error { border-color: rgba(255,42,42,.5); color: #ffbbbb; background: rgba(255,42,42,.1); }
+    .badge.expired { border-color: rgba(245,181,68,.5); color: #ffdf9c; background: rgba(245,181,68,.11); }
+
+    .inline-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .inline-actions button {
+      min-height: 32px;
+      padding-inline: 9px;
+      font-size: 12px;
+    }
+
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #090909;
+      color: var(--soft);
+      line-height: 1.5;
+    }
+
+    .notice.ok { border-color: rgba(49,208,116,.35); color: #bdf6d1; }
+    .notice.error { border-color: rgba(255,42,42,.45); color: #ffc2c2; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 920px) {
+      header { position: static; align-items: flex-start; }
+      .workspace { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      header, main { padding-inline: 14px; }
+      header { flex-direction: column; }
+      .top-actions, .row, .row > input, .row > button, .row > select { width: 100%; }
+      .row > button, .top-actions button { width: 100%; }
+      .section-head { display: grid; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>Keshav With Velo Admin</h1>
-    <button id="logoutBtn">Logout</button>
+    <div class="brand">
+      <div class="brand-mark">KV</div>
+      <div>
+        <h1>Keshav With Velo Admin</h1>
+        <small>Licenses, customers, updates, and site controls</small>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="badge" id="sessionBadge">Logged out</span>
+      <button class="secondary" id="logoutBtn">Logout</button>
+    </div>
   </header>
+
   <main>
     <section id="loginPanel">
-      <h2>Admin Login</h2>
+      <div class="section-head">
+        <div>
+          <h2>Admin Login</h2>
+          <small>Use the backend admin credentials for this licensing server.</small>
+        </div>
+      </div>
       <div class="row">
-        <input id="email" type="email" placeholder="Admin email">
-        <input id="password" type="password" placeholder="Password">
+        <input id="email" type="email" autocomplete="username" placeholder="Admin email">
+        <input id="password" type="password" autocomplete="current-password" placeholder="Password">
         <button id="loginBtn">Login</button>
       </div>
     </section>
 
     <section>
-      <h2>Search Licenses</h2>
-      <div class="row">
-        <input id="licenseSearch" placeholder="Email, name, or key hint">
-        <button data-action="licenses">Search</button>
-        <button data-action="users">View Customers</button>
-        <button data-action="attempts">Failed Attempts</button>
-        <button data-action="versions">Versions</button>
+      <div class="metric-grid">
+        <div class="metric"><span>Result Type</span><strong id="metricType">Idle</strong></div>
+        <div class="metric"><span>Rows</span><strong id="metricRows">0</strong></div>
+        <div class="metric"><span>Selected License</span><strong id="metricLicense">-</strong></div>
+        <div class="metric"><span>Last Action</span><strong id="metricAction">Ready</strong></div>
       </div>
-      <pre id="output">Login first.</pre>
     </section>
 
-    <div class="grid">
-      <section>
-        <h2>License Actions</h2>
-        <div class="row">
-          <input id="licenseId" placeholder="License ID">
-          <button data-license-action="block">Block</button>
-          <button data-license-action="unblock">Unblock</button>
-          <button data-license-action="reset-device">Reset Device</button>
-        </div>
-      </section>
+    <div class="workspace">
+      <div class="stack">
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>License Search</h2>
+              <small>Find customers by email, name, or license hint.</small>
+            </div>
+          </div>
+          <div class="row">
+            <input id="licenseSearch" placeholder="Email, name, or key hint">
+            <button data-action="licenses">Search</button>
+            <button class="secondary" data-action="users">Customers</button>
+            <button class="secondary" data-action="attempts">Failed Attempts</button>
+            <button class="secondary" data-action="versions">Versions</button>
+          </div>
+        </section>
 
-      <section>
-        <h2>Tutorial Video</h2>
-        <div class="row">
-          <input id="tutorialUrl" placeholder="YouTube tutorial link">
-          <button id="loadTutorialBtn">Load Current</button>
-          <button id="saveTutorialBtn">Save Tutorial Link</button>
-          <button id="clearTutorialBtn">Clear</button>
-        </div>
-      </section>
+        <section class="result-panel">
+          <div class="result-head">
+            <div>
+              <h2 id="resultTitle">Output</h2>
+              <small id="resultSubtitle">Login first.</small>
+            </div>
+            <button class="secondary" id="clearOutputBtn">Clear</button>
+          </div>
+          <div class="result-body" id="output">
+            <div class="notice">Login first, then search licenses or open customer lists.</div>
+          </div>
+        </section>
+      </div>
 
-      <section>
-        <h2>Website Maintenance</h2>
-        <div class="row">
-          <select id="maintenanceActive">
-            <option value="false">Off - Website Normal</option>
-            <option value="true">On - Maintenance Mode</option>
-          </select>
-          <input id="maintenanceMessage" placeholder="Optional maintenance message">
-          <button id="loadMaintenanceBtn">Load Current</button>
-          <button id="saveMaintenanceBtn">Save Maintenance</button>
-        </div>
-      </section>
+      <div class="stack">
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>License Actions</h2>
+              <small>Use the license ID from search results.</small>
+            </div>
+          </div>
+          <div class="stack">
+            <input id="licenseId" placeholder="License ID">
+            <div class="row">
+              <button class="danger" data-license-action="block">Block</button>
+              <button data-license-action="unblock">Unblock</button>
+              <button class="secondary" data-license-action="reset-device">Reset Device</button>
+            </div>
+          </div>
+        </section>
 
-      <section>
-        <h2>Manual License</h2>
-        <div class="grid">
-          <label>Name<input id="manualName" placeholder="Customer name"></label>
-          <label>Email<input id="manualEmail" type="email" placeholder="customer@gmail.com"></label>
-          <label>Type<select id="manualType"><option>standard</option><option>lifetime</option><option>trial</option></select></label>
-          <label>Expiry Days<input id="manualDays" type="number" value="365"></label>
-        </div>
-        <p><button id="manualBtn">Generate License</button></p>
-      </section>
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>Manual License</h2>
+              <small>Create a key for support or direct customers.</small>
+            </div>
+          </div>
+          <div class="grid">
+            <label>Name<input id="manualName" placeholder="Customer name"></label>
+            <label>Email<input id="manualEmail" type="email" placeholder="customer@gmail.com"></label>
+            <label>Type<select id="manualType"><option>standard</option><option>lifetime</option><option>trial</option></select></label>
+            <label>Expiry Days<input id="manualDays" type="number" value="365"></label>
+          </div>
+          <p style="margin-top:12px"><button id="manualBtn">Generate License</button></p>
+        </section>
 
-      <section>
-        <h2>Add Version</h2>
-        <div class="grid">
-          <label>Version<input id="version" placeholder="1.0.1"></label>
-          <label>Download Link or Path<input id="downloadPath" placeholder="https://drive.google.com/drive/folders/..."></label>
-          <label>Notes<textarea id="notes" placeholder="Release notes"></textarea></label>
-          <label>Active<select id="isActive"><option value="true">true</option><option value="false">false</option></select></label>
-        </div>
-        <p><button id="versionBtn">Save Version</button></p>
-      </section>
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>Website Maintenance</h2>
+              <small>Control the public maintenance banner.</small>
+            </div>
+          </div>
+          <div class="stack">
+            <select id="maintenanceActive">
+              <option value="false">Off - Website Normal</option>
+              <option value="true">On - Maintenance Mode</option>
+            </select>
+            <input id="maintenanceMessage" placeholder="Optional maintenance message">
+            <div class="row">
+              <button class="secondary" id="loadMaintenanceBtn">Load Current</button>
+              <button id="saveMaintenanceBtn">Save Maintenance</button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>Tutorial Video</h2>
+              <small>Set the install tutorial link shown on the website.</small>
+            </div>
+          </div>
+          <div class="stack">
+            <input id="tutorialUrl" placeholder="YouTube tutorial link">
+            <div class="row">
+              <button class="secondary" id="loadTutorialBtn">Load Current</button>
+              <button id="saveTutorialBtn">Save Link</button>
+              <button class="secondary" id="clearTutorialBtn">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>Add Version</h2>
+              <small>Publish a new extension download target.</small>
+            </div>
+          </div>
+          <div class="grid">
+            <label>Version<input id="version" placeholder="1.0.1"></label>
+            <label>Download Link or Path<input id="downloadPath" placeholder="https://drive.google.com/drive/folders/..."></label>
+            <label>Active<select id="isActive"><option value="true">true</option><option value="false">false</option></select></label>
+            <label>Notes<textarea id="notes" placeholder="Release notes"></textarea></label>
+          </div>
+          <p style="margin-top:12px"><button id="versionBtn">Save Version</button></p>
+        </section>
+      </div>
     </div>
   </main>
+
   <script src="admin.js"></script>
 </body>
 </html>
