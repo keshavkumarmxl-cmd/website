@@ -493,6 +493,7 @@
               <button class="danger" data-license-action="block">Block</button>
               <button data-license-action="unblock">Unblock</button>
               <button class="secondary" data-license-action="reset-device">Reset Device</button>
+              <button class="danger" data-license-action="delete">Delete License</button>
             </div>
           </div>
         </section>
@@ -564,6 +565,22 @@
             <label>Notes<textarea id="notes" placeholder="Release notes"></textarea></label>
           </div>
           <p style="margin-top:12px"><button id="versionBtn">Save Version</button></p>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>Upload ZIP Update</h2>
+              <small>Store a ZIP on the VPS and optionally make it the active download.</small>
+            </div>
+          </div>
+          <div class="grid">
+            <label>Version<input id="uploadVersion" placeholder="1.0.2"></label>
+            <label>ZIP File<input id="uploadZip" type="file" accept=".zip,application/zip"></label>
+            <label>Active<select id="uploadIsActive"><option value="true">true</option><option value="false">false</option></select></label>
+            <label>Notes<textarea id="uploadNotes" placeholder="Release notes for this uploaded ZIP"></textarea></label>
+          </div>
+          <p style="margin-top:12px"><button id="uploadZipBtn">Upload ZIP</button></p>
         </section>
           </div>
       </div>

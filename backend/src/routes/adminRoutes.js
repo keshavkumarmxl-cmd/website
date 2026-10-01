@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import bcrypt from "bcryptjs";
 import express from "express";
 import { config } from "../config.js";
@@ -17,6 +19,18 @@ import { adminLoginSchema, couponSchema, maintenanceSchema, manualLicenseSchema,
 import { expiryDate, generateLicenseKey, hashLicenseKey, licenseHint } from "../utils/license.js";
 
 export const adminRoutes = express.Router();
+
+function safeVersionName(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+function activeFlag(value) {
+  return String(value || "").trim().toLowerCase() === "true";
+}
 
 function siteSettingResponse(row, mongoSetting) {
   const value = row?.value || mongoSetting?.value || "";
@@ -381,6 +395,23 @@ adminRoutes.post("/licenses/:id/reset-device", (req, res) => {
   res.json({ status: "success" });
 });
 
+adminRoutes.delete("/licenses/:id", (req, res) => {
+  const license = db.prepare("SELECT * FROM licenses WHERE id = ?").get(req.params.id);
+  if (!license) return res.status(404).json({ error: "License not found" });
+
+  const tx = db.transaction(() => {
+    db.prepare("DELETE FROM devices WHERE license_id = ?").run(license.id);
+    db.prepare("DELETE FROM licenses WHERE id = ?").run(license.id);
+  });
+
+  tx();
+  res.json({
+    status: "success",
+    deletedLicenseId: license.id,
+    licenseHint: license.license_hint
+  });
+});
+
 adminRoutes.get("/activation-attempts", (req, res) => {
   const rows = db.prepare(`
     SELECT * FROM activation_attempts
@@ -416,6 +447,51 @@ adminRoutes.post("/manual-license", validate(manualLicenseSchema), (req, res) =>
 adminRoutes.get("/versions", (req, res) => {
   res.json(db.prepare("SELECT * FROM extension_versions ORDER BY created_at DESC").all());
 });
+
+adminRoutes.post(
+  "/versions/upload",
+  express.raw({ type: ["application/zip", "application/octet-stream"], limit: "700mb" }),
+  (req, res) => {
+    const version = safeVersionName(req.query.version);
+    if (!version) return res.status(400).json({ error: "Version is required" });
+    if (!Buffer.isBuffer(req.body) || req.body.length < 4) {
+      return res.status(400).json({ error: "Upload a valid ZIP file" });
+    }
+    if (req.body[0] !== 0x50 || req.body[1] !== 0x4b) {
+      return res.status(400).json({ error: "Uploaded file does not look like a ZIP" });
+    }
+
+    const storageDir = path.resolve(process.cwd(), "storage/extensions");
+    fs.mkdirSync(storageDir, { recursive: true });
+
+    const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z");
+    const filename = `KESHAVWITHVELO-${version}-${timestamp}.zip`;
+    const absolutePath = path.join(storageDir, filename);
+    const downloadPath = `./storage/extensions/${filename}`;
+    fs.writeFileSync(absolutePath, req.body);
+
+    const isActive = activeFlag(req.query.isActive);
+    const notes = String(req.query.notes || "").trim().slice(0, 1000) || `Uploaded ZIP ${filename}`;
+
+    const tx = db.transaction(() => {
+      if (isActive) db.prepare("UPDATE extension_versions SET is_active = 0").run();
+      db.prepare(`
+        INSERT INTO extension_versions (version, download_path, notes, is_active)
+        VALUES (?, ?, ?, ?)
+      `).run(version, downloadPath, notes, isActive ? 1 : 0);
+    });
+
+    tx();
+    res.status(201).json({
+      status: "success",
+      version,
+      filename,
+      downloadPath,
+      sizeBytes: req.body.length,
+      isActive
+    });
+  }
+);
 
 adminRoutes.post("/versions", validate(versionSchema), (req, res) => {
   const tx = db.transaction(() => {

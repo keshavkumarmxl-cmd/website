@@ -128,6 +128,7 @@ function renderLicenses(rows) {
           <div class="inline-actions">
             <button class="secondary" data-select-license="${escapeHtml(row.id)}">Select</button>
             <button class="secondary" data-copy="${escapeHtml(row.email || "")}">Copy Email</button>
+            <button class="danger" data-delete-license="${escapeHtml(row.id)}">Delete</button>
           </div>
         </td>
       </tr>
@@ -290,7 +291,9 @@ document.querySelectorAll("[data-license-action]").forEach((button) => {
       try {
         const id = licenseIdInput.value;
         if (!id) return show("Enter a license ID first.", "Action Error");
-        show(await api(`/api/admin/licenses/${id}/${button.dataset.licenseAction}`, { method: "POST" }), "License Action");
+        const action = button.dataset.licenseAction;
+        if (action === "delete" && !confirm(`Delete license ID ${id}? This removes the license and its device binding.`)) return;
+        show(await api(`/api/admin/licenses/${id}/${action}`, { method: action === "delete" ? "DELETE" : "POST" }), "License Action");
         setSelectedLicense(id);
       } catch (error) {
         show(error, "Action Error");
@@ -396,6 +399,36 @@ document.getElementById("versionBtn").addEventListener("click", async (event) =>
   });
 });
 
+document.getElementById("uploadZipBtn").addEventListener("click", async (event) => {
+  await withBusy(event.currentTarget, async () => {
+    try {
+      const file = document.getElementById("uploadZip").files[0];
+      const version = document.getElementById("uploadVersion").value.trim();
+      const notes = document.getElementById("uploadNotes").value.trim();
+      const isActive = document.getElementById("uploadIsActive").value === "true";
+      if (!version) return show("Enter a version before uploading.", "Upload Error");
+      if (!file) return show("Choose a ZIP file first.", "Upload Error");
+      if (!/\.zip$/i.test(file.name)) return show("Choose a .zip file.", "Upload Error");
+
+      const params = new URLSearchParams({ version, notes, isActive: String(isActive) });
+      const res = await fetch(`/api/admin/versions/upload?${params.toString()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/zip",
+          ...(token() ? { Authorization: `Bearer ${token()}` } : {})
+        },
+        body: await file.arrayBuffer()
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) throw data;
+      show(data, "ZIP Upload");
+    } catch (error) {
+      show(error, "Upload Error");
+    }
+  });
+});
+
 document.getElementById("clearOutputBtn").addEventListener("click", () => {
   setResultHeading("Output", "Cleared");
   setMetric("Idle", 0, "Ready");
@@ -410,6 +443,17 @@ output.addEventListener("click", (event) => {
   }
   const copyButton = event.target.closest("[data-copy]");
   if (copyButton) copyText(copyButton.dataset.copy);
+  const deleteButton = event.target.closest("[data-delete-license]");
+  if (deleteButton) {
+    const id = deleteButton.dataset.deleteLicense;
+    if (!confirm(`Delete license ID ${id}? This removes the license and its device binding.`)) return;
+    api(`/api/admin/licenses/${id}`, { method: "DELETE" })
+      .then((data) => {
+        show(data, "License Action");
+        setSelectedLicense(id);
+      })
+      .catch((error) => show(error, "Action Error"));
+  }
 });
 
 setAuthState();
