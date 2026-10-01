@@ -8,18 +8,32 @@ const metricAction = document.getElementById("metricAction");
 const resultTitle = document.getElementById("resultTitle");
 const resultSubtitle = document.getElementById("resultSubtitle");
 const sessionBadge = document.getElementById("sessionBadge");
+const sidebarAdminEmail = document.getElementById("sidebarAdminEmail");
+const sidebarSessionBadge = document.getElementById("sidebarSessionBadge");
 const licenseIdInput = document.getElementById("licenseId");
 
 function token() {
   return localStorage.getItem(tokenKey);
 }
 
+function adminEmail() {
+  return localStorage.getItem("velo_admin_email") || "";
+}
+
+function setAuthState() {
+  const isLoggedIn = Boolean(token());
+  document.body.classList.toggle("is-authenticated", isLoggedIn);
+  sessionBadge.textContent = isLoggedIn ? "Logged in" : "Logged out";
+  sessionBadge.className = "badge " + (isLoggedIn ? "success" : "");
+  if (sidebarSessionBadge) sidebarSessionBadge.textContent = isLoggedIn ? "Logged in" : "Logged out";
+  if (sidebarAdminEmail) sidebarAdminEmail.textContent = adminEmail() || "-";
+}
+
 function setMetric(type, rows, action) {
   metricType.textContent = type || "Idle";
   metricRows.textContent = Number.isFinite(rows) ? String(rows) : "0";
   if (action) metricAction.textContent = action;
-  sessionBadge.textContent = token() ? "Logged in" : "Logged out";
-  sessionBadge.className = "badge " + (token() ? "success" : "");
+  setAuthState();
 }
 
 function setSelectedLicense(id) {
@@ -236,6 +250,8 @@ document.getElementById("loginBtn").addEventListener("click", async (event) => {
         })
       });
       localStorage.setItem(tokenKey, data.token);
+      localStorage.setItem("velo_admin_email", document.getElementById("email").value.trim());
+      setAuthState();
       setMetric("Session", 1, "Logged in");
       show("Logged in.", "Session");
     } catch (error) {
@@ -246,6 +262,8 @@ document.getElementById("loginBtn").addEventListener("click", async (event) => {
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem(tokenKey);
+  localStorage.removeItem("velo_admin_email");
+  setAuthState();
   setMetric("Session", 0, "Logged out");
   show("Logged out.", "Session");
 });
@@ -394,4 +412,5 @@ output.addEventListener("click", (event) => {
   if (copyButton) copyText(copyButton.dataset.copy);
 });
 
+setAuthState();
 setMetric("Idle", 0, "Ready");
