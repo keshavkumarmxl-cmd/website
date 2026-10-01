@@ -5,6 +5,7 @@ import express from "express";
 import { config } from "../config.js";
 import { db } from "../db/connection.js";
 import {
+  blockMongoLicense,
   deleteMongoCoupon,
   getMongoCoupons,
   getMongoProductPlans,
@@ -372,9 +373,13 @@ adminRoutes.get("/licenses", (req, res) => {
   res.json(rows);
 });
 
-adminRoutes.post("/licenses/:id/block", (req, res) => {
+adminRoutes.post("/licenses/:id/block", async (req, res) => {
+  const license = db.prepare("SELECT * FROM licenses WHERE id = ?").get(req.params.id);
+  if (!license) return res.status(404).json({ error: "License not found" });
+
   db.prepare("UPDATE licenses SET status = 'blocked' WHERE id = ?").run(req.params.id);
-  res.json({ status: "success" });
+  await blockMongoLicense(license.license_hash);
+  res.json({ status: "success", blockedEverywhere: true });
 });
 
 adminRoutes.post("/licenses/:id/unblock", (req, res) => {
@@ -395,20 +400,31 @@ adminRoutes.post("/licenses/:id/reset-device", (req, res) => {
   res.json({ status: "success" });
 });
 
-adminRoutes.delete("/licenses/:id", (req, res) => {
+adminRoutes.delete("/licenses/:id", async (req, res) => {
   const license = db.prepare("SELECT * FROM licenses WHERE id = ?").get(req.params.id);
   if (!license) return res.status(404).json({ error: "License not found" });
 
   const tx = db.transaction(() => {
     db.prepare("DELETE FROM devices WHERE license_id = ?").run(license.id);
-    db.prepare("DELETE FROM licenses WHERE id = ?").run(license.id);
+    db.prepare(`
+      UPDATE licenses
+      SET status = 'blocked',
+          device_id = NULL,
+          device_rebind_count = 0,
+          activation_date = NULL,
+          last_verification = NULL
+      WHERE id = ?
+    `).run(license.id);
   });
 
   tx();
+  await blockMongoLicense(license.license_hash);
   res.json({
     status: "success",
+    blockedEverywhere: true,
     deletedLicenseId: license.id,
-    licenseHint: license.license_hint
+    licenseHint: license.license_hint,
+    note: "License was blocked everywhere and device binding was cleared."
   });
 });
 

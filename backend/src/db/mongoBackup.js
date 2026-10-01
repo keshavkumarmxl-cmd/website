@@ -136,6 +136,30 @@ export async function findMongoLicenseByEmailHint(email, licenseHint) {
   });
 }
 
+export async function blockMongoLicense(licenseHash) {
+  return safeRun("blockMongoLicense", async (db) => {
+    const now = new Date();
+    await Promise.all([
+      db.collection("licenses").updateOne(
+        { licenseHash },
+        {
+          $set: {
+            status: "blocked",
+            updatedAt: now
+          },
+          $unset: {
+            deviceHash: "",
+            lastVerification: ""
+          }
+        }
+      ),
+      db.collection("devices").deleteMany({ licenseHash })
+    ]);
+
+    return { status: "success" };
+  });
+}
+
 export async function activateMongoLicense({ licenseHash, email, deviceHash }) {
   return safeRun("activateMongoLicense", async (db) => {
     const license = await db.collection("licenses").findOne({ licenseHash });
