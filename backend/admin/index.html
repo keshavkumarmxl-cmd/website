@@ -223,7 +223,7 @@
       gap: 8px;
     }
 
-    .side-nav span {
+    .side-nav button {
       min-height: 34px;
       border: 1px solid rgba(255,255,255,.09);
       border-radius: var(--radius);
@@ -231,9 +231,17 @@
       color: var(--soft);
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       padding: 0 10px;
       font-size: 12px;
       font-weight: 850;
+      width: 100%;
+    }
+
+    .side-nav button:hover {
+      border-color: rgba(255,42,42,.45);
+      background: #121212;
+      filter: none;
     }
 
     .dashboard-main {
@@ -428,17 +436,18 @@
         <section class="side-card">
           <h2>Tools</h2>
           <div class="side-nav">
-            <span>License Search</span>
-            <span>Manual License</span>
-            <span>Maintenance</span>
-            <span>Tutorial Video</span>
-            <span>Versions</span>
+            <button type="button" data-scroll-target="licenseSearchPanel">License Search</button>
+            <button type="button" data-scroll-target="manualLicensePanel">Manual License</button>
+            <button type="button" data-scroll-target="maintenancePanel">Maintenance</button>
+            <button type="button" data-scroll-target="tutorialPanel">Tutorial Video</button>
+            <button type="button" data-scroll-target="versionsPanel">Versions</button>
+            <button type="button" data-scroll-target="zipUploadPanel">Upload ZIP</button>
           </div>
         </section>
       </aside>
 
       <div class="dashboard-main">
-        <section>
+        <section id="licenseSearchPanel">
           <div class="metric-grid">
             <div class="metric"><span>Result Type</span><strong id="metricType">Idle</strong></div>
             <div class="metric"><span>Rows</span><strong id="metricRows">0</strong></div>
@@ -449,7 +458,7 @@
 
         <div class="workspace">
           <div class="stack">
-        <section>
+        <section id="licenseActionsPanel">
           <div class="section-head">
             <div>
               <h2>License Search</h2>
@@ -480,7 +489,7 @@
           </div>
 
           <div class="stack">
-        <section>
+        <section id="manualLicensePanel">
           <div class="section-head">
             <div>
               <h2>License Actions</h2>
@@ -498,7 +507,7 @@
           </div>
         </section>
 
-        <section>
+        <section id="maintenancePanel">
           <div class="section-head">
             <div>
               <h2>Manual License</h2>
@@ -514,7 +523,7 @@
           <p style="margin-top:12px"><button id="manualBtn">Generate License</button></p>
         </section>
 
-        <section>
+        <section id="tutorialPanel">
           <div class="section-head">
             <div>
               <h2>Website Maintenance</h2>
@@ -534,7 +543,7 @@
           </div>
         </section>
 
-        <section>
+        <section id="versionsPanel">
           <div class="section-head">
             <div>
               <h2>Tutorial Video</h2>
@@ -551,7 +560,7 @@
           </div>
         </section>
 
-        <section>
+        <section id="zipUploadPanel">
           <div class="section-head">
             <div>
               <h2>Add Version</h2>
@@ -588,6 +597,6 @@
     </div>
   </main>
 
-  <script src="admin.js?v=72c4aa9"></script>
+  <script src="admin.js?v=89b880d"></script>
 </body>
 </html>

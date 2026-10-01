@@ -293,7 +293,8 @@ document.querySelectorAll("[data-license-action]").forEach((button) => {
         if (!id) return show("Enter a license ID first.", "Action Error");
         const action = button.dataset.licenseAction;
         if (action === "delete" && !confirm(`Delete license ID ${id}? This removes the license and its device binding.`)) return;
-        show(await api(`/api/admin/licenses/${id}/${action}`, { method: action === "delete" ? "DELETE" : "POST" }), "License Action");
+        const path = action === "delete" ? `/api/admin/licenses/${id}` : `/api/admin/licenses/${id}/${action}`;
+        show(await api(path, { method: action === "delete" ? "DELETE" : "POST" }), "License Action");
         setSelectedLicense(id);
       } catch (error) {
         show(error, "Action Error");
@@ -433,6 +434,14 @@ document.getElementById("clearOutputBtn").addEventListener("click", () => {
   setResultHeading("Output", "Cleared");
   setMetric("Idle", 0, "Ready");
   showNotice("Output cleared.");
+});
+
+document.querySelectorAll("[data-scroll-target]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = document.getElementById(button.dataset.scrollTarget);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 });
 
 output.addEventListener("click", (event) => {
