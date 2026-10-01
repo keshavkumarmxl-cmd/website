@@ -57,6 +57,13 @@ export const downloadSchema = z.object({
   licenseKey: licenseKeySchema
 });
 
+export const customerAccessSchema = z.object({
+  email: emailSchema,
+  keyLast4: z.string()
+    .transform((value) => String(value || "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF\u034F\u061C\u180E]/g, "").trim().toUpperCase().replace(/[^A-Z0-9]/g, ""))
+    .pipe(z.string().length(4))
+});
+
 export const adminLoginSchema = z.object({
   email: emailSchema,
   password: z.string().min(8)

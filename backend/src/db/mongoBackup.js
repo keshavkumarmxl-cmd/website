@@ -127,6 +127,15 @@ export async function findMongoLicenseByHash(licenseHash) {
   });
 }
 
+export async function findMongoLicenseByEmailHint(email, licenseHint) {
+  return safeRun("findMongoLicenseByEmailHint", async (db) => {
+    return db.collection("licenses").findOne(
+      { email, licenseHint },
+      { sort: { createdAt: -1 } }
+    );
+  });
+}
+
 export async function activateMongoLicense({ licenseHash, email, deviceHash }) {
   return safeRun("activateMongoLicense", async (db) => {
     const license = await db.collection("licenses").findOne({ licenseHash });

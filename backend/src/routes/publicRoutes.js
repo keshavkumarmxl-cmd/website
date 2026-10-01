@@ -4,6 +4,7 @@ import express from "express";
 import { db } from "../db/connection.js";
 import {
   activateMongoLicense,
+  findMongoLicenseByEmailHint,
   findMongoLicenseByHash,
   getMongoSiteSetting,
   logMongoActivationAttempt,
@@ -13,7 +14,7 @@ import {
 } from "../db/mongoBackup.js";
 import { config } from "../config.js";
 import { validate } from "../middleware/validate.js";
-import { activateSchema, downloadSchema, purchaseSchema, razorpayOrderSchema, verifyLicenseSchema } from "../schemas.js";
+import { activateSchema, customerAccessSchema, downloadSchema, purchaseSchema, razorpayOrderSchema, verifyLicenseSchema } from "../schemas.js";
 import { sendPurchaseEmail } from "../services/emailService.js";
 import { createRazorpayOrder, getCheckoutPlans, verifyPayment } from "../services/paymentService.js";
 import { createDownloadToken, readDownloadToken } from "../utils/downloadLink.js";
@@ -203,6 +204,50 @@ function appendPurchaseHistory(userId, purchase) {
   const history = JSON.parse(user.purchase_history || "[]");
   history.push(purchase);
   db.prepare("UPDATE users SET purchase_history = ? WHERE id = ?").run(JSON.stringify(history), userId);
+}
+
+function customerFromLicense(license) {
+  return {
+    email: license.email,
+    product: "Keshav With Velo",
+    licenseHint: license.license_hint || license.licenseHint,
+    licenseStatus: license.status === "inactive" ? "Verified" : license.status,
+    licenseType: license.license_type || license.licenseType || "standard",
+    expiryDate: license.expiry_date || license.expiryDate || null
+  };
+}
+
+async function findCustomerLicenseByHint({ email, keyLast4 }) {
+  const rows = db.prepare(`
+    SELECT licenses.*, users.email
+    FROM licenses
+    JOIN users ON users.id = licenses.user_id
+    WHERE users.email = ? AND licenses.license_hint = ?
+    ORDER BY licenses.created_at DESC
+  `).all(email, keyLast4);
+
+  let unavailableLicense = null;
+  for (const row of rows) {
+    const license = repairPermanentLicenseIfNeeded(row);
+    if (license.status === "blocked") {
+      unavailableLicense ||= { ...license, blocked: true };
+      continue;
+    }
+    if (isExpired(license.expiry_date) || license.status === "expired") {
+      unavailableLicense ||= { ...license, expired: true };
+      continue;
+    }
+    return license;
+  }
+  if (unavailableLicense) return unavailableLicense;
+
+  const mongoLicense = await findMongoLicenseByEmailHint(email, keyLast4);
+  if (!mongoLicense) return null;
+  if (mongoLicense.status === "blocked") return { ...mongoLicense, blocked: true };
+  if (mongoLicense.expiryDate && new Date(mongoLicense.expiryDate).getTime() < Date.now()) {
+    return { ...mongoLicense, expired: true };
+  }
+  return mongoLicense;
 }
 
 publicRoutes.get("/health", (req, res) => {
@@ -532,6 +577,43 @@ async function handleVerifyLicense(req, res) {
 
 publicRoutes.post("/verify-license", validate(verifyLicenseSchema), handleVerifyLicense);
 publicRoutes.post("/licenses/verify", validate(verifyLicenseSchema), handleVerifyLicense);
+
+publicRoutes.post("/customer-login", validate(customerAccessSchema), async (req, res) => {
+  const { email, keyLast4 } = req.body;
+  const license = await findCustomerLicenseByHint({ email, keyLast4 });
+
+  if (!license) {
+    return res.status(404).json({ status: "failed", reason: "Invalid email or license key characters" });
+  }
+  if (license.blocked || license.status === "blocked") {
+    return res.status(403).json({ status: "blocked", reason: "License is blocked" });
+  }
+  if (license.expired || isExpired(license.expiry_date || license.expiryDate) || license.status === "expired") {
+    return res.status(403).json({ status: "expired", reason: "License is expired" });
+  }
+
+  return res.json({
+    status: "success",
+    customer: customerFromLicense(license)
+  });
+});
+
+publicRoutes.post("/customer-download", validate(customerAccessSchema), async (req, res) => {
+  const { email, keyLast4 } = req.body;
+  const license = await findCustomerLicenseByHint({ email, keyLast4 });
+
+  if (!license) {
+    return res.status(404).send("Invalid email or license key characters.");
+  }
+  if (license.blocked || license.status === "blocked") {
+    return res.status(403).send("This license is blocked.");
+  }
+  if (license.expired || isExpired(license.expiry_date || license.expiryDate) || license.status === "expired") {
+    return res.status(403).send("This license is expired.");
+  }
+
+  return sendActiveDownload(res);
+});
 
 publicRoutes.post("/download", validate(downloadSchema), async (req, res) => {
   if (isMasterLicense({ email: req.body.email, licenseKey: req.body.licenseKey })) {
