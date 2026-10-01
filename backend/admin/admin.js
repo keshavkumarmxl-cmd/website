@@ -11,6 +11,11 @@ const sessionBadge = document.getElementById("sessionBadge");
 const sidebarAdminEmail = document.getElementById("sidebarAdminEmail");
 const sidebarSessionBadge = document.getElementById("sidebarSessionBadge");
 const licenseIdInput = document.getElementById("licenseId");
+const manualResult = document.getElementById("manualResult");
+const manualResultLabel = document.getElementById("manualResultLabel");
+const manualResultKey = document.getElementById("manualResultKey");
+const manualResultEmail = document.getElementById("manualResultEmail");
+const copyManualKeyBtn = document.getElementById("copyManualKeyBtn");
 
 function token() {
   return localStorage.getItem(tokenKey);
@@ -105,6 +110,27 @@ function copyText(value) {
   navigator.clipboard?.writeText(String(value)).then(() => {
     setMetric(metricType.textContent, Number(metricRows.textContent || 0), "Copied");
   }).catch(() => {});
+}
+
+function showManualResult(data) {
+  const key = data?.licenseKey || data?.key || "";
+  manualResult.classList.remove("hidden", "error");
+  manualResultLabel.textContent = key ? "Generated License Key" : "Manual License Result";
+  manualResultKey.textContent = key || JSON.stringify(data, null, 2);
+  manualResultEmail.textContent = data?.email ? `Email: ${data.email}` : "Saved";
+  copyManualKeyBtn.classList.toggle("hidden", !key);
+  if (key) metricLicense.textContent = key;
+  setMetric("Manual License", 1, "Generated");
+}
+
+function showManualError(error) {
+  manualResult.classList.remove("hidden");
+  manualResult.classList.add("error");
+  manualResultLabel.textContent = "Manual License Error";
+  manualResultKey.textContent = error?.reason || error?.message || JSON.stringify(error, null, 2);
+  manualResultEmail.textContent = "Please check the entered name, email, type, and expiry days.";
+  copyManualKeyBtn.classList.add("hidden");
+  setMetric("Manual License", 0, "Error");
 }
 
 function table(headers, rows) {
@@ -320,6 +346,7 @@ document.querySelectorAll("[data-license-action]").forEach((button) => {
 document.getElementById("manualBtn").addEventListener("click", async (event) => {
   await withBusy(event.currentTarget, async () => {
     try {
+      manualResult.classList.add("hidden");
       const data = await api("/api/admin/manual-license", {
         method: "POST",
         body: JSON.stringify({
@@ -329,11 +356,15 @@ document.getElementById("manualBtn").addEventListener("click", async (event) => 
           expiryDays: Number(document.getElementById("manualDays").value || 365)
         })
       });
-      show(data, "Manual License");
+      showManualResult(data);
     } catch (error) {
-      show(error, "Manual License Error");
+      showManualError(error);
     }
   });
+});
+
+copyManualKeyBtn.addEventListener("click", () => {
+  copyText(manualResultKey.textContent);
 });
 
 document.getElementById("loadTutorialBtn").addEventListener("click", async (event) => {

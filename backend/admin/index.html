@@ -380,6 +380,26 @@
 
     .notice.ok { border-color: rgba(49,208,116,.35); color: #bdf6d1; }
     .notice.error { border-color: rgba(255,42,42,.45); color: #ffc2c2; }
+    .manual-result {
+      margin-top: 12px;
+      border: 1px solid rgba(49,208,116,.35);
+      border-radius: var(--radius);
+      background: rgba(49,208,116,.08);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .manual-result.error {
+      border-color: rgba(255,42,42,.45);
+      background: rgba(255,42,42,.08);
+    }
+    .manual-result strong {
+      font-size: clamp(18px, 2vw, 28px);
+      overflow-wrap: anywhere;
+    }
+    .manual-result .row {
+      justify-content: space-between;
+    }
     .hidden { display: none !important; }
     body:not(.is-authenticated) #dashboardPanel { display: none; }
     body.is-authenticated #loginPanel { display: none; }
@@ -531,6 +551,14 @@
             <label>Expiry Days<input id="manualDays" type="number" value="365"></label>
           </div>
           <p style="margin-top:12px"><button id="manualBtn">Generate License</button></p>
+          <div id="manualResult" class="manual-result hidden">
+            <small id="manualResultLabel">Generated License Key</small>
+            <strong id="manualResultKey">-</strong>
+            <div class="row">
+              <small id="manualResultEmail">-</small>
+              <button id="copyManualKeyBtn" class="secondary" type="button">Copy Key</button>
+            </div>
+          </div>
         </section>
 
         <section id="maintenancePanel" class="tool-panel" data-tool-panel="maintenance">
@@ -607,6 +635,6 @@
     </div>
   </main>
 
-  <script src="admin.js?v=tool-tabs-1"></script>
+  <script src="admin.js?v=manual-inline-1"></script>
 </body>
 </html>
