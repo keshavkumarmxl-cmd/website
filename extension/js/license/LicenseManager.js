@@ -202,7 +202,8 @@
             self.save();
             return publicState(self.state);
         }).catch(function (err) {
-            if (self.canUseOfflineGrace()) {
+            var serverRejected = err && err.status && err.status !== 0;
+            if (!serverRejected && self.canUseOfflineGrace()) {
                 self.state.active = true;
                 self.state.message = "Offline grace mode active.";
                 self.emit();

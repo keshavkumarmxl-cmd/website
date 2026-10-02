@@ -64,9 +64,36 @@ function getActiveDownloadPath() {
   return activeVersion?.download_path || config.extensionZipPath;
 }
 
+function getActiveVersion() {
+  return db.prepare("SELECT * FROM extension_versions WHERE is_active = 1 ORDER BY id DESC LIMIT 1").get() || {
+    version: "1.0.0",
+    download_path: config.extensionZipPath,
+    notes: "Initial extension ZIP"
+  };
+}
+
+function compareVersions(left, right) {
+  const leftParts = String(left || "0").split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const rightParts = String(right || "0").split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < length; index += 1) {
+    const diff = (leftParts[index] || 0) - (rightParts[index] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 function purchaseDownloadUrl({ email, licenseKey }) {
   const downloadPath = getActiveDownloadPath();
   if (isExternalDownloadUrl(downloadPath)) return downloadPath;
+
+  const downloadToken = createDownloadToken({ email, licenseKey });
+  return `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
+}
+
+function activeVersionDownloadUrl({ email, licenseKey }) {
+  const version = getActiveVersion();
+  if (isExternalDownloadUrl(version.download_path)) return version.download_path;
 
   const downloadToken = createDownloadToken({ email, licenseKey });
   return `${config.publicBaseUrl}/api/download-link?token=${encodeURIComponent(downloadToken)}`;
@@ -613,6 +640,49 @@ publicRoutes.post("/customer-download", validate(customerAccessSchema), async (r
   }
 
   return sendActiveDownload(res);
+});
+
+publicRoutes.post("/check-update", async (req, res) => {
+  const currentVersion = String(req.body.currentVersion || "0.0.0").trim();
+  const normalizedKey = normalizeLicenseKey(req.body.licenseKey);
+  if (!normalizedKey) return res.status(400).json({ updateAvailable: false, error: "License key is required." });
+
+  const licenseHash = hashLicenseKey(normalizedKey);
+  let license = db.prepare(`
+    SELECT licenses.*, users.email
+    FROM licenses
+    JOIN users ON users.id = licenses.user_id
+    WHERE licenses.license_hash = ?
+  `).get(licenseHash);
+
+  if (!license) {
+    const mongoLicense = await findMongoLicenseByHash(licenseHash);
+    if (!mongoLicense) return res.status(404).json({ updateAvailable: false, error: "Invalid license key." });
+    if (mongoLicense.status === "blocked") return res.status(403).json({ updateAvailable: false, status: "blocked", error: "License is blocked." });
+    if (mongoLicense.expiryDate && new Date(mongoLicense.expiryDate).getTime() < Date.now()) {
+      return res.status(403).json({ updateAvailable: false, status: "expired", error: "License is expired." });
+    }
+    license = {
+      email: mongoLicense.email,
+      status: mongoLicense.status,
+      expiry_date: mongoLicense.expiryDate
+    };
+  }
+
+  if (license.status === "blocked") return res.status(403).json({ updateAvailable: false, status: "blocked", error: "License is blocked." });
+  if (isExpired(license.expiry_date) || license.status === "expired") {
+    return res.status(403).json({ updateAvailable: false, status: "expired", error: "License is expired." });
+  }
+
+  const activeVersion = getActiveVersion();
+  const updateAvailable = compareVersions(activeVersion.version, currentVersion) > 0;
+  res.json({
+    updateAvailable,
+    version: activeVersion.version,
+    currentVersion,
+    notes: activeVersion.notes || "",
+    downloadUrl: updateAvailable ? activeVersionDownloadUrl({ email: license.email || "", licenseKey: normalizedKey }) : null
+  });
 });
 
 publicRoutes.post("/download", validate(downloadSchema), async (req, res) => {
