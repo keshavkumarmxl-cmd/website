@@ -400,6 +400,46 @@
     .manual-result .row {
       justify-content: space-between;
     }
+    .upload-progress {
+      margin-top: 14px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: var(--radius);
+      background: #080808;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .upload-progress-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--soft);
+      font-weight: 900;
+    }
+    .upload-progress-track {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .upload-progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--red), #ff6868);
+      transition: width .18s ease;
+    }
+    .upload-progress.ok .upload-progress-fill {
+      background: linear-gradient(90deg, #1dbb62, #7cf0aa);
+    }
+    .upload-progress.error .upload-progress-fill {
+      background: linear-gradient(90deg, #9f1111, #ff2a2a);
+    }
+    .upload-progress small {
+      overflow-wrap: anywhere;
+    }
     .hidden { display: none !important; }
     body:not(.is-authenticated) #dashboardPanel { display: none; }
     body.is-authenticated #loginPanel { display: none; }
@@ -628,6 +668,16 @@
             <label>Notes<textarea id="uploadNotes" placeholder="Release notes for this uploaded ZIP"></textarea></label>
           </div>
           <p style="margin-top:12px"><button id="uploadZipBtn">Upload ZIP</button></p>
+          <div id="uploadProgress" class="upload-progress hidden" aria-live="polite">
+            <div class="upload-progress-head">
+              <span id="uploadProgressLabel">Ready</span>
+              <span id="uploadProgressPercent">0%</span>
+            </div>
+            <div class="upload-progress-track">
+              <div id="uploadProgressFill" class="upload-progress-fill"></div>
+            </div>
+            <small id="uploadProgressDetail">Choose a ZIP file to upload.</small>
+          </div>
         </section>
           </div>
       </div>
@@ -635,6 +685,6 @@
     </div>
   </main>
 
-  <script src="admin.js?v=manual-inline-1"></script>
+  <script src="admin.js?v=upload-progress-1"></script>
 </body>
 </html>

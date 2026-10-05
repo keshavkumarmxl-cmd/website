@@ -33,6 +33,8 @@ function activeFlag(value) {
   return String(value || "").trim().toLowerCase() === "true";
 }
 
+const maxZipUploadBytes = Number(process.env.MAX_EXTENSION_UPLOAD_BYTES || 6 * 1024 ** 3);
+
 function siteSettingResponse(row, mongoSetting) {
   const value = row?.value || mongoSetting?.value || "";
   return {
@@ -464,50 +466,105 @@ adminRoutes.get("/versions", (req, res) => {
   res.json(db.prepare("SELECT * FROM extension_versions ORDER BY created_at DESC").all());
 });
 
-adminRoutes.post(
-  "/versions/upload",
-  express.raw({ type: ["application/zip", "application/octet-stream"], limit: "700mb" }),
-  (req, res) => {
-    const version = safeVersionName(req.query.version);
-    if (!version) return res.status(400).json({ error: "Version is required" });
-    if (!Buffer.isBuffer(req.body) || req.body.length < 4) {
-      return res.status(400).json({ error: "Upload a valid ZIP file" });
-    }
-    if (req.body[0] !== 0x50 || req.body[1] !== 0x4b) {
-      return res.status(400).json({ error: "Uploaded file does not look like a ZIP" });
-    }
+adminRoutes.post("/versions/upload", (req, res) => {
+  const version = safeVersionName(req.query.version);
+  if (!version) return res.status(400).json({ error: "Version is required" });
 
-    const storageDir = path.resolve(process.cwd(), "storage/extensions");
-    fs.mkdirSync(storageDir, { recursive: true });
+  const storageDir = path.resolve(process.cwd(), "storage/extensions");
+  fs.mkdirSync(storageDir, { recursive: true });
 
-    const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z");
-    const filename = `KESHAVWITHVELO-${version}-${timestamp}.zip`;
-    const absolutePath = path.join(storageDir, filename);
-    const downloadPath = `./storage/extensions/${filename}`;
-    fs.writeFileSync(absolutePath, req.body);
+  const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z");
+  const filename = `KESHAVWITHVELO-${version}-${timestamp}.zip`;
+  const tempFilename = `${filename}.uploading`;
+  const absolutePath = path.join(storageDir, filename);
+  const tempPath = path.join(storageDir, tempFilename);
+  const downloadPath = `./storage/extensions/${filename}`;
+  const output = fs.createWriteStream(tempPath);
+  let sizeBytes = 0;
+  let firstBytes = Buffer.alloc(0);
+  let completed = false;
 
-    const isActive = activeFlag(req.query.isActive);
-    const notes = String(req.query.notes || "").trim().slice(0, 1000) || `Uploaded ZIP ${filename}`;
-
-    const tx = db.transaction(() => {
-      if (isActive) db.prepare("UPDATE extension_versions SET is_active = 0").run();
-      db.prepare(`
-        INSERT INTO extension_versions (version, download_path, notes, is_active)
-        VALUES (?, ?, ?, ?)
-      `).run(version, downloadPath, notes, isActive ? 1 : 0);
-    });
-
-    tx();
-    res.status(201).json({
-      status: "success",
-      version,
-      filename,
-      downloadPath,
-      sizeBytes: req.body.length,
-      isActive
-    });
+  function cleanupTemp() {
+    try { if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath); } catch (error) {}
   }
-);
+
+  function fail(statusCode, message) {
+    if (completed) return;
+    completed = true;
+    try { req.destroy(); } catch (error) {}
+    try { output.destroy(); } catch (error) {}
+    cleanupTemp();
+    if (!res.headersSent) res.status(statusCode).json({ error: message });
+  }
+
+  output.on("error", () => {
+    fail(500, "Could not write uploaded ZIP to storage.");
+  });
+
+  req.on("data", (chunk) => {
+    if (completed) return;
+    sizeBytes += chunk.length;
+    if (sizeBytes > maxZipUploadBytes) {
+      fail(413, `ZIP is too large. Max upload size is ${Math.floor(maxZipUploadBytes / (1024 ** 3))}GB.`);
+      return;
+    }
+
+    if (firstBytes.length < 4) {
+      firstBytes = Buffer.concat([firstBytes, chunk.slice(0, 4 - firstBytes.length)]);
+      if (firstBytes.length >= 4 && (firstBytes[0] !== 0x50 || firstBytes[1] !== 0x4b)) {
+        fail(400, "Uploaded file does not look like a ZIP.");
+        return;
+      }
+    }
+
+    req.pause();
+    if (!output.write(chunk)) output.once("drain", () => req.resume());
+    else req.resume();
+  });
+
+  req.on("end", () => {
+    if (completed) return;
+    if (sizeBytes < 4 || firstBytes[0] !== 0x50 || firstBytes[1] !== 0x4b) {
+      fail(400, "Upload a valid ZIP file.");
+      return;
+    }
+
+    output.end(() => {
+      if (completed) return;
+      completed = true;
+      try {
+        fs.renameSync(tempPath, absolutePath);
+        const isActive = activeFlag(req.query.isActive);
+        const notes = String(req.query.notes || "").trim().slice(0, 1000) || `Uploaded ZIP ${filename}`;
+
+        const tx = db.transaction(() => {
+          if (isActive) db.prepare("UPDATE extension_versions SET is_active = 0").run();
+          db.prepare(`
+            INSERT INTO extension_versions (version, download_path, notes, is_active)
+            VALUES (?, ?, ?, ?)
+          `).run(version, downloadPath, notes, isActive ? 1 : 0);
+        });
+
+        tx();
+        res.status(201).json({
+          status: "success",
+          version,
+          filename,
+          downloadPath,
+          sizeBytes,
+          isActive
+        });
+      } catch (error) {
+        cleanupTemp();
+        if (!res.headersSent) res.status(500).json({ error: "Could not save uploaded ZIP version." });
+      }
+    });
+  });
+
+  req.on("error", () => {
+    fail(400, "ZIP upload was interrupted.");
+  });
+});
 
 adminRoutes.post("/versions", validate(versionSchema), (req, res) => {
   const tx = db.transaction(() => {

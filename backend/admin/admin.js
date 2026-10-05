@@ -16,6 +16,11 @@ const manualResultLabel = document.getElementById("manualResultLabel");
 const manualResultKey = document.getElementById("manualResultKey");
 const manualResultEmail = document.getElementById("manualResultEmail");
 const copyManualKeyBtn = document.getElementById("copyManualKeyBtn");
+const uploadProgress = document.getElementById("uploadProgress");
+const uploadProgressLabel = document.getElementById("uploadProgressLabel");
+const uploadProgressPercent = document.getElementById("uploadProgressPercent");
+const uploadProgressFill = document.getElementById("uploadProgressFill");
+const uploadProgressDetail = document.getElementById("uploadProgressDetail");
 
 function token() {
   return localStorage.getItem(tokenKey);
@@ -110,6 +115,103 @@ function copyText(value) {
   navigator.clipboard?.writeText(String(value)).then(() => {
     setMetric(metricType.textContent, Number(metricRows.textContent || 0), "Copied");
   }).catch(() => {});
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes) || 0;
+  if (value >= 1024 ** 3) return `${(value / (1024 ** 3)).toFixed(2)} GB`;
+  if (value >= 1024 ** 2) return `${(value / (1024 ** 2)).toFixed(1)} MB`;
+  if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${value} B`;
+}
+
+function setUploadProgress({ percent = 0, label = "Ready", detail = "", mode = "" } = {}) {
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  uploadProgress.classList.remove("hidden", "ok", "error");
+  if (mode) uploadProgress.classList.add(mode);
+  uploadProgressLabel.textContent = label;
+  uploadProgressPercent.textContent = `${Math.round(safePercent)}%`;
+  uploadProgressFill.style.width = `${safePercent}%`;
+  uploadProgressDetail.textContent = detail || "";
+}
+
+function uploadZipWithProgress({ file, version, notes, isActive }) {
+  return new Promise((resolve, reject) => {
+    const params = new URLSearchParams({ version, notes, isActive: String(isActive) });
+    const xhr = new XMLHttpRequest();
+    const startedAt = Date.now();
+
+    xhr.open("POST", `/api/admin/versions/upload?${params.toString()}`, true);
+    xhr.setRequestHeader("Content-Type", "application/zip");
+    if (token()) xhr.setRequestHeader("Authorization", `Bearer ${token()}`);
+    xhr.timeout = 0;
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) {
+        setUploadProgress({
+          percent: 5,
+          label: "Uploading",
+          detail: `${file.name} - ${formatBytes(file.size)} selected`
+        });
+        return;
+      }
+      const elapsedSeconds = Math.max(1, (Date.now() - startedAt) / 1000);
+      const speed = event.loaded / elapsedSeconds;
+      setUploadProgress({
+        percent: (event.loaded / event.total) * 100,
+        label: "Uploading",
+        detail: `${formatBytes(event.loaded)} of ${formatBytes(event.total)} - ${formatBytes(speed)}/s`
+      });
+    };
+
+    xhr.onload = () => {
+      let data = {};
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+      } catch (error) {
+        reject({ error: "Upload finished but server returned invalid JSON." });
+        return;
+      }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(data || { error: `Upload failed with HTTP ${xhr.status}` });
+        return;
+      }
+      setUploadProgress({
+        percent: 100,
+        label: "Uploaded",
+        detail: `${file.name} uploaded successfully.`,
+        mode: "ok"
+      });
+      resolve(data);
+    };
+
+    xhr.onerror = () => {
+      setUploadProgress({
+        percent: 0,
+        label: "Upload failed",
+        detail: "Network error while uploading ZIP.",
+        mode: "error"
+      });
+      reject({ error: "Network error while uploading ZIP." });
+    };
+
+    xhr.onabort = () => {
+      setUploadProgress({
+        percent: 0,
+        label: "Upload cancelled",
+        detail: "The ZIP upload was cancelled.",
+        mode: "error"
+      });
+      reject({ error: "Upload cancelled." });
+    };
+
+    setUploadProgress({
+      percent: 0,
+      label: "Starting",
+      detail: `${file.name} - ${formatBytes(file.size)}`
+    });
+    xhr.send(file);
+  });
 }
 
 function showManualResult(data) {
@@ -456,20 +558,15 @@ document.getElementById("uploadZipBtn").addEventListener("click", async (event) 
       if (!file) return show("Choose a ZIP file first.", "Upload Error");
       if (!/\.zip$/i.test(file.name)) return show("Choose a .zip file.", "Upload Error");
 
-      const params = new URLSearchParams({ version, notes, isActive: String(isActive) });
-      const res = await fetch(`/api/admin/versions/upload?${params.toString()}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/zip",
-          ...(token() ? { Authorization: `Bearer ${token()}` } : {})
-        },
-        body: await file.arrayBuffer()
-      });
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : {};
-      if (!res.ok) throw data;
+      const data = await uploadZipWithProgress({ file, version, notes, isActive });
       show(data, "ZIP Upload");
     } catch (error) {
+      setUploadProgress({
+        percent: 0,
+        label: "Upload failed",
+        detail: error?.error || error?.message || "Upload failed.",
+        mode: "error"
+      });
       show(error, "Upload Error");
     }
   });
