@@ -1,5 +1,20 @@
 import nodemailer from "nodemailer";
 import { config } from "../config.js";
+import { db } from "../db/connection.js";
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function getTutorialUrl() {
+  const row = db.prepare("SELECT value FROM site_settings WHERE key = ?").get("tutorial_youtube_url");
+  return String(row?.value || "").trim();
+}
 
 function createTransport() {
   if (!config.smtp.host || !config.smtp.user || !config.smtp.pass) return null;
@@ -18,8 +33,15 @@ function createTransport() {
   });
 }
 
-function buildPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
+function buildPurchaseEmail({ name, email, licenseKey, downloadUrl, tutorialUrl }) {
   const subject = "Your Keshav With Velo activation details";
+  const tutorialText = tutorialUrl ? `
+Tutorial video:
+${tutorialUrl}
+` : "";
+  const tutorialHtml = tutorialUrl ? `
+      <p><strong>Tutorial video:</strong> <a href="${escapeHtml(tutorialUrl)}">Watch setup tutorial</a></p>
+  ` : "";
   const text = `Hi ${name},
 
 Thank you for buying Keshav With Velo.
@@ -32,6 +54,7 @@ ${licenseKey}
 
 Download link:
 ${downloadUrl}
+${tutorialText}
 
 Activation:
 1. Download and install the extension ZIP.
@@ -50,14 +73,16 @@ Terms:
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.55;color:#111">
       <h2>Keshav With Velo License</h2>
-      <p>Hi ${name}, thank you for buying Keshav With Velo.</p>
-      <p><strong>Download:</strong> <a href="${downloadUrl}">Download Keshav With Velo</a></p>
-      <p><strong>Activation email:</strong><br>${email}</p>
+      <p>Hi ${escapeHtml(name)}, thank you for buying Keshav With Velo.</p>
+      <p><strong>Download:</strong> <a href="${escapeHtml(downloadUrl)}">Download Keshav With Velo</a></p>
+      ${tutorialHtml}
+      <p><strong>Activation email:</strong><br>${escapeHtml(email)}</p>
       <p><strong>Activation key:</strong></p>
-      <p style="font-size:22px;font-weight:700;letter-spacing:2px">${licenseKey}</p>
+      <p style="font-size:22px;font-weight:700;letter-spacing:2px">${escapeHtml(licenseKey)}</p>
       <h3>Activation</h3>
       <ol>
         <li>Download and install the extension ZIP.</li>
+        ${tutorialUrl ? "<li>Watch the tutorial video if you need setup help.</li>" : ""}
         <li>Open the extension panel in Adobe After Effects.</li>
         <li>Enter your Gmail/email and license key.</li>
         <li>Activate on your main editing device.</li>
@@ -121,7 +146,7 @@ async function sendWithSmtp({ email, subject, text, html }) {
 }
 
 export async function sendPurchaseEmail({ name, email, licenseKey, downloadUrl }) {
-  const { subject, text, html } = buildPurchaseEmail({ name, email, licenseKey, downloadUrl });
+  const { subject, text, html } = buildPurchaseEmail({ name, email, licenseKey, downloadUrl, tutorialUrl: getTutorialUrl() });
   const failures = [];
 
   try {
