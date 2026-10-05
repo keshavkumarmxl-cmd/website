@@ -11,9 +11,33 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function fullYouTubeUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") {
+      const videoId = url.pathname.split("/").filter(Boolean)[0] || "";
+      return videoId ? `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}` : raw;
+    }
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+      const videoId = url.searchParams.get("v");
+      if (videoId) return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+      const shortsId = url.pathname.match(/^\/shorts\/([^/?#]+)/)?.[1];
+      if (shortsId) return `https://www.youtube.com/watch?v=${encodeURIComponent(shortsId)}`;
+    }
+  } catch (error) {
+    return raw;
+  }
+
+  return raw;
+}
+
 function getTutorialUrl() {
   const row = db.prepare("SELECT value FROM site_settings WHERE key = ?").get("tutorial_youtube_url");
-  return String(row?.value || "").trim();
+  return fullYouTubeUrl(row?.value);
 }
 
 function createTransport() {
