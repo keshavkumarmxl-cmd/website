@@ -17,7 +17,7 @@ export const checkoutPlans = {
     description: "Keshav With Velo India Launch"
   },
   International: {
-    amount: 100,
+    amount: 300,
     currency: "USD",
     licenseType: "standard",
     description: "Keshav With Velo International"
