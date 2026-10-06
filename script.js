@@ -628,8 +628,8 @@ let planDetails = {
     International: {
         title: "International checkout",
         plan: "International",
-        price: "$2",
-        amount: 200,
+        price: "$3",
+        amount: 300,
         currency: "USD",
         button: "Checkout"
     }
@@ -638,7 +638,7 @@ let planDetails = {
 function sitePriceLabel(plan) {
     if (!plan) return "";
     if (plan.key === "India Launch" || plan.plan === "India Launch" || plan.title === "India Launch") return "₹99";
-    if (plan.key === "International" || plan.plan === "International" || plan.title === "International") return "$2";
+    if (plan.key === "International" || plan.plan === "International" || plan.title === "International") return "$3";
     return plan.price;
 }
 
