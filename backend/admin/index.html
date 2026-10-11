@@ -491,6 +491,7 @@
         <input id="email" type="email" autocomplete="username" placeholder="Admin email">
         <input id="password" type="password" autocomplete="current-password" placeholder="Password">
         <button id="loginBtn">Login</button>
+        <button class="secondary hidden" id="devLoginBtn">Open locally without password</button>
       </div>
     </section>
 
@@ -509,6 +510,8 @@
             <button type="button" data-tool-target="license">License Search</button>
             <button type="button" data-tool-target="manual">Manual License</button>
             <button type="button" data-tool-target="maintenance">Maintenance</button>
+            <button type="button" data-tool-target="promo">Promo Timer</button>
+            <button type="button" data-tool-target="coupons">Coupons</button>
             <button type="button" data-tool-target="tutorial">Tutorial Video</button>
             <button type="button" data-tool-target="versions">Versions</button>
             <button type="button" data-tool-target="upload">Upload ZIP</button>
@@ -621,6 +624,44 @@
           </div>
         </section>
 
+        <section id="promoPanel" class="tool-panel" data-tool-panel="promo">
+          <div class="section-head">
+            <div>
+              <h2>Promo Countdown</h2>
+              <small>Control the homepage 40-hour promo timer.</small>
+            </div>
+          </div>
+          <div class="grid">
+            <label>Active<select id="promoActive"><option value="true">On - Show Timer</option><option value="false">Off - Hide Timer</option></select></label>
+            <label>Ends At<input id="promoEndsAt" type="datetime-local"></label>
+            <label>Badge Text<input id="promoBadge" maxlength="40" value="40H Promo Active"></label>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="secondary" id="loadPromoBtn">Load Current</button>
+            <button class="secondary" id="promo40Btn">Set 40 Hours</button>
+            <button id="savePromoBtn">Save Promo Timer</button>
+          </div>
+        </section>
+
+        <section id="couponSettingsPanel" class="tool-panel" data-tool-panel="coupons">
+          <div class="section-head">
+            <div>
+              <h2>Coupon Field</h2>
+              <small>Show or hide the coupon code input in the checkout modal.</small>
+            </div>
+          </div>
+          <div class="stack">
+            <select id="checkoutCouponsEnabled">
+              <option value="true">Enabled - Show coupon field</option>
+              <option value="false">Disabled - Hide coupon field</option>
+            </select>
+            <div class="row">
+              <button class="secondary" id="loadCouponSettingBtn">Load Current</button>
+              <button id="saveCouponSettingBtn">Save Coupon Field</button>
+            </div>
+          </div>
+        </section>
+
         <section id="tutorialPanel" class="tool-panel" data-tool-panel="tutorial">
           <div class="section-head">
             <div>
@@ -685,6 +726,6 @@
     </div>
   </main>
 
-  <script src="admin.js?v=upload-progress-1"></script>
+  <script src="admin.js?v=coupon-field-1"></script>
 </body>
 </html>

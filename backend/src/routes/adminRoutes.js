@@ -16,7 +16,7 @@ import {
 } from "../db/mongoBackup.js";
 import { validate } from "../middleware/validate.js";
 import { createAdminToken, requireAdmin } from "../middleware/auth.js";
-import { adminLoginSchema, couponSchema, maintenanceSchema, manualLicenseSchema, offerBannerSchema, planSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
+import { adminLoginSchema, checkoutCouponsSchema, couponSchema, maintenanceSchema, manualLicenseSchema, offerBannerSchema, planSchema, promoTimerSchema, tutorialVideoSchema, versionSchema } from "../schemas.js";
 import { expiryDate, generateLicenseKey, hashLicenseKey, licenseHint } from "../utils/license.js";
 
 export const adminRoutes = express.Router();
@@ -33,6 +33,11 @@ function activeFlag(value) {
   return String(value || "").trim().toLowerCase() === "true";
 }
 
+function isLocalSocket(req) {
+  const address = String(req.socket?.remoteAddress || "");
+  return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(address);
+}
+
 const maxZipUploadBytes = Number(process.env.MAX_EXTENSION_UPLOAD_BYTES || 6 * 1024 ** 3);
 
 function siteSettingResponse(row, mongoSetting) {
@@ -47,7 +52,7 @@ function mapPlanRow(row, index = 0) {
   return {
     key: row.plan_key,
     title: row.title,
-    amount: row.amount,
+    amount: row.plan_key === "International" && row.amount === 300 ? 200 : row.amount,
     currency: row.currency,
     licenseType: row.license_type,
     description: row.description,
@@ -83,6 +88,7 @@ function saveSiteSettingLocal(key, value) {
 }
 
 function hydratePlanLocal(plan) {
+  const amount = plan.key === "International" && plan.amount === 300 ? 200 : plan.amount;
   db.prepare(`
     INSERT INTO product_plans (plan_key, title, amount, currency, license_type, description, is_active, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -97,7 +103,7 @@ function hydratePlanLocal(plan) {
   `).run(
     plan.key,
     plan.title,
-    plan.amount,
+    amount,
     plan.currency,
     plan.licenseType || "standard",
     plan.description,
@@ -137,6 +143,18 @@ adminRoutes.post("/login", validate(adminLoginSchema), (req, res) => {
   }
 
   return res.json({ token: createAdminToken(admin) });
+});
+
+adminRoutes.post("/dev-login", (req, res) => {
+  if (config.nodeEnv === "production" || !isLocalSocket(req)) {
+    return res.status(404).json({ error: "Local dev login is unavailable" });
+  }
+
+  return res.json({
+    token: createAdminToken({ id: 0, email: "local-dev@keshavwithvelo.test" }),
+    email: "local-dev@keshavwithvelo.test",
+    mode: "local-dev"
+  });
 });
 
 adminRoutes.use(requireAdmin);
@@ -250,11 +268,70 @@ adminRoutes.post("/settings/maintenance", validate(maintenanceSchema), async (re
   res.json({ status: "success", isActive: req.body.isActive, message: maintenanceMessage });
 });
 
+adminRoutes.get("/settings/promo-timer", async (req, res) => {
+  const active = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("promo_timer_active");
+  const endsAt = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("promo_timer_ends_at");
+  const badge = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("promo_timer_badge");
+  const mongoActive = await getMongoSiteSetting("promo_timer_active");
+  const mongoEndsAt = await getMongoSiteSetting("promo_timer_ends_at");
+  const mongoBadge = await getMongoSiteSetting("promo_timer_badge");
+  if (!active && mongoActive) saveSiteSettingLocal("promo_timer_active", mongoActive.value || "1");
+  if (!endsAt && mongoEndsAt) saveSiteSettingLocal("promo_timer_ends_at", mongoEndsAt.value || "");
+  if (!badge && mongoBadge) saveSiteSettingLocal("promo_timer_badge", mongoBadge.value || "40H Promo Active");
+
+  res.json({
+    isActive: active ? active.value === "1" : (mongoActive ? mongoActive.value === "1" : true),
+    endsAt: endsAt?.value || mongoEndsAt?.value || "",
+    badge: badge?.value || mongoBadge?.value || "40H Promo Active",
+    updatedAt: active?.updated_at || endsAt?.updated_at || badge?.updated_at || mongoActive?.updatedAt || mongoEndsAt?.updatedAt || mongoBadge?.updatedAt || null
+  });
+});
+
+adminRoutes.post("/settings/promo-timer", validate(promoTimerSchema), async (req, res) => {
+  const endsAt = req.body.endsAt || "";
+  const badge = req.body.badge || "40H Promo Active";
+  const tx = db.transaction(() => {
+    saveSiteSettingLocal("promo_timer_active", req.body.isActive ? "1" : "0");
+    saveSiteSettingLocal("promo_timer_ends_at", endsAt);
+    saveSiteSettingLocal("promo_timer_badge", badge);
+  });
+
+  tx();
+  await Promise.all([
+    mirrorSiteSetting("promo_timer_active", req.body.isActive ? "1" : "0"),
+    mirrorSiteSetting("promo_timer_ends_at", endsAt),
+    mirrorSiteSetting("promo_timer_badge", badge)
+  ]);
+  res.json({ status: "success", isActive: req.body.isActive, endsAt, badge });
+});
+
+adminRoutes.get("/settings/checkout-coupons", async (req, res) => {
+  const enabled = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("checkout_coupons_enabled");
+  const mongoEnabled = await getMongoSiteSetting("checkout_coupons_enabled");
+  if (!enabled && mongoEnabled) saveSiteSettingLocal("checkout_coupons_enabled", mongoEnabled.value || "1");
+
+  res.json({
+    isEnabled: enabled ? enabled.value === "1" : (mongoEnabled ? mongoEnabled.value === "1" : true),
+    updatedAt: enabled?.updated_at || mongoEnabled?.updatedAt || null
+  });
+});
+
+adminRoutes.post("/settings/checkout-coupons", validate(checkoutCouponsSchema), async (req, res) => {
+  const value = req.body.isEnabled ? "1" : "0";
+  saveSiteSettingLocal("checkout_coupons_enabled", value);
+  await mirrorSiteSetting("checkout_coupons_enabled", value);
+  res.json({ status: "success", isEnabled: req.body.isEnabled });
+});
+
 adminRoutes.get("/pricing/plans", async (req, res) => {
   const mongoPlans = await getMongoProductPlans();
   if (mongoPlans?.length) {
-    mongoPlans.forEach(hydratePlanLocal);
-    return res.json(mongoPlans);
+    const normalizedPlans = mongoPlans.map((plan) => ({
+      ...plan,
+      amount: plan.key === "International" && plan.amount === 300 ? 200 : plan.amount
+    }));
+    normalizedPlans.forEach(hydratePlanLocal);
+    return res.json(normalizedPlans);
   }
 
   res.json(db.prepare("SELECT * FROM product_plans ORDER BY rowid").all().map(mapPlanRow));

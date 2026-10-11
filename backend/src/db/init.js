@@ -161,7 +161,7 @@ if (!activeVersion) {
 
 const plans = [
   ["India Launch", "India Launch", 9900, "INR", "standard", "Keshav With Velo India Launch"],
-  ["International", "International", 300, "USD", "standard", "Keshav With Velo International"]
+  ["International", "International", 200, "USD", "standard", "Keshav With Velo International"]
 ];
 
 for (const plan of plans) {
@@ -170,5 +170,7 @@ for (const plan of plans) {
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(...plan);
 }
+
+db.prepare("UPDATE product_plans SET amount = 200, updated_at = CURRENT_TIMESTAMP WHERE plan_key = 'International' AND amount = 300").run();
 
 console.log("Database initialized.");

@@ -1,5 +1,6 @@
 const output = document.getElementById("output");
 const tokenKey = "velo_admin_token";
+const isLocalAdminOpen = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
 
 const metricType = document.getElementById("metricType");
 const metricRows = document.getElementById("metricRows");
@@ -21,6 +22,7 @@ const uploadProgressLabel = document.getElementById("uploadProgressLabel");
 const uploadProgressPercent = document.getElementById("uploadProgressPercent");
 const uploadProgressFill = document.getElementById("uploadProgressFill");
 const uploadProgressDetail = document.getElementById("uploadProgressDetail");
+const devLoginBtn = document.getElementById("devLoginBtn");
 
 function token() {
   return localStorage.getItem(tokenKey);
@@ -32,6 +34,7 @@ function adminEmail() {
 
 function setAuthState() {
   const isLoggedIn = Boolean(token());
+  if (devLoginBtn) devLoginBtn.classList.toggle("hidden", !isLocalAdminOpen);
   document.body.classList.toggle("is-authenticated", isLoggedIn);
   sessionBadge.textContent = isLoggedIn ? "Logged in" : "Logged out";
   sessionBadge.className = "badge " + (isLoggedIn ? "success" : "");
@@ -61,6 +64,9 @@ function activateTool(toolName, shouldStore = true) {
     button.classList.toggle("is-active", button.dataset.toolTarget === selected);
   });
   if (shouldStore) localStorage.setItem("velo_admin_active_tool", selected);
+  if (shouldStore && selected === "coupons" && token()) {
+    loadCheckoutCouponSetting().catch((error) => show(error, "Coupon Field Error"));
+  }
   const firstPanel = document.querySelector(`[data-tool-panel="${selected}"]`);
   if (shouldStore && firstPanel) firstPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -108,6 +114,33 @@ function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
+}
+
+function toDateTimeLocal(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 16);
+}
+
+function fromDateTimeLocal(value) {
+  if (!value) return "";
+  return new Date(value).toISOString();
+}
+
+function setPromoFor40Hours() {
+  const date = new Date(Date.now() + 40 * 60 * 60 * 1000);
+  document.getElementById("promoEndsAt").value = toDateTimeLocal(date.toISOString());
+  document.getElementById("promoActive").value = "true";
+  document.getElementById("promoBadge").value = "40H Promo Active";
+}
+
+async function loadCheckoutCouponSetting() {
+  const data = await api("/api/admin/settings/checkout-coupons");
+  document.getElementById("checkoutCouponsEnabled").value = data.isEnabled === false ? "false" : "true";
+  show(data, "Coupon Field");
+  return data;
 }
 
 function copyText(value) {
@@ -381,6 +414,15 @@ async function withBusy(button, action) {
   }
 }
 
+async function finishAdminLogin(data, email, message = "Logged in.") {
+  localStorage.setItem(tokenKey, data.token);
+  localStorage.setItem("velo_admin_email", email || data.email || "local-dev@keshavwithvelo.test");
+  setAuthState();
+  activateTool(localStorage.getItem("velo_admin_active_tool") || "license", false);
+  setMetric("Session", 1, message);
+  show(message, "Session");
+}
+
 document.getElementById("loginBtn").addEventListener("click", async (event) => {
   await withBusy(event.currentTarget, async () => {
     try {
@@ -391,14 +433,20 @@ document.getElementById("loginBtn").addEventListener("click", async (event) => {
           password: document.getElementById("password").value
         })
       });
-      localStorage.setItem(tokenKey, data.token);
-      localStorage.setItem("velo_admin_email", document.getElementById("email").value.trim());
-      setAuthState();
-      activateTool(localStorage.getItem("velo_admin_active_tool") || "license", false);
-      setMetric("Session", 1, "Logged in");
-      show("Logged in.", "Session");
+      await finishAdminLogin(data, document.getElementById("email").value.trim(), "Logged in.");
     } catch (error) {
       show(error, "Login Error");
+    }
+  });
+});
+
+devLoginBtn.addEventListener("click", async (event) => {
+  await withBusy(event.currentTarget, async () => {
+    try {
+      const data = await api("/api/admin/dev-login", { method: "POST" });
+      await finishAdminLogin(data, data.email, "Local admin opened without password.");
+    } catch (error) {
+      show(error?.error || "Start local backend first: cd backend && npm run dev", "Local Login Error");
     }
   });
 });
@@ -525,6 +573,64 @@ document.getElementById("saveMaintenanceBtn").addEventListener("click", async (e
       }), "Maintenance");
     } catch (error) {
       show(error, "Maintenance Error");
+    }
+  });
+});
+
+document.getElementById("loadPromoBtn").addEventListener("click", async (event) => {
+  await withBusy(event.currentTarget, async () => {
+    try {
+      const data = await api("/api/admin/settings/promo-timer");
+      document.getElementById("promoActive").value = data.isActive === false ? "false" : "true";
+      document.getElementById("promoEndsAt").value = toDateTimeLocal(data.endsAt);
+      document.getElementById("promoBadge").value = data.badge || "40H Promo Active";
+      show(data, "Promo Timer");
+    } catch (error) {
+      show(error, "Promo Timer Error");
+    }
+  });
+});
+
+document.getElementById("promo40Btn").addEventListener("click", setPromoFor40Hours);
+
+document.getElementById("savePromoBtn").addEventListener("click", async (event) => {
+  await withBusy(event.currentTarget, async () => {
+    try {
+      show(await api("/api/admin/settings/promo-timer", {
+        method: "POST",
+        body: JSON.stringify({
+          isActive: document.getElementById("promoActive").value === "true",
+          endsAt: fromDateTimeLocal(document.getElementById("promoEndsAt").value),
+          badge: document.getElementById("promoBadge").value.trim() || "40H Promo Active"
+        })
+      }), "Promo Timer");
+    } catch (error) {
+      show(error, "Promo Timer Error");
+    }
+  });
+});
+
+document.getElementById("loadCouponSettingBtn").addEventListener("click", async (event) => {
+  await withBusy(event.currentTarget, async () => {
+    try {
+      await loadCheckoutCouponSetting();
+    } catch (error) {
+      show(error, "Coupon Field Error");
+    }
+  });
+});
+
+document.getElementById("saveCouponSettingBtn").addEventListener("click", async (event) => {
+  await withBusy(event.currentTarget, async () => {
+    try {
+      show(await api("/api/admin/settings/checkout-coupons", {
+        method: "POST",
+        body: JSON.stringify({
+          isEnabled: document.getElementById("checkoutCouponsEnabled").value === "true"
+        })
+      }), "Coupon Field");
+    } catch (error) {
+      show(error, "Coupon Field Error");
     }
   });
 });

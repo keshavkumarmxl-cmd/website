@@ -17,7 +17,7 @@ export const checkoutPlans = {
     description: "Keshav With Velo India Launch"
   },
   International: {
-    amount: 300,
+    amount: 200,
     currency: "USD",
     licenseType: "standard",
     description: "Keshav With Velo International"
@@ -71,9 +71,14 @@ function normalizeCouponCode(code) {
   return String(code || "").trim().toUpperCase();
 }
 
+export function areCheckoutCouponsEnabled() {
+  const row = db.prepare("SELECT value FROM site_settings WHERE key = ?").get("checkout_coupons_enabled");
+  return row ? row.value === "1" : true;
+}
+
 export function calculateCheckout({ plan, couponCode }) {
   const details = getPlan(plan);
-  const code = normalizeCouponCode(couponCode);
+  const code = areCheckoutCouponsEnabled() ? normalizeCouponCode(couponCode) : "";
   let discount = null;
   let finalAmount = details.amount;
 
@@ -85,7 +90,7 @@ export function calculateCheckout({ plan, couponCode }) {
     const currencyMismatch = coupon?.currency && coupon.currency !== details.currency;
 
     if (!coupon || !coupon.is_active || expired || limitReached || currencyMismatch) {
-      console.warn("[checkout coupon ignored]", {
+      console.log("[checkout coupon ignored]", {
         code,
         reason: !coupon
           ? "not_found"

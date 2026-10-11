@@ -97,6 +97,16 @@ export const maintenanceSchema = z.object({
   message: z.string().trim().max(220).optional()
 });
 
+export const promoTimerSchema = z.object({
+  isActive: z.boolean().default(true),
+  endsAt: z.string().trim().max(40).optional(),
+  badge: z.string().trim().max(40).optional()
+});
+
+export const checkoutCouponsSchema = z.object({
+  isEnabled: z.boolean().default(true)
+});
+
 export const planSchema = z.object({
   title: z.string().trim().min(2).max(80),
   amount: z.number().int().min(100).max(99999999),

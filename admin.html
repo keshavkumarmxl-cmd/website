@@ -6,93 +6,298 @@
   <title>Keshav With Velo Admin</title>
   <style>
     :root {
-      --bg: #050505;
-      --panel: #101116;
+      --bg: #050507;
+      --panel: rgba(14, 15, 20, 0.86);
       --line: rgba(255,255,255,0.12);
-      --text: #f7f7f7;
-      --muted: #a6abb7;
-      --red: #ff1515;
-      --cyan: #1fc7ff;
+      --line-red: rgba(255,35,35,0.42);
+      --text: #f8f8f8;
+      --muted: #a7acb8;
+      --soft: #d5d8df;
+      --red: #ff171f;
+      --red-dark: #8f0007;
+      --green: #19d27c;
+      --cyan: #20c7ff;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
       min-height: 100vh;
-      padding: clamp(16px, 3vw, 32px);
+      padding: clamp(14px, 2.4vw, 28px);
       background:
-        radial-gradient(circle at 18% 10%, rgba(255,21,21,0.18), transparent 28rem),
-        radial-gradient(circle at 80% 72%, rgba(31,199,255,0.12), transparent 26rem),
-        linear-gradient(180deg, #080808, #020202);
+        radial-gradient(circle at 14% 8%, rgba(255,23,31,0.22), transparent 30rem),
+        radial-gradient(circle at 86% 20%, rgba(32,199,255,0.09), transparent 28rem),
+        linear-gradient(180deg, #09090b, #020203 64%, #000);
       color: var(--text);
       font-family: Inter, Arial, sans-serif;
     }
 
-    main {
-      width: min(100%, 980px);
+    button, input, select { font: inherit; }
+
+    button,
+    a {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid rgba(255,23,31,0.58);
+      border-radius: 12px;
+      padding: 0 16px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: #fff;
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 14px 34px rgba(255,23,31,0.16);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    button:hover,
+    a:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.28); }
+
+    button.secondary,
+    a.secondary {
+      border-color: rgba(255,255,255,0.14);
+      background: rgba(17,19,25,0.84);
+      color: var(--soft);
+      box-shadow: none;
+    }
+
+    button.danger {
+      border-color: rgba(255,107,107,0.48);
+      background: rgba(68,18,22,0.72);
+      color: #ffbcbc;
+      box-shadow: none;
+    }
+
+    .admin-page {
+      width: min(100%, 1240px);
       margin: 0 auto;
       display: grid;
-      gap: 14px;
+      gap: 18px;
     }
 
-    section {
+    .admin-hero,
+    .login-card,
+    .admin-sidebar,
+    .admin-card {
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: clamp(18px, 4vw, 28px);
+      border-radius: 22px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(255,21,21,0.16), transparent 14rem),
-        linear-gradient(180deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025));
-      box-shadow: 0 26px 90px rgba(0,0,0,0.34);
+        linear-gradient(135deg, rgba(255,23,31,0.11), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.028));
+      box-shadow: 0 28px 90px rgba(0,0,0,0.38);
+      backdrop-filter: blur(16px);
     }
 
-    h1,
-    h2,
-    p {
-      margin-top: 0;
+    .admin-hero {
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      padding: 16px;
+      border-color: rgba(255,23,31,0.26);
+      background: rgba(5,5,7,0.86);
     }
 
-    h1 {
-      margin-bottom: 8px;
-      font-size: clamp(30px, 5vw, 48px);
-      line-height: 1;
+    .brand-mini {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mini img {
+      width: 54px;
+      height: 54px;
+      flex: 0 0 auto;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 0 0 4px rgba(255,23,31,0.08);
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .16em;
       text-transform: uppercase;
     }
 
-    h2 {
-      margin-bottom: 14px;
-      font-size: 22px;
-      text-transform: uppercase;
-    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; font-size: clamp(24px, 3vw, 42px); line-height: 1; }
+    h2 { margin-bottom: 8px; font-size: clamp(21px, 2vw, 30px); line-height: 1.05; }
+    h3 { margin-bottom: 7px; font-size: 15px; }
 
     p {
       color: var(--muted);
       line-height: 1.55;
     }
 
+    .hero-copy p,
+    .section-head p,
+    .side-card p { margin-bottom: 0; }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .login-card {
+      width: min(100%, 520px);
+      margin: 22px auto 0;
+      padding: clamp(22px, 4vw, 34px);
+    }
+
+    .login-card .grid { grid-template-columns: 1fr; }
+
+    .admin-shell {
+      display: grid;
+      grid-template-columns: 285px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .admin-sidebar {
+      position: sticky;
+      top: 106px;
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .side-card {
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      background: rgba(0,0,0,0.20);
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .side-nav button {
+      justify-content: flex-start;
+      min-height: 46px;
+      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.045);
+      box-shadow: none;
+      color: var(--soft);
+    }
+
+    .side-nav button.is-active,
+    .side-nav button:hover {
+      border-color: rgba(255,23,31,0.62);
+      background: rgba(255,23,31,0.13);
+      color: #fff;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .overview-grid,
+    .hint-grid,
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .metric,
+    .hint,
+    .item {
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      background: rgba(0,0,0,0.23);
+      padding: 14px;
+    }
+
+    .metric span,
+    .hint span {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .metric strong { display: block; font-size: 22px; line-height: 1; }
+    .hint p, .item p { margin-bottom: 0; }
+
+    .admin-card {
+      scroll-margin-top: 112px;
+      padding: clamp(18px, 3vw, 26px);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .section-number {
+      min-width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-red);
+      border-radius: 14px;
+      color: var(--red);
+      font-weight: 950;
+      background: rgba(255,23,31,0.08);
+    }
+
     label {
       display: grid;
-      gap: 7px;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
+      gap: 8px;
+      margin-bottom: 13px;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .04em;
       text-transform: uppercase;
     }
 
     input,
     select {
       width: 100%;
-      min-height: 46px;
+      min-height: 48px;
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 8px;
-      padding: 0 13px;
-      background: #08090d;
+      border-radius: 13px;
+      padding: 0 14px;
+      background: rgba(5,6,9,0.92);
       color: #fff;
-      font: inherit;
       outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(255,23,31,0.78);
+      box-shadow: 0 0 0 4px rgba(255,23,31,0.12);
     }
 
     input[type="checkbox"] {
@@ -101,126 +306,31 @@
       accent-color: var(--red);
     }
 
-    input:focus,
-    select:focus {
-      border-color: rgba(31,199,255,0.72);
-      box-shadow: 0 0 0 3px rgba(31,199,255,0.12);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .item {
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 8px;
-      background: rgba(0,0,0,0.22);
-    }
-
-    .item strong {
-      display: block;
-      margin-bottom: 8px;
-    }
-
-    .item p {
-      margin-bottom: 12px;
-    }
-
-    button,
-    a {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255,21,21,0.68);
-      border-radius: 8px;
-      padding: 0 16px;
-      background: linear-gradient(135deg, var(--red), #870000);
-      color: #fff;
-      font: inherit;
-      font-weight: 900;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    button.secondary,
-    a.secondary {
-      border-color: rgba(255,255,255,0.14);
-      background: #111319;
-      color: var(--muted);
-    }
-
-    button.danger {
-      border-color: rgba(255,107,107,0.45);
-      background: #241014;
-      color: #ffb2b2;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .panel-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-    }
-
-    .brand-mini {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .brand-mini img {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      object-fit: cover;
-      border: 1px solid rgba(255,255,255,0.16);
-    }
-
     .checkbox-label {
       display: flex;
       grid-template-columns: none;
       flex-direction: row;
       align-items: center;
-      gap: 9px;
-    }
-
-    .hidden {
-      display: none;
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
     .status {
       min-height: 24px;
       margin: 12px 0 0;
       color: var(--muted);
-      font-weight: 700;
+      font-weight: 800;
     }
 
-    .status.success {
-      color: #25d77b;
-    }
-
-    .status.error {
-      color: #ff6b6b;
-    }
+    .status.success { color: #25d77b; }
+    .status.error { color: #ff6b6b; }
 
     .preview {
       aspect-ratio: 16 / 9;
       overflow: hidden;
       margin-top: 14px;
       border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 8px;
+      border-radius: 18px;
       background: #050505;
     }
 
@@ -230,135 +340,275 @@
       border: 0;
     }
 
-    @media (max-width: 680px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    .item { margin-top: 12px; }
+    .item strong { display: block; margin-bottom: 8px; }
+    .hidden { display: none !important; }
 
-      .panel-top {
-        align-items: flex-start;
-        flex-direction: column;
-      }
+    @media (max-width: 980px) {
+      .admin-shell { grid-template-columns: 1fr; }
+      .admin-sidebar { position: static; }
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 680px) {
+      body { padding: 10px; }
+      .admin-hero { position: static; align-items: flex-start; flex-direction: column; }
+      .brand-mini img { width: 46px; height: 46px; border-radius: 13px; }
+      .grid, .hint-grid, .overview-grid { grid-template-columns: 1fr; }
+      .section-head { flex-direction: column; }
+      button, a { width: 100%; }
+      .row { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <section>
-      <div class="panel-top">
-        <div class="brand-mini">
-          <img src="assets/profile.png" alt="Keshav With Velo">
-          <div>
-            <h1>Admin Panel</h1>
-            <p>Manage website video, offer, pricing and coupons.</p>
-          </div>
-        </div>
-        <div class="row">
-          <a class="secondary" href="index.html">Open Website</a>
-          <button class="secondary hidden" id="logoutBtn" type="button">Logout</button>
+  <main class="admin-page">
+    <section class="admin-hero">
+      <div class="brand-mini">
+        <img src="assets/profile.png" alt="Keshav With Velo">
+        <div class="hero-copy">
+          <p class="eyebrow">Keshav With Velo Control Room</p>
+          <h1>Admin Panel</h1>
+          <p>Website ka content, timer, price aur coupon settings ek jagah se manage karo.</p>
         </div>
       </div>
-    </section>
-
-    <section id="loginPanel">
-      <h2>Login</h2>
-      <label>Email
-        <input id="email" type="email" autocomplete="username" placeholder="Admin email">
-      </label>
-      <label>Password
-        <input id="password" type="password" autocomplete="current-password" placeholder="Admin password">
-      </label>
-      <button id="loginBtn" type="button">Login</button>
-      <p class="status" id="loginStatus">Preparing secure login...</p>
-    </section>
-
-    <section class="hidden" id="tutorialPanel">
-      <h2>Tutorial Video</h2>
-      <label>YouTube Link
-        <input id="youtubeUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
-      </label>
       <div class="row">
-        <button id="saveBtn" type="button">Save Tutorial Link</button>
-        <button class="secondary" id="clearBtn" type="button">Clear Link</button>
-      </div>
-      <p class="status" id="saveStatus"></p>
-      <div class="preview hidden" id="videoPreview">
-        <iframe id="previewFrame" title="Tutorial preview" allowfullscreen></iframe>
+        <a class="secondary" href="index.html">Open Website</a>
+        <button class="secondary hidden" id="logoutBtn" type="button">Logout</button>
       </div>
     </section>
 
-    <section class="hidden" id="offerPanel">
-      <h2>Header Offer Ticker</h2>
-      <label>Offer text
-        <input id="offerText" type="text" maxlength="220" placeholder="Use LAUNCH50 for 50% off today">
-      </label>
-      <label class="checkbox-label"><input id="offerActive" type="checkbox" checked> Active</label>
-      <div class="row">
-        <button id="saveOfferBtn" type="button">Save Offer</button>
-        <button class="secondary" id="clearOfferBtn" type="button">Clear Offer</button>
-      </div>
-      <p class="status" id="offerStatus"></p>
-    </section>
-
-    <section class="hidden" id="pricingPanel">
-      <h2>Pricing</h2>
-      <div id="planList"></div>
-      <p class="status" id="pricingStatus"></p>
-    </section>
-
-    <section class="hidden" id="couponPanel">
-      <h2>Coupons</h2>
+    <section class="login-card" id="loginPanel">
+      <p class="eyebrow">Secure Access</p>
+      <h2>Login to admin</h2>
+      <p>Local testing ke liye dev login button use kar sakte ho. Live changes save karne se website settings update hongi.</p>
       <div class="grid">
-        <label>Code
-          <input id="couponCode" type="text" placeholder="LAUNCH50">
+        <label>Email
+          <input id="email" type="email" placeholder="admin@email.com" autocomplete="username">
         </label>
-        <label>Discount type
-          <select id="couponType">
-            <option value="percent">Percent</option>
-            <option value="fixed">Fixed amount</option>
-          </select>
-        </label>
-        <label>Discount value
-          <input id="couponValue" type="number" min="1" step="0.01" placeholder="50% or 3500 rupees">
-        </label>
-        <label>Currency for fixed discount
-          <input id="couponCurrency" type="text" maxlength="3" placeholder="INR" value="INR">
-        </label>
-        <label>Max redemptions
-          <input id="couponMax" type="number" min="1" placeholder="Optional">
-        </label>
-        <label>Expires at
-          <input id="couponExpiry" type="datetime-local">
+        <label>Password
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password">
         </label>
       </div>
       <div class="row">
-        <button id="saveCouponBtn" type="button">Save Coupon</button>
+        <button id="loginBtn" type="button">Login</button>
+        <button class="secondary" id="devLoginBtn" type="button">Open locally without password</button>
       </div>
-      <p class="status" id="couponStatus"></p>
-      <div id="couponList"></div>
+      <p class="status" id="loginStatus"></p>
     </section>
+
+    <div class="admin-shell hidden" id="dashboardShell">
+      <aside class="admin-sidebar">
+        <div class="side-card">
+          <p class="eyebrow">Quick Menu</p>
+          <h3>Kaunsi setting chahiye?</h3>
+          <p>Left se section choose karo, right side me uska form open rahega.</p>
+        </div>
+        <nav class="side-nav" aria-label="Admin sections">
+          <button class="is-active" type="button" data-admin-jump="tutorialPanel">Tutorial video</button>
+          <button type="button" data-admin-jump="offerPanel">Top offer ticker</button>
+          <button type="button" data-admin-jump="promoPanel">Promo timer</button>
+          <button type="button" data-admin-jump="pricingPanel">Website pricing</button>
+          <button type="button" data-admin-jump="couponPanel">Coupon controls</button>
+        </nav>
+        <div class="side-card">
+          <h3>Save rule</h3>
+          <p>Har card ka apna save button hai. Jo setting change karo, usi card ka save dabao.</p>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <section class="admin-card" id="overviewPanel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Dashboard Overview</p>
+              <h2>Important controls</h2>
+              <p>Ye shortcut cards batate hain kaunsi setting kis kaam ke liye hai.</p>
+            </div>
+            <span class="section-number">00</span>
+          </div>
+          <div class="overview-grid">
+            <div class="metric"><span>Video</span><strong>Tutorial</strong></div>
+            <div class="metric"><span>Sale</span><strong>Timer</strong></div>
+            <div class="metric"><span>Checkout</span><strong>Price</strong></div>
+            <div class="metric"><span>Discount</span><strong>Coupon</strong></div>
+          </div>
+        </section>
+
+        <section class="admin-card hidden" id="tutorialPanel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 01</p>
+              <h2>Tutorial video</h2>
+              <p>Website par tutorial section me jo YouTube video dikhta hai, uska link yahan se change hota hai.</p>
+            </div>
+            <span class="section-number">01</span>
+          </div>
+          <label>YouTube link
+            <input id="youtubeUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
+          </label>
+          <div class="row">
+            <button id="saveBtn" type="button">Save tutorial</button>
+            <button class="danger" id="clearBtn" type="button">Clear video</button>
+          </div>
+          <p class="status" id="saveStatus"></p>
+          <div class="preview hidden" id="videoPreview">
+            <iframe id="previewFrame" allowfullscreen title="Tutorial preview"></iframe>
+          </div>
+        </section>
+
+        <section class="admin-card hidden" id="offerPanel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 02</p>
+              <h2>Top offer ticker</h2>
+              <p>Website ke top scrolling message ko on/off aur edit karo.</p>
+            </div>
+            <span class="section-number">02</span>
+          </div>
+          <label>Offer text
+            <input id="offerText" type="text" placeholder="WINDOWS & MAC SUPPORTED • AE 2023+ REQUIRED">
+          </label>
+          <label class="checkbox-label"><input id="offerActive" type="checkbox"> Show offer ticker on website</label>
+          <div class="row">
+            <button id="saveOfferBtn" type="button">Save offer</button>
+            <button class="danger" id="clearOfferBtn" type="button">Clear offer</button>
+          </div>
+          <p class="status" id="offerStatus"></p>
+        </section>
+
+        <section class="admin-card hidden" id="promoPanel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 03</p>
+              <h2>Promo timer</h2>
+              <p>Website hero me jo countdown timer hai uska active state aur end time yahan se control hota hai.</p>
+            </div>
+            <span class="section-number">03</span>
+          </div>
+          <div class="hint-grid">
+            <div class="hint"><span>Tip</span><p>40 hour sale start karni ho to quick button use karo.</p></div>
+            <div class="hint"><span>Display</span><p>Timer active hoga to website par red promo countdown dikhega.</p></div>
+          </div>
+          <label class="checkbox-label"><input id="promoActive" type="checkbox"> Promo timer active</label>
+          <div class="grid">
+            <label>Promo ends at
+              <input id="promoEndsAt" type="datetime-local">
+            </label>
+            <label>Badge text
+              <input id="promoBadge" type="text" placeholder="40H PROMO ACTIVE">
+            </label>
+          </div>
+          <div class="row">
+            <button class="secondary" id="promo40Btn" type="button">Set 40 hours from now</button>
+            <button id="savePromoBtn" type="button">Save promo timer</button>
+          </div>
+          <p class="status" id="promoStatus"></p>
+        </section>
+
+        <section class="admin-card hidden" id="pricingPanel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 04</p>
+              <h2>Website pricing</h2>
+              <p>India aur International checkout prices yahan se edit karo.</p>
+            </div>
+            <span class="section-number">04</span>
+          </div>
+          <div id="planList"></div>
+          <p class="status" id="pricingStatus"></p>
+        </section>
+
+        <section class="admin-card hidden" id="couponPanel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 05</p>
+              <h2>Coupon controls</h2>
+              <p>Checkout form me coupon field enable/disable karo aur coupon code create karo.</p>
+            </div>
+            <span class="section-number">05</span>
+          </div>
+          <label class="checkbox-label"><input id="checkoutCouponsEnabled" type="checkbox"> Show coupon code field at checkout</label>
+          <div class="row">
+            <button class="secondary" id="loadCouponSettingBtn" type="button">Load coupon setting</button>
+            <button id="saveCouponSettingBtn" type="button">Save coupon field setting</button>
+          </div>
+          <div class="grid">
+            <label>Coupon code
+              <input id="couponCode" type="text" placeholder="SAVE20">
+            </label>
+            <label>Discount type
+              <select id="couponType">
+                <option value="percent">Percent</option>
+                <option value="fixed">Fixed amount</option>
+              </select>
+            </label>
+            <label>Discount value
+              <input id="couponValue" type="number" min="0" step="0.01" placeholder="20">
+            </label>
+            <label>Currency
+              <select id="couponCurrency">
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="ALL">All</option>
+              </select>
+            </label>
+            <label>Max uses
+              <input id="couponMax" type="number" min="0" step="1" placeholder="0 = unlimited">
+            </label>
+            <label>Expiry date
+              <input id="couponExpiry" type="date">
+            </label>
+          </div>
+          <div class="row">
+            <button id="saveCouponBtn" type="button">Create coupon</button>
+          </div>
+          <p class="status" id="couponStatus"></p>
+          <div id="couponList"></div>
+        </section>
+      </div>
+    </div>
   </main>
 
   <script>
-    const API_BASE_URL = window.LICENSING_API_BASE_URL || "https://api.keshavwithvelo.in";
+    const isLocalAdminOpen = window.location.protocol === "file:" || ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+    const API_BASE_URL = window.LICENSING_API_BASE_URL || (isLocalAdminOpen ? "http://localhost:4000" : "https://api.keshavwithvelo.in");
     const tokenKey = "velo_admin_token";
     const loginPanel = document.getElementById("loginPanel");
     const tutorialPanel = document.getElementById("tutorialPanel");
     const offerPanel = document.getElementById("offerPanel");
+    const promoPanel = document.getElementById("promoPanel");
     const pricingPanel = document.getElementById("pricingPanel");
     const couponPanel = document.getElementById("couponPanel");
     const logoutBtn = document.getElementById("logoutBtn");
+    const dashboardShell = document.getElementById("dashboardShell");
+    const devLoginBtn = document.getElementById("devLoginBtn");
     const loginStatus = document.getElementById("loginStatus");
     const saveStatus = document.getElementById("saveStatus");
     const offerStatus = document.getElementById("offerStatus");
     const youtubeUrl = document.getElementById("youtubeUrl");
     const offerText = document.getElementById("offerText");
     const offerActive = document.getElementById("offerActive");
+    const promoActive = document.getElementById("promoActive");
+    const promoEndsAt = document.getElementById("promoEndsAt");
+    const promoBadge = document.getElementById("promoBadge");
+    const checkoutCouponsEnabled = document.getElementById("checkoutCouponsEnabled");
     const videoPreview = document.getElementById("videoPreview");
     const previewFrame = document.getElementById("previewFrame");
 
     function token() {
       return localStorage.getItem(tokenKey);
+    }
+
+    async function finishLogin(data, message = "Logged in.") {
+      localStorage.setItem(tokenKey, data.token);
+      setStatus(loginStatus, message, "success");
+      showAdmin();
+      await loadTutorial();
+      await loadOffer();
+      await loadPromo();
+      await loadCouponSetting();
+      await loadPricingTools();
     }
 
     function setStatus(element, message, mode = "") {
@@ -443,18 +693,22 @@
       loginPanel.classList.add("hidden");
       tutorialPanel.classList.remove("hidden");
       offerPanel.classList.remove("hidden");
+      promoPanel.classList.remove("hidden");
       pricingPanel.classList.remove("hidden");
       couponPanel.classList.remove("hidden");
       logoutBtn.classList.remove("hidden");
+      dashboardShell.classList.remove("hidden");
     }
 
     function showLogin() {
       loginPanel.classList.remove("hidden");
       tutorialPanel.classList.add("hidden");
       offerPanel.classList.add("hidden");
+      promoPanel.classList.add("hidden");
       pricingPanel.classList.add("hidden");
       couponPanel.classList.add("hidden");
       logoutBtn.classList.add("hidden");
+      dashboardShell.classList.add("hidden");
     }
 
     async function loadTutorial() {
@@ -478,6 +732,48 @@
         setStatus(offerStatus, data.text ? "Current offer loaded." : "No offer text is saved yet.");
       } catch (error) {
         setStatus(offerStatus, error.error || "Could not load offer.", "error");
+      }
+    }
+
+    function toDateTimeLocal(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return offsetDate.toISOString().slice(0, 16);
+    }
+
+    function fromDateTimeLocal(value) {
+      if (!value) return "";
+      return new Date(value).toISOString();
+    }
+
+    function setPromoFor40Hours() {
+      const date = new Date(Date.now() + 40 * 60 * 60 * 1000);
+      promoEndsAt.value = toDateTimeLocal(date.toISOString());
+      promoActive.value = "true";
+      promoBadge.value = "40H Promo Active";
+    }
+
+    async function loadPromo() {
+      try {
+        const data = await api("/api/admin/settings/promo-timer");
+        promoActive.value = data.isActive === false ? "false" : "true";
+        promoEndsAt.value = toDateTimeLocal(data.endsAt);
+        promoBadge.value = data.badge || "40H Promo Active";
+        setStatus(document.getElementById("promoStatus"), data.endsAt ? "Promo timer loaded." : "No end time saved yet.");
+      } catch (error) {
+        setStatus(document.getElementById("promoStatus"), error.error || "Could not load promo timer.", "error");
+      }
+    }
+
+    async function loadCouponSetting() {
+      try {
+        const data = await api("/api/admin/settings/checkout-coupons");
+        checkoutCouponsEnabled.checked = data.isEnabled !== false;
+        setStatus(document.getElementById("couponStatus"), checkoutCouponsEnabled.checked ? "Coupon field is enabled on checkout." : "Coupon field is disabled on checkout.", "success");
+      } catch (error) {
+        setStatus(document.getElementById("couponStatus"), error.error || "Could not load coupon field setting.", "error");
       }
     }
 
@@ -555,14 +851,20 @@
           })
         });
 
-        localStorage.setItem(tokenKey, data.token);
-        setStatus(loginStatus, "Logged in.", "success");
-        showAdmin();
-        await loadTutorial();
-        await loadOffer();
-        await loadPricingTools();
+        await finishLogin(data);
       } catch (error) {
         setStatus(loginStatus, error.error || "Login failed.", "error");
+      }
+    });
+
+        devLoginBtn.classList.toggle("hidden", !isLocalAdminOpen);
+    devLoginBtn.addEventListener("click", async () => {
+      try {
+        setStatus(loginStatus, "Opening local admin without password...");
+        const data = await api("/api/admin/dev-login", { method: "POST" });
+        await finishLogin(data, "Local admin opened without password.");
+      } catch (error) {
+        setStatus(loginStatus, error.error || "Start local backend first: cd backend && npm run dev", "error");
       }
     });
 
@@ -609,6 +911,25 @@
       offerText.value = "";
     });
 
+    document.getElementById("promo40Btn").addEventListener("click", setPromoFor40Hours);
+
+    document.getElementById("savePromoBtn").addEventListener("click", async () => {
+      try {
+        setStatus(document.getElementById("promoStatus"), "Saving promo timer...");
+        await api("/api/admin/settings/promo-timer", {
+          method: "POST",
+          body: JSON.stringify({
+            isActive: promoActive.value === "true",
+            endsAt: fromDateTimeLocal(promoEndsAt.value),
+            badge: promoBadge.value.trim() || "40H Promo Active"
+          })
+        });
+        setStatus(document.getElementById("promoStatus"), "Promo timer saved.", "success");
+      } catch (error) {
+        setStatus(document.getElementById("promoStatus"), error.error || "Could not save promo timer.", "error");
+      }
+    });
+
     document.getElementById("planList").addEventListener("click", async (event) => {
       const button = event.target.closest("[data-save-plan]");
       if (!button) return;
@@ -634,6 +955,22 @@
         await loadPricingTools();
       } catch (error) {
         setStatus(document.getElementById("pricingStatus"), error.error || "Could not save plan.", "error");
+      }
+    });
+
+    document.getElementById("loadCouponSettingBtn").addEventListener("click", loadCouponSetting);
+
+    document.getElementById("saveCouponSettingBtn").addEventListener("click", async () => {
+      try {
+        setStatus(document.getElementById("couponStatus"), "Saving coupon field setting...");
+        const data = await api("/api/admin/settings/checkout-coupons", {
+          method: "POST",
+          body: JSON.stringify({ isEnabled: checkoutCouponsEnabled.checked })
+        });
+        checkoutCouponsEnabled.checked = data.isEnabled !== false;
+        setStatus(document.getElementById("couponStatus"), checkoutCouponsEnabled.checked ? "Coupon field enabled on checkout." : "Coupon field disabled on checkout.", "success");
+      } catch (error) {
+        setStatus(document.getElementById("couponStatus"), error.error || "Could not save coupon field setting.", "error");
       }
     });
 
@@ -681,10 +1018,19 @@
       }
     });
 
+    document.querySelectorAll("[data-admin-jump]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = document.getElementById(button.dataset.adminJump);
+        if (!target) return;
+        document.querySelectorAll("[data-admin-jump]").forEach((item) => item.classList.toggle("is-active", item === button));
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem(tokenKey);
       showLogin();
-      setStatus(loginStatus, "Logged out.");
+      setStatus(loginStatus, isLocalAdminOpen ? "Logged out. You can open locally without password." : "Logged out.");
     });
 
     youtubeUrl.addEventListener("input", () => updatePreview(youtubeUrl.value));
@@ -693,9 +1039,12 @@
       showAdmin();
       loadTutorial();
       loadOffer();
+      loadPromo();
+      loadCouponSetting();
       loadPricingTools();
     } else {
       warmApi();
+      if (isLocalAdminOpen) setStatus(loginStatus, "Local mode: start backend, then click Open locally without password.");
     }
   </script>
 </body>

@@ -85,13 +85,33 @@
             <span class="login-btn-dot" aria-hidden="true"></span>
             <span id="loginButtonText">Login</span>
         </button>
-        <button class="buy-btn" data-open-payment="India Launch">Buy Now ₹99 / $3</button>
+        <button class="donate-btn" id="donateOpen" type="button">Donate</button>
+        <button class="buy-btn" data-open-payment="India Launch"><span class="buy-full-label">Buy Now ₹99 / $2</span><span class="buy-mobile-label" aria-hidden="true">Buy Now</span></button>
         <div class="offer-ticker" id="offerTicker" aria-live="polite" aria-hidden="true">
             <div class="offer-ticker-track" id="offerTickerTrack"></div>
         </div>
     </header>
 
     <main id="top">
+        <aside class="promo-countdown" id="promoCountdown" aria-live="polite">
+            <div class="promo-countdown-grid" aria-label="Promotion countdown">
+                <span>
+                    <strong id="promoHours">40</strong>
+                    <small>Hours</small>
+                </span>
+                <i aria-hidden="true">:</i>
+                <span>
+                    <strong id="promoMinutes">00</strong>
+                    <small>Minutes</small>
+                </span>
+                <i aria-hidden="true">:</i>
+                <span>
+                    <strong id="promoSeconds">00</strong>
+                    <small>Seconds</small>
+                </span>
+            </div>
+            <p>Price will increase when this timer ends</p>
+        </aside>
         <section class="panel-showcase" id="workflow">
             <div class="orbit-head">
                 <p class="eyebrow">New 400x update</p>
@@ -245,9 +265,9 @@
                 </article>
                 <article>
                     <p class="plan">International</p>
-                    <h3 data-plan-price="International">$3</h3>
+                    <h3 data-plan-price="International">$2</h3>
                     <p>Simple global pricing for editors outside India. One license activates on one PC only.</p>
-                    <button class="pricing-buy" data-open-payment="International"><span data-plan-button="International">Buy for $3</span><i aria-hidden="true"></i></button>
+                    <button class="pricing-buy" data-open-payment="International"><span data-plan-button="International">Buy for $2</span><i aria-hidden="true"></i></button>
                 </article>
             </div>
             <div class="terms-panel" id="terms">
@@ -292,6 +312,42 @@
         </div>
     </footer>
 
+    <div class="modal donate-modal" id="donateModal" aria-hidden="true">
+        <div class="modal-card donate-modal-card">
+            <button class="modal-close" id="donateClose" aria-label="Close donation options"><span>x</span></button>
+            <section class="donate-shell" aria-label="Donation options">
+                <div class="donate-intro">
+                    <p class="eyebrow">Support the creator</p>
+                    <h2>Donate to Keshav With Velo</h2>
+                    <p>Choose Razorpay/UPI for India or PayPal for international support.</p>
+                    <div class="donate-payment-links">
+                        <a class="primary-btn donate-direct-link" href="https://razorpay.me/@keshavwithvelo" target="_blank" rel="noopener">
+                            <span>Open Razorpay link</span>
+                            <span class="donate-link-arrow" aria-hidden="true">↗</span>
+                        </a>
+                        <a class="primary-btn donate-direct-link donate-paypal-link" href="https://www.paypal.com/ncp/payment/TECW93XJMXV6A" target="_blank" rel="noopener">
+                            <span>Open PayPal link</span>
+                            <span class="donate-link-arrow" aria-hidden="true">↗</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="donate-options">
+                    <article class="donate-card donate-qr-card">
+                        <span>India / UPI</span>
+                        <strong>Razorpay</strong>
+                        <img src="assets/donate-razorpay-qr.png" alt="Razorpay donation QR for Keshav With Velo">
+                    </article>
+                    <article class="donate-card donate-qr-card donate-paypal-card">
+                        <span>International</span>
+                        <strong>PayPal</strong>
+                        <img src="assets/donate-paypal-qr.png" alt="PayPal donation QR for Keshav With Velo">
+                    </article>
+                </div>
+            </section>
+        </div>
+    </div>
+
     <div class="modal" id="paymentModal" aria-hidden="true">
         <div class="modal-card">
             <button class="modal-close" id="modalClose" aria-label="Close"><span>x</span></button>
@@ -299,6 +355,7 @@
                 <p class="eyebrow">Choose payment method</p>
                 <h2>Where are you buying from?</h2>
                 <p>Select India checkout for INR payment or International checkout for USD payment.</p>
+                <button class="donate-inline-btn" type="button" data-open-donate>Donate instead</button>
                 <div class="checkout-plan-switch checkout-choice-grid" aria-label="Choose payment method">
                     <button class="checkout-plan-option active" type="button" data-select-plan="India Launch">
                         <span>India</span>
@@ -308,7 +365,7 @@
                     </button>
                     <button class="checkout-plan-option" type="button" data-select-plan="International">
                         <span>International</span>
-                        <strong>$3</strong>
+                        <strong>$2</strong>
                         <em>Pay in USD</em>
                         <b>Click here to continue</b>
                     </button>
@@ -354,7 +411,7 @@
                         <span>Email for your license</span>
                         <input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="254" required>
                     </label>
-                    <label class="checkout-field">
+                    <label class="checkout-field checkout-coupon-field" id="checkoutCouponField">
                         <span>Coupon code</span>
                         <input id="checkoutCoupon" name="couponCode" type="text" autocomplete="off" maxlength="40" placeholder="Optional">
                     </label>
@@ -456,6 +513,6 @@
     </div>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script src="script.js?v=5bd635d"></script>
+    <script src="script.js?v=coupon-field-1"></script>
 </body>
 </html>

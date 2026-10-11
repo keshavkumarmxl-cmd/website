@@ -16,7 +16,7 @@ import { config } from "../config.js";
 import { validate } from "../middleware/validate.js";
 import { activateSchema, customerAccessSchema, downloadSchema, purchaseSchema, razorpayOrderSchema, verifyLicenseSchema } from "../schemas.js";
 import { sendPurchaseEmail } from "../services/emailService.js";
-import { createRazorpayOrder, getCheckoutPlans, verifyPayment } from "../services/paymentService.js";
+import { areCheckoutCouponsEnabled, createRazorpayOrder, getCheckoutPlans, verifyPayment } from "../services/paymentService.js";
 import { createDownloadToken, readDownloadToken } from "../utils/downloadLink.js";
 import {
   expiryDate,
@@ -233,6 +233,11 @@ function appendPurchaseHistory(userId, purchase) {
   db.prepare("UPDATE users SET purchase_history = ? WHERE id = ?").run(JSON.stringify(history), userId);
 }
 
+function isDuplicatePaymentError(error) {
+  const message = String(error?.message || "");
+  return error?.code === "SQLITE_CONSTRAINT_UNIQUE" && message.includes("purchases.payment_provider");
+}
+
 function customerFromLicense(license) {
   return {
     email: license.email,
@@ -314,6 +319,32 @@ publicRoutes.get("/site-settings/maintenance", async (req, res) => {
   });
 });
 
+publicRoutes.get("/site-settings/promo-timer", async (req, res) => {
+  const active = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("promo_timer_active");
+  const endsAt = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("promo_timer_ends_at");
+  const badge = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("promo_timer_badge");
+  const mongoActive = await getMongoSiteSetting("promo_timer_active");
+  const mongoEndsAt = await getMongoSiteSetting("promo_timer_ends_at");
+  const mongoBadge = await getMongoSiteSetting("promo_timer_badge");
+
+  res.json({
+    isActive: active ? active.value === "1" : (mongoActive ? mongoActive.value === "1" : true),
+    endsAt: endsAt?.value || mongoEndsAt?.value || "",
+    badge: badge?.value || mongoBadge?.value || "40H Promo Active",
+    updatedAt: active?.updated_at || endsAt?.updated_at || badge?.updated_at || mongoActive?.updatedAt || mongoEndsAt?.updatedAt || mongoBadge?.updatedAt || null
+  });
+});
+
+publicRoutes.get("/site-settings/checkout-coupons", async (req, res) => {
+  const enabled = db.prepare("SELECT value, updated_at FROM site_settings WHERE key = ?").get("checkout_coupons_enabled");
+  const mongoEnabled = await getMongoSiteSetting("checkout_coupons_enabled");
+
+  res.json({
+    isEnabled: enabled ? enabled.value === "1" : (mongoEnabled ? mongoEnabled.value === "1" : true),
+    updatedAt: enabled?.updated_at || mongoEnabled?.updatedAt || null
+  });
+});
+
 publicRoutes.get("/pricing", (req, res) => {
   res.json({ plans: getCheckoutPlans().filter((plan) => plan.isActive) });
 });
@@ -369,7 +400,9 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
 
     const buyerEmail = body.email || payment.raw?.email;
     const buyerName = body.name || payment.raw?.notes?.name || payment.raw?.contact || "Razorpay Customer";
-    const couponCode = String(payment.raw?.notes?.couponCode || (body.paymentProvider === "manual" ? body.couponCode : "") || "").trim().toUpperCase();
+    const couponCode = areCheckoutCouponsEnabled()
+      ? String(payment.raw?.notes?.couponCode || (body.paymentProvider === "manual" ? body.couponCode : "") || "").trim().toUpperCase()
+      : "";
 
     if (!buyerEmail) {
       return res.status(400).json({
@@ -441,6 +474,9 @@ publicRoutes.post("/purchase", validate(purchaseSchema), async (req, res, next) 
       emailDelivery
     });
   } catch (error) {
+    if (isDuplicatePaymentError(error)) {
+      return res.status(409).json({ status: "failed", reason: "Payment was already used" });
+    }
     return next(error);
   }
 });

@@ -435,6 +435,112 @@ async function initOfferTicker() {
 
 initOfferTicker();
 
+let promoCountdownTimer = null;
+
+function fallbackPromoEndsAt() {
+    const storageKey = "kwvPromoFallbackEndsAt";
+    const existing = localStorage.getItem(storageKey);
+    if (existing && !Number.isNaN(new Date(existing).getTime()) && new Date(existing).getTime() > Date.now()) {
+        return existing;
+    }
+
+    const next = new Date(Date.now() + 40 * 60 * 60 * 1000).toISOString();
+    localStorage.setItem(storageKey, next);
+    return next;
+}
+
+
+function setCountdownDigitMarkup(node, value) {
+    node.innerHTML = `<span class="promo-digit-current">${value}</span><span class="promo-digit-next" aria-hidden="true">${value}</span>`;
+}
+
+function flipCountdownNumber(node, value) {
+    if (!node) return;
+    if (!node.dataset.ready) {
+        setCountdownDigitMarkup(node, value);
+        node.dataset.value = value;
+        node.dataset.ready = "1";
+        return;
+    }
+
+    if (node.dataset.value === value) return;
+    const current = node.querySelector(".promo-digit-current");
+    const next = node.querySelector(".promo-digit-next");
+    if (!current || !next) {
+        setCountdownDigitMarkup(node, value);
+        node.dataset.value = value;
+        return;
+    }
+
+    next.textContent = value;
+    node.dataset.value = value;
+    node.classList.remove("is-flipping");
+    void node.offsetWidth;
+    node.classList.add("is-flipping");
+
+    window.setTimeout(() => {
+        current.textContent = value;
+        node.classList.remove("is-flipping");
+    }, 430);
+}
+
+function setPromoCountdown({ isActive = true, endsAt = "", badge = "40H Promo Active" } = {}) {
+    const card = document.getElementById("promoCountdown");
+    const badgeNode = document.getElementById("promoCountdownBadge");
+    const hoursNode = document.getElementById("promoHours");
+    const minutesNode = document.getElementById("promoMinutes");
+    const secondsNode = document.getElementById("promoSeconds");
+    if (!card || !hoursNode || !minutesNode || !secondsNode) return;
+
+    const endDate = new Date(endsAt || fallbackPromoEndsAt());
+    if (!isActive || Number.isNaN(endDate.getTime())) {
+        card.classList.add("is-hidden");
+        return;
+    }
+
+    if (badgeNode) badgeNode.textContent = badge || "40H Promo Active";
+
+    function render() {
+        const remaining = Math.max(0, endDate.getTime() - Date.now());
+        if (remaining <= 0) {
+            card.classList.add("is-hidden");
+            window.clearInterval(promoCountdownTimer);
+            return;
+        }
+
+        const totalSeconds = Math.floor(remaining / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        flipCountdownNumber(hoursNode, String(hours).padStart(2, "0"));
+        flipCountdownNumber(minutesNode, String(minutes).padStart(2, "0"));
+        flipCountdownNumber(secondsNode, String(seconds).padStart(2, "0"));
+        card.classList.remove("is-hidden");
+    }
+
+    window.clearInterval(promoCountdownTimer);
+    render();
+    promoCountdownTimer = window.setInterval(render, 1000);
+}
+
+async function initPromoCountdown() {
+    setPromoCountdown();
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/site-settings/promo-timer`, {
+            headers: { Accept: "application/json" }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setPromoCountdown(data);
+    } catch (error) {
+        // Keep local 40-hour fallback if the settings API is unavailable.
+    }
+}
+
+initPromoCountdown();
+
 function animateFeatureOrbit() {
     const orbit = document.querySelector(".feature-orbit");
     const cards = [...document.querySelectorAll(".orbit-card")];
@@ -595,8 +701,11 @@ const checkoutPlanLabel = document.getElementById("checkoutPlanLabel");
 const checkoutPriceLabel = document.getElementById("checkoutPriceLabel");
 const checkoutDiscountLine = document.getElementById("checkoutDiscountLine");
 const checkoutButtonText = document.getElementById("checkoutButtonText");
+const checkoutCouponField = document.getElementById("checkoutCouponField");
+const checkoutCouponInput = document.getElementById("checkoutCoupon");
 const planOptionButtons = document.querySelectorAll("[data-select-plan]");
 let selectedPlan = "India Launch";
+let checkoutCouponsEnabled = true;
 
 const customerSessionKey = "kwvCustomerSession";
 const loginModal = document.getElementById("loginModal");
@@ -615,6 +724,10 @@ const loginWelcome = document.getElementById("loginWelcome");
 const customerDownloadUpdate = document.getElementById("customerDownloadUpdate");
 const customerDownloadText = document.getElementById("customerDownloadText");
 const customerDownloadStatus = document.getElementById("customerDownloadStatus");
+const donateOpen = document.getElementById("donateOpen");
+const donateModal = document.getElementById("donateModal");
+const donateClose = document.getElementById("donateClose");
+const donateInlineButtons = document.querySelectorAll("[data-open-donate]");
 
 let planDetails = {
     "India Launch": {
@@ -628,8 +741,8 @@ let planDetails = {
     International: {
         title: "International checkout",
         plan: "International",
-        price: "$3",
-        amount: 300,
+        price: "$2",
+        amount: 200,
         currency: "USD",
         button: "Checkout"
     }
@@ -638,7 +751,7 @@ let planDetails = {
 function sitePriceLabel(plan) {
     if (!plan) return "";
     if (plan.key === "India Launch" || plan.plan === "India Launch" || plan.title === "India Launch") return "₹99";
-    if (plan.key === "International" || plan.plan === "International" || plan.title === "International") return "$3";
+    if (plan.key === "International" || plan.plan === "International" || plan.title === "International") return "$2";
     return plan.price;
 }
 
@@ -649,6 +762,34 @@ function updateDisplayedPrices() {
         if (price) price.textContent = details.price;
         if (button) button.textContent = `Buy for ${details.price}`;
     });
+}
+
+function setCouponFieldEnabled(isEnabled) {
+    checkoutCouponsEnabled = isEnabled !== false;
+    if (!checkoutCouponField || !checkoutCouponInput) return;
+
+    checkoutCouponField.hidden = !checkoutCouponsEnabled;
+    checkoutCouponField.classList.toggle("is-disabled", !checkoutCouponsEnabled);
+    checkoutCouponInput.disabled = !checkoutCouponsEnabled;
+    checkoutCouponInput.required = false;
+    checkoutCouponInput.placeholder = checkoutCouponsEnabled ? "Optional" : "Coupons disabled";
+    if (!checkoutCouponsEnabled) checkoutCouponInput.value = "";
+}
+
+async function initCheckoutCouponSetting() {
+    setCouponFieldEnabled(true);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/site-settings/checkout-coupons`, {
+            headers: { Accept: "application/json" },
+            cache: "no-store"
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setCouponFieldEnabled(data.isEnabled !== false);
+    } catch (error) {
+        // Keep coupon field visible if the settings API is unavailable.
+    }
 }
 
 function setSelectedPlan(planKey) {
@@ -842,6 +983,29 @@ loginModal?.addEventListener("click", (event) => {
     if (event.target === loginModal) closeLoginModal();
 });
 
+function openDonateModal() {
+    donateModal?.classList.add("active");
+    donateModal?.setAttribute("aria-hidden", "false");
+}
+
+function closeDonateModal() {
+    donateModal?.classList.remove("active");
+    donateModal?.setAttribute("aria-hidden", "true");
+}
+
+donateOpen?.addEventListener("click", openDonateModal);
+donateClose?.addEventListener("click", closeDonateModal);
+donateModal?.addEventListener("click", (event) => {
+    if (event.target === donateModal) closeDonateModal();
+});
+donateInlineButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        modal?.classList.remove("active");
+        modal?.setAttribute("aria-hidden", "true");
+        openDonateModal();
+    });
+});
+
 document.getElementById("loginKeyLast4")?.addEventListener("input", (event) => {
     event.target.value = String(event.target.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
 });
@@ -948,7 +1112,7 @@ checkoutForm.addEventListener("submit", async (event) => {
         const formData = new FormData(checkoutForm);
         const name = String(formData.get("name") || "").trim();
         const email = String(formData.get("email") || "").trim().toLowerCase();
-        const couponCode = String(formData.get("couponCode") || "").trim().toUpperCase();
+        const couponCode = checkoutCouponsEnabled ? String(formData.get("couponCode") || "").trim().toUpperCase() : "";
         if (!name || !email) {
             setCheckoutStatus("Enter your name and email so we can deliver your license.", "error");
             return;
@@ -1062,3 +1226,4 @@ function formatCheckoutPrice(amount, currency) {
 }
 
 loadPricing();
+initCheckoutCouponSetting();
