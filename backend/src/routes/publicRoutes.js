@@ -111,6 +111,15 @@ function sendActiveDownload(res) {
     return res.status(404).send("The extension download is not available yet.");
   }
 
+  if (config.downloadAccelPrefix) {
+    const prefix = config.downloadAccelPrefix.replace(/\/+$/, "");
+    const filename = encodeURIComponent(path.basename(filePath));
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", 'attachment; filename="keshav-with-velo.zip"');
+    res.setHeader("X-Accel-Redirect", `${prefix}/${filename}`);
+    return res.end();
+  }
+
   return res.download(filePath, "keshav-with-velo.zip");
 }
 
